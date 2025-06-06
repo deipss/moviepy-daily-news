@@ -548,6 +548,10 @@ def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%
 
 
 def generate_audio(text: str, output_file: str = "audio.wav") -> None:
+    if  os.path.exists(output_file):
+        logger.info(f"{output_file}已存在，跳过生成音频。")
+        return
+    logger.info(f"{output_file}开始生成音频: {text}")
     rate = 70
     sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
@@ -575,7 +579,7 @@ if __name__ == "__main__":
     for arg in args:
         logger.info(f"参数: {arg}")
     if len(args) > 0 and args[0]:
-        logger.info("未指定日期，使用当前日期")
+        logger.info("指定日期"+args[0])
         auto_download_daily(today=args[0])
     else:
         today = datetime.now().strftime("%Y%m%d")

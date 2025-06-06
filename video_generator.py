@@ -527,7 +527,9 @@ def find_highest_resolution_image(directory: str) -> tuple[str, int, int] | None
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     video_paths = []
     intro_path = build_today_intro_path(today)
-    generate_video_intro(intro_path, today)
+    if not os.path.exists(intro_path):
+        logger.info(f"{intro_path}不存在，生成")
+        generate_video_intro(intro_path, today)
     video_paths.append(intro_path)
     bbc_paths = generate_all_news_video(source=BBC, today=today)
     cn_paths = generate_all_news_video(source=CHINADAILY, today=today)
