@@ -8,12 +8,13 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import List
 import re
-
+import sys
 import os
 import requests
 from datetime import datetime
 from logging_config import logger
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # 设置请求头，模拟浏览器访问
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
@@ -279,7 +280,7 @@ class ChinaDailyScraper(NewsScraper):
         if not os.path.exists(today_path):
             results = self.crawling_news_meta(today)
         else:
-            logger.info("数据已存在，跳过爬取。")
+            logger.info(f"{today_path} 数据已存在，跳过爬取。")
         for result in results:
             folder = result.folder
             img_folder_path = os.path.join(today_path, folder)
@@ -295,7 +296,7 @@ class ChinaDailyScraper(NewsScraper):
                             image_file.write(response.content)
                     except requests.RequestException as e:
                         logger.error(f"下载图片失败: {image_url} - {e}")
-        logger.info("图片下载完成。")
+        logger.info(f"{today}图片下载完成。")
 
 
 class BbcScraper(NewsScraper):
@@ -546,12 +547,13 @@ def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%
 
 
 def generate_audio(text: str, output_file: str = "audio.wav") -> None:
-    rate = 60
+    rate = 70
     sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
 
 
 def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
+    logger.info(f'start downloading {today}')
     cs = ChinaDailyScraper(source_url='https://cn.chinadaily.com.cn/', source=CHINADAILY, news_type='国内新闻')
     cs.download_images(today)
     bbc_scraper = BbcScraper(source_url='https://www.bbc.com/news/', source=BBC, news_type='国际新闻')
@@ -565,5 +567,15 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
 
 
 if __name__ == "__main__":
-    today = datetime.now().strftime("%Y%m%d")
-    auto_download_daily(today='20250605')
+    args = sys.argv[1:]
+    logger.info(f"接收到 {len(args)} 个参数: {args}")
+
+    # 示例：处理参数
+    for arg in args:
+        logger.info(f"参数: {arg}")
+    if  args[0]:
+        logger.info("未指定日期，使用当前日期")
+        auto_download_daily(today=args[0])
+    else:
+        today = datetime.now().strftime("%Y%m%d")
+        auto_download_daily(today=today)

@@ -9,13 +9,15 @@ from PIL import Image
 from pathlib import Path
 from moviepy.video.fx import Loop
 from crawl_news import generate_audio
-from crawl_news import generate_audio_linux, NEWS_JSON_FILE_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, \
+from crawl_news import NEWS_JSON_FILE_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, \
     AUDIO_FILE_NAME, CHINADAILY, BBC, NewsArticle
 from ollama_client import OllamaClient
 from logging_config import logger
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 BACKGROUND_IMAGE_PATH = "videos/generated_background.png"
-INTRODUCTION_AUDIO = "videos/introduction.aiff"
+INTRODUCTION_AUDIO = "videos/introduction.mp3"
 GLOBAL_WIDTH = 1920
 GLOBAL_HEIGHT = 1080
 GAP = int(GLOBAL_WIDTH * 0.02)
@@ -595,4 +597,15 @@ if __name__ == "__main__":
         os.mkdir('temp')
     if not os.path.exists('videos'):
         os.mkdir('videos')
-    combine_videos(datetime.now().strftime("%Y%m%d"))
+    args = sys.argv[1:]
+    logger.info(f"接收到 {len(args)} 个参数: {args}")
+
+    # 示例：处理参数
+    for arg in args:
+        logger.info(f"参数: {arg}")
+    if args[0]:
+        logger.info("未指定日期，使用当前日期")
+        combine_videos(today=args[0])
+    else:
+        today = datetime.now().strftime("%Y%m%d")
+        combine_videos(today=today)
