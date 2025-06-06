@@ -69,7 +69,13 @@ class OllamaClient:
         :return: 生成的摘要文本
         """
         prompt = f"请为以下文本生成一个简洁的摘要（不超过{max_tokens}个字）：\n{text}"
+        cnt = 3
         response = self.generate_text(prompt, model, {"max_tokens": max_tokens})
+        while cnt > 0:
+            if "error" in response:
+                response = self.generate_text(prompt, model, {"max_tokens": max_tokens})
+                logger.error(f"生成摘要失败: {response['error']},text={text}")
+            cnt -= 1
         summary = response.get("response", "")
         # 直接找到 </think> 的位置进行截断，并清理前后空格和换行符
         think_end = summary.find('</think>')

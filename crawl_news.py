@@ -517,10 +517,12 @@ def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m
     json_file_path = os.path.join(folder_path, NEWS_JSON_FILE_NAME)
 
     if os.path.exists(json_file_path):
+        processed_json_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
+        if os.path.exists(processed_json_path):
+            logger.info(f"{processed_json_path}已存在处理后的新闻结果文件，跳过处理。")
+            return
         processed_news = load_and_summarize_news(json_file_path)
 
-        # 保存处理后的新闻数据
-        processed_json_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
         with open(processed_json_path, 'w', encoding='utf-8') as json_file:
             json.dump([article.to_dict() for article in processed_news], json_file, ensure_ascii=False, indent=4)
 
@@ -573,7 +575,7 @@ if __name__ == "__main__":
     # 示例：处理参数
     for arg in args:
         logger.info(f"参数: {arg}")
-    if  len(args)>0  and args[0]:
+    if len(args) > 0 and args[0]:
         logger.info("未指定日期，使用当前日期")
         auto_download_daily(today=args[0])
     else:
