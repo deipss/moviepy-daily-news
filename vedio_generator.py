@@ -597,13 +597,14 @@ if __name__ == "__main__":
         os.mkdir('temp')
     if not os.path.exists('videos'):
         os.mkdir('videos')
+
     args = sys.argv[1:]
     logger.info(f"接收到 {len(args)} 个参数: {args}")
 
     # 示例：处理参数
     for arg in args:
         logger.info(f"参数: {arg}")
-    if args[0]:
+    if not args and args[0]:
         logger.info("未指定日期，使用当前日期")
         combine_videos(today=args[0])
     else:
