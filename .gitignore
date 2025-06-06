@@ -189,6 +189,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+/.idea
 
 # Cursor
 #  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
@@ -196,3 +197,4 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+app.log

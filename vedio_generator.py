@@ -8,10 +8,11 @@ import math
 from PIL import Image
 from pathlib import Path
 
-from agent.all_reptile import generate_audio_macos
-from all_reptile import generate_audio_linux, NEWS_JSON_FILE_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, \
+from crawl_news import generate_audio_macos
+from crawl_news import generate_audio_linux, NEWS_JSON_FILE_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, \
     AUDIO_FILE_NAME, CHINADAILY, BBC, NewsArticle
 from ollama_client import OllamaClient
+from logging_config import logger
 
 BACKGROUND_IMAGE_PATH = "videos/generated_background.png"
 INTRODUCTION_AUDIO = "videos/introduction.aiff"
@@ -21,10 +22,11 @@ GAP = int(GLOBAL_WIDTH * 0.02)
 INNER_WIDTH = GLOBAL_WIDTH - GAP
 INNER_HEIGHT = GLOBAL_HEIGHT - GAP
 W_H_RADIO = GLOBAL_WIDTH / GLOBAL_HEIGHT
+W_H_RADIO = "{:.2f}".format(W_H_RADIO)
 FPS = 40
 MAIN_BG_COLOR = "#FF9900"
 VIDEO_FILE_NAME = "video.mp4"
-print(
+logger.info(
     f"GLOBAL_WIDTH:{GLOBAL_WIDTH},  GLOBAL_HEIGHT:{GLOBAL_HEIGHT}, W_H_RADIO:{W_H_RADIO},  FPS:{FPS},  BACKGROUND_IMAGE_PATH:{BACKGROUND_IMAGE_PATH},GAP:{GAP},INNER_WIDTH:{INNER_WIDTH},INNER_HEIGHT:{INNER_HEIGHT}")
 
 
@@ -40,7 +42,7 @@ def build_today_intro_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "intro.mp4")
 
 
-def build_today_video_path( today=datetime.now().strftime("%Y%m%d")):
+def build_today_video_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "video.mp4")
 
 
@@ -171,7 +173,6 @@ def truncate_after_400_find_period(text: str) -> str:
 
 
 def generate_quad_layout_video(audio_path, image_path_top, txt_cn, title, summary, output_path, is_preview=True):
-    title = '新闻来源：' + title
     txt_cn = truncate_after_400_find_period(txt_cn)
     # 加载背景和音频
     bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(255, 255, 255))  # 白色背景
@@ -287,7 +288,7 @@ def calculate_segment_times(duration, num_segments):
 
 
 def generate_quad_layout_video_v2(audio_path, image_list, title, summary, output_path, index, is_preview=True):
-    title = '新闻来源：' + title + "    " + index
+    title = "" + index +" "+ title
     # 加载背景和音频
     bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(255, 255, 255))  # 白色背景
     audio_clip = AudioFileClip(audio_path)
@@ -433,7 +434,7 @@ def combine_videos_with_transitions(video_paths, output_path):
     for i, video_path in enumerate(video_paths):
         # 加载视频
         video = VideoFileClip(video_path)
-        if(video.duration < 2):
+        if (video.duration < 2):
             continue
         video = video.with_position(('center', 'center'), relative=True)
         # 将视频放置在背景上
@@ -446,8 +447,6 @@ def combine_videos_with_transitions(video_paths, output_path):
 
     # 合并视频，添加1秒的过渡效果
     final_clip = concatenate_videoclips(clips, method="compose")
-
-    final_clip = final_clip.with_speed_scaled(1.5)
     # 导出最终视频
     final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
     # final_clip.preview()
@@ -509,7 +508,7 @@ def find_highest_resolution_image(directory: str) -> tuple[str, int, int] | None
                             highest_resolution = resolution
                             best_image = (file_path, width, height)
                 except Exception as e:
-                    print(f"无法处理图片 {file_path}: {e}")
+                    logger.info(f"无法处理图片 {file_path}: {e}")
 
     return best_image
 
@@ -542,7 +541,7 @@ def generate_all_news_video(source: str, today: str = datetime.now().strftime("%
         folder_path = os.path.dirname(json_file_path)  # 获取新闻图片所在的文件夹路径
         video_output_path = os.path.join(folder_path, article.folder, "%s" % VIDEO_FILE_NAME)
         if os.path.exists(video_output_path):
-            print(f"{article.folder}视频已存在，跳过生成,path={video_output_path}")
+            logger.info(f"{article.folder}视频已存在，跳过生成,path={video_output_path}")
             video_output_paths.append(video_output_path)
             continue
         audio_output_path = os.path.join(folder_path, article.folder, "%s" % AUDIO_FILE_NAME)
@@ -578,10 +577,9 @@ def temp_test_ollama():
 
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
-    txt = ";".join([news_item['title']for news_item in news_data])
+    txt = ";".join([news_item['title'] for news_item in news_data])
     data = client.generate_top_topic(txt)
-    print(data)
-
+    logger.info(data)
 
 
 # 示例使用

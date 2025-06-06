@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
 from abc import abstractmethod
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import List
 import re
 
@@ -14,6 +14,7 @@ import pyttsx3
 import os
 import requests
 from datetime import datetime
+from logging_config import logger
 
 # 设置请求头，模拟浏览器访问
 headers = {
@@ -121,7 +122,6 @@ class NewsScraper:
     def is_sensitive_word_en(self, word) -> bool:
         return "Jinping" in word
 
-    # 创建以当前日期命名的文件夹
     def create_folder(self, today=datetime.now().strftime("%Y%m%d")) -> str:
         folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, self.source)
         os.makedirs(folder_path, exist_ok=True)
@@ -133,7 +133,7 @@ class NewsScraper:
             response.raise_for_status()
             return response.text
         except requests.RequestException as e:
-            print(f"[WARN] 请求失败: {url} 错误信息： {e}")
+            logger.error(f"[WARN] 请求失败: {url} 错误信息： {e}")
             return None
 
 
@@ -146,23 +146,18 @@ class ChinaDailyScraper(NewsScraper):
             'https://world.chinadaily.com.cn/'
         ]
 
-    def truncate_after_700_find_period(self, text: str) -> str:
-        if len(text) <= 700:
+    def truncate_find_period(self, text: str, end_pos: 700) -> str:
+        if len(text) <= end_pos:
             return text
-
-        end_pos = 700  # 第300个字符的位置（索引从0开始，取前300个字符）
-
         # 从end_pos位置开始向后查找第一个句号
         last_period = text.find('。', end_pos)
 
         if last_period != -1:
-            # 截取至句号位置（包含句号）
             return text[:last_period + 1]
         else:
-            # 300字符后无句号，返回全文（或截断并添加省略号）
             return text  # 或返回 text[:end_pos] + "..."（按需选择）
 
-    def extract_news_content(self, url) -> NewsArticle:
+    def extract_news_content(self, url) -> NewsArticle | None:
         """提取新闻页面的标题、图片和正文内容"""
         try:
 
@@ -191,7 +186,7 @@ class ChinaDailyScraper(NewsScraper):
                 text = p.get_text(strip=True)
                 if text and len(text) > 10:  # 过滤短文本
                     content += text + " "
-            content = self.truncate_after_700_find_period(content)
+            content = self.truncate_find_period(content, 700)
             article = NewsArticle(source=self.source, news_type=self.news_type)
             article.title = title
             article.content_cn = content.strip()
@@ -201,30 +196,8 @@ class ChinaDailyScraper(NewsScraper):
             return article
 
         except Exception as e:
-            print(f"提取新闻内容出错: {e}")
+            logger.error(f"提取新闻内容出错: {e}")
             return None
-
-    def extract_all_not_visit_urls(self, today):
-        visited_urls = set()
-        full_urls = []
-        for base_url in self.origin_url():
-
-            html = self.fetch_page(base_url)
-            if not html:
-                print("无法获取初始页面内容，程序退出。")
-                return
-
-            # 提取所有链接
-            urls = self.extract_links(html, visited_urls, today)
-            print(f"{base_url} 共发现 {len(urls)} 个链接。")
-
-        for url in visited_urls:
-            if url.startswith("//"):
-                full_urls.append("https:" + url)
-            else:
-                full_urls.append(url)
-        print(f"去重共发现 {len(visited_urls)} 个链接。")
-        return full_urls
 
     def extract_links(self, html, visited_urls, today) -> set[str]:
         """解析 HTML，提取所有链接"""
@@ -241,32 +214,54 @@ class ChinaDailyScraper(NewsScraper):
                 urls.add(href)
         return urls
 
+    def extract_all_not_visit_urls(self, today):
+        visited_urls = set()
+        full_urls = []
+        for base_url in self.origin_url():
+
+            html = self.fetch_page(base_url)
+            if not html:
+                logger.info("无法获取初始页面内容，程序退出。")
+                return
+
+            # 提取所有链接
+            urls = self.extract_links(html, visited_urls, today)
+            logger.info(f"{base_url} 共发现 {len(urls)} 个链接。")
+
+        for url in visited_urls:
+            if url.startswith("//"):
+                full_urls.append("https:" + url)
+            else:
+                full_urls.append(url)
+        logger.info(f"去重共发现 {len(visited_urls)} 个链接。")
+        return full_urls
+
     def crawling_news_meta(self, today) -> List[NewsArticle]:
         folder_path = self.create_folder(today)
         urls = self.extract_all_not_visit_urls(today)
         results = []
         if urls is None:
-            print("无法获取初始页面内容，程序退出。")
+            logger.info("无法获取初始页面内容，程序退出。")
             return results
         for id, url in enumerate(urls):
             article = self.extract_news_content(url)
             if not article:
-                print(f"[ERROR] 无法获取新闻内容: {url}")
+                logger.info(f"无法获取新闻内容: {url}")
                 continue
             if len(article.images) == 0:
-                print(f"[ERROR] 未找到图片: {url}")
+                logger.info(f"未找到图片: {url}")
                 continue
             if self.is_sensitive_word_cn(article.title):
-                print(f"[ERROR] 标题包含敏感词: {url}")
+                logger.info(f"标题包含敏感词: {url}")
                 continue
             if self.is_sensitive_word_cn(article.content_cn):
-                print(f"[ERROR] 标题包含敏感词: {url}")
+                logger.info(f"标题包含敏感词: {url}")
                 continue
             if '/gtx/' in url:
-                print(f"[ERROR] URL 包含敏感词gtx : {url}")
+                logger.info(f"URL 包含敏感词gtx : {url}")
                 continue
             if len(article.content_cn) < 10:
-                print(f"[ERROR] 内容过短: {url}")
+                logger.info(f"内容过短: {url}")
                 continue
             article.folder = "{:04d}".format(id)
             results.append(article)
@@ -286,7 +281,7 @@ class ChinaDailyScraper(NewsScraper):
         if not os.path.exists(today_path):
             results = self.crawling_news_meta(today)
         else:
-            print("数据已存在，跳过爬取。")
+            logger.info("数据已存在，跳过爬取。")
         for result in results:
             folder = result.folder
             img_folder_path = os.path.join(today_path, folder)
@@ -301,8 +296,8 @@ class ChinaDailyScraper(NewsScraper):
                         with open(image_path, "wb") as image_file:
                             image_file.write(response.content)
                     except requests.RequestException as e:
-                        print(f"[ERROR] 下载图片失败: {image_url} - {e}")
-        print("图片下载完成。")
+                        logger.error(f"下载图片失败: {image_url} - {e}")
+        logger.info("图片下载完成。")
 
 
 class BbcScraper(NewsScraper):
@@ -312,7 +307,7 @@ class BbcScraper(NewsScraper):
             'https://www.bbc.com/news'
         ]
 
-    def extract_news_content(self, url) -> NewsArticle:
+    def extract_news_content(self, url) -> NewsArticle | None:
         """提取新闻页面的标题、图片和正文内容"""
         try:
 
@@ -351,9 +346,9 @@ class BbcScraper(NewsScraper):
                             max_width_entry = max(image_data, key=lambda x: x[1])
                             highest_res_url = max_width_entry[0]
                             image_urls.append(highest_res_url)
-                            print(f"最高分辨率图片 URL: {highest_res_url}")
+                            logger.info(f"最高分辨率图片 URL: {highest_res_url}")
                         else:
-                            print("未找到有效图片 URL")
+                            logger.info("未找到有效图片 URL")
 
             # 提取正文文本
             content = ""
@@ -370,29 +365,8 @@ class BbcScraper(NewsScraper):
             return article
 
         except Exception as e:
-            print(f"提取新闻内容出错: {e}")
+            logger.error(f"提取新闻内容出错: {e}")
             return None
-
-    def extract_all_not_visit_urls(self, today):
-        # 初始爬取目标页面
-        visited_urls = set()
-        full_urls = []
-        for base_url in self.origin_url():
-
-            html = self.fetch_page(base_url)
-            if not html:
-                print("无法获取初始页面内容，程序退出。")
-                return
-
-            # 提取所有链接
-            urls = self.extract_links(html, visited_urls, today)
-            print(f"{base_url} 共发现 {len(urls)} 个链接。")
-
-        for url in visited_urls:
-            if url.startswith("/news/articles"):
-                full_urls.append("https://www.bbc.com" + url)
-        print(f"去重,拼接后共发现 {len(full_urls)} 个链接。")
-        return full_urls
 
     def extract_links(self, html, visited_urls, today) -> set[str]:
         """解析 HTML，提取所有链接"""
@@ -405,29 +379,50 @@ class BbcScraper(NewsScraper):
                 urls.add(href)
         return urls
 
+    def extract_all_not_visit_urls(self, today):
+        # 初始爬取目标页面
+        visited_urls = set()
+        full_urls = []
+        for base_url in self.origin_url():
+
+            html = self.fetch_page(base_url)
+            if not html:
+                logger.info("无法获取初始页面内容，程序退出。")
+                return
+
+            # 提取所有链接
+            urls = self.extract_links(html, visited_urls, today)
+            logger.info(f"{base_url} 共发现 {len(urls)} 个链接。")
+
+        for url in visited_urls:
+            if url.startswith("/news/articles"):
+                full_urls.append("https://www.bbc.com" + url)
+        logger.info(f"去重,拼接后共发现 {len(full_urls)} 个链接。")
+        return full_urls
+
     def crawling_news_meta(self, today) -> List[NewsArticle]:
         folder_path = self.create_folder(today)
         urls = self.extract_all_not_visit_urls(today)
         results = []
         if urls is None:
-            print("无法获取初始页面内容，程序退出。")
+            logger.info("无法获取初始页面内容，程序退出。")
             return results
         for id, url in enumerate(urls):
             article = self.extract_news_content(url)
             if not article:
-                print(f"[ERROR] 无法获取新闻内容: {url}")
+                logger.info(f"无法获取新闻内容: {url}")
                 continue
             if len(article.images) == 0:
-                print(f"[ERROR] 未找到图片: {url}")
+                logger.info(f"未找到图片: {url}")
                 continue
             if len(article.content_en) < 10:
-                print(f"[ERROR] 内容过短: {url}")
+                logger.info(f"内容过短: {url}")
                 continue
             if self.is_sensitive_word_en(article.title_en):
-                print(f"[ERROR] 标题包含敏感词: {url}")
+                logger.info(f"标题包含敏感词: {url}")
                 continue
             if self.is_sensitive_word_en(article.content_en):
-                print(f"[ERROR] 内容含敏感词: {url}")
+                logger.info(f"内容含敏感词: {url}")
                 continue
             article.folder = "{:04d}".format(id)
             results.append(article)
@@ -447,7 +442,7 @@ class BbcScraper(NewsScraper):
         if not os.path.exists(today_path):
             results = self.crawling_news_meta(today)
         else:
-            print("数据已存在，跳过爬取。")
+            logger.info("数据已存在，跳过爬取。")
         for result in results:
             folder = result.folder
             img_folder_path = os.path.join(today_path, folder)
@@ -462,14 +457,13 @@ class BbcScraper(NewsScraper):
                         with open(image_path, "wb") as image_file:
                             image_file.write(response.content)
                     except requests.RequestException as e:
-                        print(f"[ERROR] 下载图片失败: {image_url} - {e}")
-        print(f"{self.source}图片下载完成。")
+                        logger.error(f"下载图片失败: {image_url} - {e}")
+        logger.info(f"{self.source}图片下载完成。")
 
 
 def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
     """
     加载新闻数据，提取中文摘要，并翻译英文内容为中文。
-
     :param json_file_path: JSON 文件路径
     :return: 包含摘要和翻译后内容的 NewsArticle 列表
     """
@@ -507,15 +501,9 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
 
         # 提取中文摘要
         summary = ollama_client.generate_summary(article.content_cn, max_tokens=200)
-        if len(summary) > 200:
-            end_pos = 180  # 第300个字符的位置（索引从0开始，取前300个字符）
-            # 从end_pos位置开始向后查找第一个句号
-            last_period = summary.find('。', end_pos)
-            summary = summary[:last_period + 1]
         article.summary = summary
-        print(f"{article.url} - {article.title}补充完成")
+        logger.info(f"{article.url} - {article.title} - 补充完成")
         processed_news.append(article)
-
     return processed_news
 
 
@@ -525,7 +513,7 @@ def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m
 
     :param today: 日期字符串，格式为 YYYYMMDD
     """
-    print(f"开始处理 {source} 的新闻结果文件...")
+    logger.info(f"开始处理 {source} 的新闻结果文件...")
     folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
     json_file_path = os.path.join(folder_path, NEWS_JSON_FILE_NAME)
 
@@ -537,10 +525,10 @@ def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m
         with open(processed_json_path, 'w', encoding='utf-8') as json_file:
             json.dump([article.to_dict() for article in processed_news], json_file, ensure_ascii=False, indent=4)
 
-        print(f"处理完成，已保存到 {processed_json_path}")
+        logger.info(f"处理完成，已保存到 {processed_json_path}")
     else:
-        print(f"未找到新闻结果文件: {json_file_path}")
-    print(f"处理 {source} 的新闻结果文件完成")
+        logger.info(f"未找到新闻结果文件: {json_file_path}")
+    logger.info(f"处理 {source} 的新闻结果文件完成")
 
 
 def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%Y%m%d")) -> None:
@@ -574,11 +562,11 @@ def generate_audio_linux(text: str, output_dir: str = "audio.wav") -> None:
     engine.save_to_file(text, output_dir)
     engine.runAndWait()  # 确保语音合成完成
     engine.stop()  # 显式关闭引擎以释放资源
-    print(f"语音已保存到 {output_dir}")
+    logger.info(f"语音已保存到 {output_dir}")
 
 
 def generate_audio_macos(text, output_file="output.aiff"):
-    print(f"音频文件已保存到 {output_file}")
+    logger.info(f"音频文件已保存到 {output_file}")
     speed = 230
     os.system(f'say -r {speed} "{text}" -o {output_file}')
 
@@ -586,8 +574,8 @@ def generate_audio_macos(text, output_file="output.aiff"):
 def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     cs = ChinaDailyScraper(source_url='https://cn.chinadaily.com.cn/', source=CHINADAILY, news_type='国内新闻')
     cs.download_images(today)
-    bbcScraper = BbcScraper(source_url='https://www.bbc.com/news/', source=BBC, news_type='国际新闻')
-    bbcScraper.download_images(today)
+    bbc_scraper = BbcScraper(source_url='https://www.bbc.com/news/', source=BBC, news_type='国际新闻')
+    bbc_scraper.download_images(today)
 
     process_news_results(source=CHINADAILY, today=today)
     process_news_results(source=BBC, today=today)
@@ -597,4 +585,5 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
 
 
 if __name__ == "__main__":
-    auto_download_daily()
+    today = datetime.now().strftime("%Y%m%d")
+    auto_download_daily(today='20250604')

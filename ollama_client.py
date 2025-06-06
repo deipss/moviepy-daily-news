@@ -1,5 +1,6 @@
 import requests
 from typing import Dict, Any
+from logging_config import logger
 
 
 class OllamaClient:
@@ -33,7 +34,20 @@ class OllamaClient:
             "stream": False
         }
         response = requests.post(url, json=payload)
-        return response.json()
+
+        # 检查 HTTP 状态码是否为 200 (OK)
+        if response.status_code == 200:
+            try:
+                # 尝试解析 JSON 数据
+                return response.json()
+            except ValueError as e:
+                # 处理 JSON 解析失败的情况
+                logger.error(f"JSON 解析失败: {e}")
+                return {"error": "无法解析响应内容"}
+        else:
+            # 记录错误信息
+            logger.error(f"请求失败，状态码: {response.status_code}, 响应内容: {response.text}")
+            return {"error": f"请求失败，状态码: {response.status_code}"}
 
     def get_models(self) -> Dict[str, Any]:
         """
@@ -63,6 +77,19 @@ class OllamaClient:
             summary = summary[think_end + len('</think>'):].strip()
         else:
             summary = summary.strip()
+
+        if len(summary) > max_tokens:
+            logger.info(f"当前摘要={len(summary)},摘要超过{max_tokens}个字，再次生成摘要")
+            prompt = f"请为以下文本生成一个简洁的摘要（不超过{max_tokens // 9 * 10}个字）：\n{summary}"
+            response = self.generate_text(prompt, model, {"max_tokens": max_tokens})
+            summary = response.get("response", "")
+            # 直接找到 </think> 的位置进行截断，并清理前后空格和换行符
+            think_end = summary.find('</think>')
+            if think_end != -1:
+                summary = summary[think_end + len('</think>'):].strip()
+            else:
+                summary = summary.strip()
+
         return summary
 
     def generate_top_topic(self, text: str, model: str = "deepseek-r1:8b", max_tokens: int = 100) -> str:
@@ -96,5 +123,3 @@ class OllamaClient:
         prompt = f"请将以下英文文本翻译成中文：\n{text}"
         response = self.generate_text(prompt, model)
         return response.get("response", "")
-
-
