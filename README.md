@@ -1,16 +1,18 @@
-# 技术方案
+# 1. 技术方案
 
 大概的方向就是先使用爬虫技术，爬取网站的新闻文本、图片，英文新闻使用机器翻译进行翻译，使用ollama中deepseek进行摘要提取，上述的素材准备好，使用moviepy生成视频。
 主要用的技术：
 
 - 爬虫：BeautifulSoup
-- 机器翻译：字节旗下的火山翻译（每月有免费额度，基本够用） https://www.volcengine.com/docs/4640/65067
-- 摘要提取：ollama 部署了 deepseek-r1:8b https://ollama.com/library/deepseek-r1
+- 机器翻译：字节旗下的[火山翻译](https://www.volcengine.com/docs/4640/65067)（每月有免费额度，基本够用） 
+- 摘要提取：ollama 部署了  [deepseek-r1:8b](https://ollama.com/library/deepseek-r1 "点击打开ollama")
+- 文字转语音:刚开始打算使用[字节的megaTTS](https://github.com/bytedance/MegaTTS3)，8G的显示不够，使用微软的edge-tts，效果还可以。
 - 视频生成：moviepy
+
 
 > 硬件最好是有GPU，用来运行ollama，当然可以用云服务器代替，取决于个人的资源。
 
-# 新闻来源
+# 2. 新闻来源
 
 - [x] 中国日报（chinadaily）
 - [x] 英国广播公司（BBC）
@@ -20,7 +22,7 @@
 
 英国卫报、泰晤士报、彭博社报和BBC的内容差不多，不再重复爬取。
 
-# 使用
+# 3. 使用
 
 在ubuntu 22.04 中，使用conda创建一个python3.11的环境，安装依赖包，然后运行crawl_news.py和vedio_generator.py。
 
@@ -35,24 +37,24 @@ python crawl_news.py 20250605
 python vedio_generator.py 20250605
 ```
 
-# 效果
+# 4. 效果
 
 以下生成的视频截图
 ![vedio.png](assets/vedio.png)
 
-# 测试
+# 5. 测试
 
 功能可用，在摘要生成时，以下的nvidia 1080 8G 显卡，在运行ollama deepseek-r1:8b进行摘要生成的情况：
 ![nvidia.png](assets/nvidia.png)
 
-# todo
+# 6. todo
 
 - [x] 英文翻译成中文
 - [x] ollama进行摘要提取
 - [ ] ollama进行摘要提取后，增加一个小的评论
 - [x] 信息的过滤，对于政治类的信息，中英文的都要去除
 
-# 附件
+# 7. 附件
 
 爬取的数据样例：
 

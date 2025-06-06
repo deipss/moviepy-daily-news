@@ -1,12 +1,13 @@
 import json
-
+import time
 from volcengine.ApiInfo import ApiInfo
 from volcengine.Credentials import Credentials
 from volcengine.ServiceInfo import ServiceInfo
 from volcengine.base.Service import Service
+from logging_config import logger
 
 
-def batch_translate(txt_list,source_language='zh',target_language='en'):
+def batch_translate(txt_list, source_language='zh', target_language='en'):
     k_access_key = ''  # https://console.volcengine.com/iam/keymanage/
     k_secret_key = '=='
     k_service_info = \
@@ -28,13 +29,27 @@ def batch_translate(txt_list,source_language='zh',target_language='en'):
         'TargetLanguage': target_language,
         'TextList': txt_list,
     }
-    res_json = service.json('translate', {}, json.dumps(body))
+    res_json = send_translate_request(body, service)
+    if res_json is None:
+        return txt_list
     res = json.loads(res_json)
     cn_list = []
     for i in res['TranslationList']:
         cn_list.append(i['Translation'])
     return cn_list
 
+
+def send_translate_request(body, service):
+    cnt = 3
+    while cnt > 0:
+        try:
+            res_json = service.json('translate', {}, json.dumps(body))
+            return res_json
+        except Exception as e:
+            logger.error(f"翻译失败: {e},body={body}")
+            cnt -= 1
+            time.sleep(3)
+    return None
 
 # if __name__ == '__main__':
 #     data = batch_translate(['在在城桂林枯在在', '要在有有有以夺有'])
