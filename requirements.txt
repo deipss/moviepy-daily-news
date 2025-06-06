@@ -1,16 +1,7 @@
-# HTML解析
 beautifulsoup4==4.12.2
-# HTTP 请求
 requests==2.31.0
-# 语音合成
 pyttsx3==2.90
-# 视频处理
-moviepy==1.0.3
-# 中文农历处理
-zhdate==1.1.4
-# 图像处理
-Pillow==10.3.0
-# 字典类、数据处理
-dataclasses-json==0.6.4
-# 火山引擎 SDK（volcengine）
-volcengine==1.0.103
+moviepy==2.0.25
+Pillow==10.2.0
+zhdate==1.3.6
+volcengine==1.1.0  # 注意：需确认是否为公开可用版本

@@ -7,7 +7,7 @@ import os
 import math
 from PIL import Image
 from pathlib import Path
-
+from moviepy.video.fx import Loop
 from crawl_news import generate_audio_macos
 from crawl_news import generate_audio_linux, NEWS_JSON_FILE_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, \
     AUDIO_FILE_NAME, CHINADAILY, BBC, NewsArticle
@@ -54,7 +54,7 @@ def build_today_index_path(index: str, today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(CN_NEWS_FOLDER_NAME, today, index)
 
 
-def generate_background_image(width, height, color=MAIN_BG_COLOR):
+def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR):
     # 创建一个新的图像
     image = Image.new("RGB", (width, height), color)  # 橘色背景
     draw = ImageDraw.Draw(image)
@@ -288,7 +288,7 @@ def calculate_segment_times(duration, num_segments):
 
 
 def generate_quad_layout_video_v2(audio_path, image_list, title, summary, output_path, index, is_preview=True):
-    title = "" + index +" "+ title
+    title = "" + index + " " + title
     # 加载背景和音频
     bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(255, 255, 255))  # 白色背景
     audio_clip = AudioFileClip(audio_path)
@@ -306,7 +306,7 @@ def generate_quad_layout_video_v2(audio_path, image_list, title, summary, output
     bottom_left_width = bg_width - bottom_right_width
 
     # 右下图片处理 地球仪
-    bottom_right_img = VideoFileClip('videos/earth.mp4')
+    bottom_right_img = VideoFileClip('videos/earth.mp4').with_effects([Loop(duration=duration)])
     if bottom_right_img.w > bottom_right_width or bottom_right_img.h > bottom_height:
         scale = min(bottom_right_width / bottom_right_img.w, bottom_height / bottom_right_img.h)
         bottom_right_img = bottom_right_img.resized(scale)
@@ -377,17 +377,19 @@ def get_full_date(today=datetime.now()):
     weekday_map = ["一", "二", "三", "四", "五", "六", "日"]
     weekday = f"星期{weekday_map[today.weekday()]}"
 
-    return "今天是{}, \n农历{}, \n{}".format(solar_date, lunar_date, weekday)
+    return "今天是{}, \n农历{}, \n{},欢迎收看【今日快报】".format(solar_date, lunar_date, weekday)
 
 
-def generate_video_intro(output_path='videos/introduction.mp4', today=datetime.now().strftime("%%m%d")):
+def generate_video_intro(output_path='videos/introduction.mp4', today=datetime.now().strftime("%Y%m%d")):
     """生成带日期文字和背景音乐的片头视频
 
     Args:
         bg_music_path: 背景音乐文件路径
         output_path: 输出视频路径
     """
+    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
     if os.path.exists(output_path):
+        logger.info(f"{output_path}已存在")
         return
         # 加载背景图片
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
@@ -414,16 +416,23 @@ def generate_video_intro(output_path='videos/introduction.mp4', today=datetime.n
         font='./font/simhei.ttf',
         stroke_color='black',
         stroke_width=2
-    ).with_duration(duration).with_position(('center', 0.7), relative=True)
+    ).with_duration(duration).with_position(('center', 0.65), relative=True)
+
+    topics = generate_top_topic_by_ollama(today)
+    logger.info(f"topics={topics}")
+    topic_txt_clip = TextClip(
+        text=topics,
+        font_size=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.6),
+        color='black',
+        font='./font/simhei.ttf',
+        stroke_color='black',
+        stroke_width=2
+    ).with_duration(duration).with_position(('center', 0.05), relative=True)
 
     # 合成最终视频
-    final_clip = CompositeVideoClip([bg_clip, txt_clip], size=bg_clip.size)
-    final_clip.write_videofile(
-        output_path,
-        codec="libx264",
-        audio_codec="aac",
-        fps=FPS
-    )
+    final_clip = CompositeVideoClip([bg_clip, txt_clip, topic_txt_clip], size=bg_clip.size)
+    final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
+    # final_clip.preview()
 
 
 def combine_videos_with_transitions(video_paths, output_path):
@@ -513,9 +522,7 @@ def find_highest_resolution_image(directory: str) -> tuple[str, int, int] | None
     return best_image
 
 
-def combine_videos():
-    today = '20250605'
-    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
+def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     video_paths = []
     intro_path = build_today_intro_path(today)
     generate_video_intro(intro_path, today)
@@ -570,19 +577,22 @@ def temp_test():
         ['cn_news/20250512/intro.mp4', 'cn_news/20250512/0000/video.mp4', 'cn_news/20250512/0001/video.mp4'], 'a.mp4')
 
 
-def temp_test_ollama():
+def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
     client = OllamaClient()
-    folder_path = os.path.join(CN_NEWS_FOLDER_NAME, '20250605', BBC)
+    folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, BBC)
     json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
 
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     txt = ";".join([news_item['title'] for news_item in news_data])
     data = client.generate_top_topic(txt)
-    logger.info(data)
+    return data
 
 
 # 示例使用
 if __name__ == "__main__":
-    # combine_videos()
-    temp_test_ollama()
+    if not os.path.exists('temp'):
+        os.mkdir('temp')
+    if not os.path.exists('videos'):
+        os.mkdir('videos')
+    combine_videos(datetime.now().strftime("%Y%m%d"))
