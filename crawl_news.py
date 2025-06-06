@@ -9,8 +9,6 @@ from dataclasses import dataclass
 from typing import List
 import re
 
-import pyttsx3
-
 import os
 import requests
 from datetime import datetime
@@ -27,7 +25,7 @@ CN_NEWS_FOLDER_NAME = "news"
 
 CHINADAILY = 'chinadaily'
 BBC = 'bbc'
-AUDIO_FILE_NAME = "summary_audio.aiff"
+AUDIO_FILE_NAME = "summary_audio.mp3"
 
 
 @dataclass
@@ -544,31 +542,13 @@ def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%
         # 新增逻辑：将摘要转换为音频并保存
         folder_path = os.path.dirname(json_file_path)  # 获取新闻图片所在的文件夹路径
         audio_output_path = os.path.join(folder_path, article.folder, "%s" % AUDIO_FILE_NAME)
-        generate_audio_macos(article.summary, output_file=audio_output_path)
+        generate_audio(article.summary, output_file=audio_output_path)
 
 
-def generate_audio_linux(text: str, output_dir: str = "audio.wav") -> None:
-    """
-    使用 pyttsx3 将文本转换为语音并保存到指定文件。
-
-    :param text: 要转换为语音的文本
-    :param output_dir: 保存语音文件的路径，默认为 "audio.mp3"
-    """
-    engine = pyttsx3.init()
-    # 设置语速（默认200，2倍速为400）
-    engine.setProperty('rate', 230)
-    # 合成语音并保存到文件
-    # engine.say(text)
-    engine.save_to_file(text, output_dir)
-    engine.runAndWait()  # 确保语音合成完成
-    engine.stop()  # 显式关闭引擎以释放资源
-    logger.info(f"语音已保存到 {output_dir}")
-
-
-def generate_audio_macos(text, output_file="output.aiff"):
-    logger.info(f"音频文件已保存到 {output_file}")
-    speed = 230
-    os.system(f'say -r {speed} "{text}" -o {output_file}')
+def generate_audio(text: str, output_file: str = "audio.wav") -> None:
+    rate = 60
+    sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
+    os.system(sh)
 
 
 def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
@@ -586,4 +566,4 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
 
 if __name__ == "__main__":
     today = datetime.now().strftime("%Y%m%d")
-    auto_download_daily(today='20250604')
+    auto_download_daily(today='20250605')

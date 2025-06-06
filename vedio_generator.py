@@ -8,7 +8,7 @@ import math
 from PIL import Image
 from pathlib import Path
 from moviepy.video.fx import Loop
-from crawl_news import generate_audio_macos
+from crawl_news import generate_audio
 from crawl_news import generate_audio_linux, NEWS_JSON_FILE_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, \
     AUDIO_FILE_NAME, CHINADAILY, BBC, NewsArticle
 from ollama_client import OllamaClient
@@ -397,7 +397,7 @@ def generate_video_intro(output_path='videos/introduction.mp4', today=datetime.n
     # 加载背景音乐
     date_obj = datetime.strptime(today, "%Y%m%d")
     date_text = get_full_date(date_obj)
-    generate_audio_macos(date_text, INTRODUCTION_AUDIO)
+    generate_audio(date_text, INTRODUCTION_AUDIO)
     audio_clip = AudioFileClip(INTRODUCTION_AUDIO)
     duration = audio_clip.duration
 
