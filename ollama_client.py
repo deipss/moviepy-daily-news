@@ -120,18 +120,19 @@ class OllamaClient:
         prompt = f"请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到10个字左右）：\n{text}"
         response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
         summary = response.get("response", "")
-        summary = self._extract_think(summary)
+        summary = self._extract_think(summary,is_replace_line=False)
         summary = summary.replace("**", "")
         return summary
 
-    def _extract_think(self, summary):
+    def _extract_think(self, summary,is_replace_line=True):
         # 直接找到 </think> 的位置进行截断，并清理前后空格和换行符
         think_end = summary.find('</think>')
         if think_end != -1:
             summary = summary[think_end + len('</think>'):].strip()
         else:
             summary = summary.strip()
-        summary = summary.replace("\n", "")
+        if is_replace_line:
+            summary = summary.replace("\n", "")
         return summary
 
     def translate_to_chinese(self, text: str, model: str = "deepseek-r1:8b") -> str:
