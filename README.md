@@ -19,7 +19,8 @@
 - [ ] 英国卫报（The Guardian）https://www.theguardian.com/us
 - [ ] 泰晤士报（The Times） https://www.thetimes.com/
 - [ ] 彭博社报 （要钱）https://www.bloomberg.com/
-  英国卫报、泰晤士报、彭博社报和BBC的内容差不多，不再重复爬取。
+
+英国卫报、泰晤士报、彭博社报和BBC的内容差不多，不再重复爬取。
 
 # todo 
 
@@ -28,3 +29,7 @@
 - [ ] ollama进行摘要提取后，增加一个小的评论
 - [x] 信息的过滤，对于政治类的信息，中英文的都要去除
 
+
+# 效果
+
+![vedio.png](assets/vedio.png)
