@@ -573,7 +573,7 @@ if __name__ == "__main__":
     # 示例：处理参数
     for arg in args:
         logger.info(f"参数: {arg}")
-    if  not args and args[0]:
+    if  len(args)>0  and args[0]:
         logger.info("未指定日期，使用当前日期")
         auto_download_daily(today=args[0])
     else:
