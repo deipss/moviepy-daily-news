@@ -1,6 +1,5 @@
 import json
 from ollama_client import OllamaClient
-from volcano_client import batch_translate
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
@@ -490,13 +489,13 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
                 else:
                     article.content_en = article.content_en[:max_length]
             translated_content = \
-                batch_translate(txt_list=[article.content_en], source_language='en', target_language='zh')[0]
+                ollama_client.translate_to_chinese(text=article.content_en)
             article.content_cn = translated_content
 
         if article.title_en:
-            article.title = batch_translate(txt_list=[article.title_en], source_language='en', target_language='zh')[0]
+            article.title = ollama_client.translate_to_chinese(text=article.title_en)
         if article.title and not article.title_en:
-            article.title_en = batch_translate(txt_list=[article.title], source_language='zh', target_language='en')[0]
+            article.title_en = ollama_client.translate_to_english(text=article.title)
 
         # 提取中文摘要
         summary = ollama_client.generate_summary(article.content_cn, max_tokens=200)
