@@ -4,7 +4,7 @@
 主要用的技术：
 
 - 爬虫：BeautifulSoup
-- 机器翻译：字节旗下的[火山翻译](https://www.volcengine.com/docs/4640/65067)（每月有免费额度，基本够用） 
+- ~~机器翻译：字节旗下的[火山翻译](https://www.volcengine.com/docs/4640/65067)（每月有免费额度，不够用，已移除，使用deepseek翻译）~~ 
 - 摘要提取：ollama 部署了  [deepseek-r1:8b](https://ollama.com/library/deepseek-r1 "点击打开ollama")
 - 文字转语音:刚开始打算使用[字节的megaTTS](https://github.com/bytedance/MegaTTS3)，8G的显示不够，使用微软的edge-tts，效果还可以。
 - 视频生成：moviepy

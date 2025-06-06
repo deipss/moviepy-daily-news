@@ -121,6 +121,7 @@ class OllamaClient:
         response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
         summary = response.get("response", "")
         summary = self._extract_think(summary)
+        summary = summary.replace("**", "")
         return summary
 
     def _extract_think(self, summary):
