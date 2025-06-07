@@ -108,7 +108,7 @@ class OllamaClient:
 
         return summary
 
-    def generate_top_topic(self, text: str, model: str = "deepseek-r1:8b", max_tokens: int = 100) -> str:
+    def generate_top_topic(self, text: str, model: str = "deepseek-r1:8b", max_tokens: int = 50) -> str:
         """
         生成中文文本的摘要。
 
@@ -122,6 +122,14 @@ class OllamaClient:
         summary = response.get("response", "")
         summary = self._extract_think(summary,is_replace_line=False)
         summary = summary.replace("**", "")
+        if len(summary) > max_tokens:
+            logger.info(f"当前摘要={summary}")
+            logger.info(f"当前摘要={len(summary)},摘要超过{max_tokens}个字，再次生成摘要")
+            prompt = f"请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到10个字左右）：\n{summary}"
+            response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
+            summary = response.get("response", "")
+            summary = self._extract_think(summary, is_replace_line=False)
+            summary = summary.replace("**", "")
         return summary
 
     def _extract_think(self, summary,is_replace_line=True):

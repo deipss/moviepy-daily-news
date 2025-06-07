@@ -28,6 +28,7 @@ W_H_RADIO = "{:.2f}".format(W_H_RADIO)
 FPS = 40
 MAIN_BG_COLOR = "#FF9900"
 VIDEO_FILE_NAME = "video.mp4"
+EVENING = False
 logger.info(
     f"GLOBAL_WIDTH:{GLOBAL_WIDTH},  GLOBAL_HEIGHT:{GLOBAL_HEIGHT}, W_H_RADIO:{W_H_RADIO},  FPS:{FPS},  BACKGROUND_IMAGE_PATH:{BACKGROUND_IMAGE_PATH},GAP:{GAP},INNER_WIDTH:{INNER_WIDTH},INNER_HEIGHT:{INNER_HEIGHT}")
 
@@ -157,12 +158,9 @@ def calculate_font_size_and_line_length(text, box_width, box_height, font_ratio=
     return 40, len(text)
 
 
-def truncate_after_400_find_period(text: str) -> str:
-    if len(text) <= 400:
+def truncate_after_find_period(text: str,end_pos:int = 400) -> str:
+    if len(text) <= end_pos:
         return text
-
-    end_pos = 400  # 第300个字符的位置（索引从0开始，取前300个字符）
-
     # 从end_pos位置开始向后查找第一个句号
     last_period = text.find('。', end_pos)
 
@@ -175,7 +173,7 @@ def truncate_after_400_find_period(text: str) -> str:
 
 
 def generate_quad_layout_video(audio_path, image_path_top, txt_cn, title, summary, output_path, is_preview=True):
-    txt_cn = truncate_after_400_find_period(txt_cn)
+    txt_cn = truncate_after_find_period(txt_cn)
     # 加载背景和音频
     bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(255, 255, 255))  # 白色背景
     audio_clip = AudioFileClip(audio_path)
@@ -308,7 +306,7 @@ def generate_quad_layout_video_v2(audio_path, image_list, title, summary, output
     bottom_left_width = bg_width - bottom_right_width
 
     # 右下图片处理 地球仪
-    bottom_right_img = VideoFileClip('videos/earth.mp4').with_effects([Loop(duration=duration)])
+    bottom_right_img = VideoFileClip('videos/lady_announcer.mp4').with_effects([Loop(duration=duration)])
     if bottom_right_img.w > bottom_right_width or bottom_right_img.h > bottom_height:
         scale = min(bottom_right_width / bottom_right_img.w, bottom_height / bottom_right_img.h)
         bottom_right_img = bottom_right_img.resized(scale)
@@ -379,10 +377,10 @@ def get_full_date(today=datetime.now()):
     weekday_map = ["一", "二", "三", "四", "五", "六", "日"]
     weekday = f"星期{weekday_map[today.weekday()]}"
 
-    return "今天是{}, \n农历{}, \n{},欢迎收看【今日快报】".format(solar_date, lunar_date, weekday)
+    return "今天是{}, \n农历{}, \n{},欢迎收看【今日快电】".format(solar_date, lunar_date, weekday)
 
 
-def generate_video_intro(output_path='videos/introduction.mp4', today=datetime.now().strftime("%Y%m%d")):
+def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),is_preview=True):
     """生成带日期文字和背景音乐的片头视频
 
     Args:
@@ -425,17 +423,18 @@ def generate_video_intro(output_path='videos/introduction.mp4', today=datetime.n
     topic_txt_clip = TextClip(
         text=topics,
         font_size=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.6),
-        color='black',
+        color='blue',
         font='./font/simhei.ttf',
-        stroke_color='black',
-        stroke_width=2
+        stroke_color='blue',
+        stroke_width=1
     ).with_duration(duration).with_position(('center', 0.05), relative=True)
 
     # 合成最终视频
     final_clip = CompositeVideoClip([bg_clip, txt_clip, topic_txt_clip], size=bg_clip.size)
-    final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
-    # final_clip.preview()
-
+    if is_preview:
+        final_clip.preview()
+    else:
+        final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
 
 def combine_videos_with_transitions(video_paths, output_path):
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
@@ -462,23 +461,6 @@ def combine_videos_with_transitions(video_paths, output_path):
     final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
     # final_clip.preview()
 
-
-def temp_video_text_align():
-    list = [
-        'news/20250604/chinadaily/0002/683fd0b16b8efd9fa6284ec3_m.jpg',
-        'news/20250604/chinadaily/0002/683fd0b16b8efd9fa6284ec5_m.png',
-        'news/20250604/chinadaily/0002/683fd0b26b8efd9fa6284ec7_m.jpg',
-        'news/20250604/chinadaily/0002/683fd0b26b8efd9fa6284ec9_m.jpg',
-        'news/20250604/chinadaily/0002/683fd0b26b8efd9fa6284ecb_m.jpg']
-
-    generate_quad_layout_video_v2(
-        output_path="news/20250604/bbc/0000/video.mp4",
-        audio_path="news/20250604/bbc/0000/summary_audio.aiff",
-        image_list=list,
-        summary="""韩国新总统李在镕以近50%的选票胜出，但其蜜月期仅一天即上任，需应对弹劾前总统尹锡烈留下的政治和安全漏洞。首轮挑战是处理唐纳德·特朗普可能破坏的经济、安全和与朝鲜关系。一季度韩国经济收缩，已因特朗普征收25%关税陷入困境。美国驻首尔军事存在可能转向遏制中国，增加韩国的外交和军事压力。李明博希望改善与中国的关系，但面临美国对朝鲜半岛战略布局的不确定性，同时需解决国内民主恢复问题。""",
-        title="""[英国广播公司]韩国新总统需要避免特朗普式的危机""",
-        index="0000"
-    )
 
 
 def find_highest_resolution_image(directory: str) -> tuple[str, int, int] | None:
@@ -529,10 +511,10 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     intro_path = build_today_intro_path(today)
     if not os.path.exists(intro_path):
         logger.info(f"{intro_path}不存在，生成")
-        generate_video_intro(intro_path, today)
+        generate_video_introduction(intro_path, today)
     video_paths.append(intro_path)
-    bbc_paths = generate_all_news_video(source=BBC, today=today)
     cn_paths = generate_all_news_video(source=CHINADAILY, today=today)
+    bbc_paths = generate_all_news_video(source=BBC, today=today)
     [video_paths.append(i) for i in bbc_paths]
     [video_paths.append(i) for i in cn_paths]
     combine_videos_with_transitions(video_paths, build_today_video_path(today))
@@ -572,15 +554,6 @@ def generate_all_news_video(source: str, today: str = datetime.now().strftime("%
     return video_output_paths
 
 
-def temp_test():
-    generate_all_news_video(source=BBC, today='20250604')
-    generate_all_news_video(source=CHINADAILY, today='20250604')
-    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
-    generate_video_intro()
-    combine_videos_with_transitions(
-        ['cn_news/20250512/intro.mp4', 'cn_news/20250512/0000/video.mp4', 'cn_news/20250512/0001/video.mp4'], 'a.mp4')
-
-
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
     client = OllamaClient()
     folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, BBC)
@@ -590,11 +563,41 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"))
         news_data = json.load(json_file)
     txt = ";".join([news_item['title'] for news_item in news_data])
     data = client.generate_top_topic(txt)
+    logger.info(f'topic is \n{data}')
     return data
 
 
+def test_generate():
+    generate_all_news_video(source=BBC, today='20250604')
+    generate_all_news_video(source=CHINADAILY, today='20250604')
+    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
+    generate_video_introduction()
+    combine_videos_with_transitions(
+        ['cn_news/20250512/intro.mp4', 'cn_news/20250512/0000/video.mp4', 'cn_news/20250512/0001/video.mp4'], 'a.mp4')
+
+
+
+def test_video_text_align():
+    list = [
+        'news/20250604/chinadaily/0000/683fd3d86b8efd9fa6284ef8_m.png',
+        'news/20250604/chinadaily/0000/683fd3d96b8efd9fa6284efa_m.jpg',
+        'news/20250604/chinadaily/0000/683fd3d96b8efd9fa6284efc_m.jpg',
+        'news/20250604/chinadaily/0000/683fd3da6b8efd9fa6284efe_m.jpg'
+        ]
+
+    generate_quad_layout_video_v2(
+        output_path="news/20250604/chinadaily/0000/video.mp4",
+        audio_path="news/20250604/chinadaily/0000/summary_audio.aiff",
+        image_list=list,
+        summary="""韩国新总统李在镕以近50%的选票胜出，但其蜜月期仅一天即上任，需应对弹劾前总统尹锡烈留下的政治和安全漏洞。首轮挑战是处理唐纳德·特朗普可能破坏的经济、安全和与朝鲜关系。一季度韩国经济收缩，已因特朗普征收25%关税陷入困境。美国驻首尔军事存在可能转向遏制中国，增加韩国的外交和军事压力。李明博希望改善与中国的关系，但面临美国对朝鲜半岛战略布局的不确定性，同时需解决国内民主恢复问题。""",
+        title="""[英国广播公司]韩国新总统需要避免特朗普式的危机""",
+        index="0000",is_preview=False
+    )
+
 # 示例使用
 if __name__ == "__main__":
+
+
     if not os.path.exists('temp'):
         os.mkdir('temp')
     if not os.path.exists('videos'):
@@ -607,7 +610,7 @@ if __name__ == "__main__":
     for arg in args:
         logger.info(f"参数: {arg}")
     if len(args)>0 and args[0]:
-        logger.info("未指定日期，使用当前日期")
+        logger.info("指定日期，使用当前日期")
         combine_videos(today=args[0])
     else:
         today = datetime.now().strftime("%Y%m%d")
