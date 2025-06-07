@@ -84,6 +84,7 @@ class NewsArticle:
         self.author = author
         self.tags = tags or []
         self.summary = summary
+        self.show = True
 
     def to_dict(self):
         return self.__dict__
@@ -111,7 +112,7 @@ class NewsScraper:
 
     def is_sensitive_word_cn(self, word) -> bool:
         cnt = 0
-        sensitive_words = ["平", "%%", "习", "&&&&&#", "近", "县"]  # 去除了重复项
+        sensitive_words = ["平", "%%", "习", "&&&&&#", "近", "县","杀"]  # 去除了重复项
         for sensitive_word in sensitive_words:
             if sensitive_word in word:
                 cnt += 1

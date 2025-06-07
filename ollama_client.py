@@ -109,15 +109,7 @@ class OllamaClient:
         return summary
 
     def generate_top_topic(self, text: str, model: str = "deepseek-r1:8b", max_tokens: int = 50) -> str:
-        """
-        生成中文文本的摘要。
-
-        :param text: 输入的中文文本
-        :param model: 使用的模型名称，默认为"deepseek-r1:8b"
-        :param max_tokens: 摘要的最大token数，默认为50
-        :return: 生成的摘要文本
-        """
-        prompt = f"请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到10个字左右）：\n{text}"
+        prompt = f"请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到10个字左右，同时请排除一些未成年内容：\n{text}"
         response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
         summary = response.get("response", "")
         summary = self._extract_think(summary,is_replace_line=False)
@@ -125,7 +117,7 @@ class OllamaClient:
         if len(summary) > max_tokens:
             logger.info(f"当前摘要={summary}")
             logger.info(f"当前摘要={len(summary)},摘要超过{max_tokens}个字，再次生成摘要")
-            prompt = f"请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到10个字左右）：\n{summary}"
+            prompt = f"请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到10个字左右，同时请排除一些未成年内容：\n{summary}"
             response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
             summary = response.get("response", "")
             summary = self._extract_think(summary, is_replace_line=False)

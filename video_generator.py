@@ -6,7 +6,6 @@ from zhdate import ZhDate
 import os
 import math
 from PIL import Image
-from pathlib import Path
 from moviepy.video.fx import Loop
 from crawl_news import generate_audio
 from crawl_news import NEWS_JSON_FILE_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, \
@@ -17,7 +16,6 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 BACKGROUND_IMAGE_PATH = "videos/generated_background.png"
-INTRODUCTION_AUDIO = "videos/introduction.mp3"
 GLOBAL_WIDTH = 1920
 GLOBAL_HEIGHT = 1080
 GAP = int(GLOBAL_WIDTH * 0.02)
@@ -36,6 +34,8 @@ logger.info(
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp4")
+def build_today_introduction_audio_path(today=datetime.now().strftime("%Y%m%d")):
+    return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp3")
 
 
 def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
@@ -150,7 +150,7 @@ def calculate_segment_times(duration, num_segments):
     return segment_times
 
 
-def generate_three_layout_video(audio_path, image_list, title, summary, output_path, index, is_preview=True):
+def generate_three_layout_video(audio_path, image_list, title, summary, output_path, index, is_preview=False):
     title = "" + index + " " + title
     # 加载背景和音频
     bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(255, 255, 255))  # 白色背景
@@ -243,7 +243,7 @@ def get_full_date(today=datetime.now()):
     return "今天是{}, \n农历{}, \n{},欢迎收看【今日快电】".format(solar_date, lunar_date, weekday)
 
 
-def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),is_preview=True):
+def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),is_preview=False):
     """生成带日期文字和背景音乐的片头视频
 
     Args:
@@ -260,8 +260,9 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     # 加载背景音乐
     date_obj = datetime.strptime(today, "%Y%m%d")
     date_text = get_full_date(date_obj)
-    generate_audio(date_text, INTRODUCTION_AUDIO)
-    audio_clip = AudioFileClip(INTRODUCTION_AUDIO)
+    audio_path = build_today_introduction_audio_path(today)
+    generate_audio(date_text, audio_path)
+    audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
 
     # 设置背景视频时长
@@ -413,7 +414,8 @@ def test_video_text_align():
         image_list=list,
         summary="""韩国新总统李在镕以近50%的选票胜出，但其蜜月期仅一天即上任，需应对弹劾前总统尹锡烈留下的政治和安全漏洞。首轮挑战是处理唐纳德·特朗普可能破坏的经济、安全和与朝鲜关系。一季度韩国经济收缩，已因特朗普征收25%关税陷入困境。美国驻首尔军事存在可能转向遏制中国，增加韩国的外交和军事压力。李明博希望改善与中国的关系，但面临美国对朝鲜半岛战略布局的不确定性，同时需解决国内民主恢复问题。""",
         title="""[英国广播公司]韩国新总统需要避免特朗普式的危机""",
-        index="0000",is_preview=False
+        index="0000",
+        is_preview=False
     )
 
 # 示例使用
