@@ -30,31 +30,19 @@ MAIN_BG_COLOR = "#FF9900"
 VIDEO_FILE_NAME = "video.mp4"
 EVENING = False
 logger.info(
-    f"GLOBAL_WIDTH:{GLOBAL_WIDTH},  GLOBAL_HEIGHT:{GLOBAL_HEIGHT}, W_H_RADIO:{W_H_RADIO},  FPS:{FPS},  BACKGROUND_IMAGE_PATH:{BACKGROUND_IMAGE_PATH},GAP:{GAP},INNER_WIDTH:{INNER_WIDTH},INNER_HEIGHT:{INNER_HEIGHT}")
+    f"GLOBAL_WIDTH:{GLOBAL_WIDTH}\nGLOBAL_HEIGHT:{GLOBAL_HEIGHT}\n W_H_RADIO:{W_H_RADIO}\n  FPS:{FPS}\n  BACKGROUND_IMAGE_PATH:{BACKGROUND_IMAGE_PATH}\nGAP:{GAP}\nINNER_WIDTH:{INNER_WIDTH}\nINNER_HEIGHT:{INNER_HEIGHT}")
 
 
-def build_today_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today)
+
+def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
+    return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp4")
 
 
-def build_today_news_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, NEWS_JSON_FILE_NAME)
+def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
+    return os.path.join(CN_NEWS_FOLDER_NAME, today, VIDEO_FILE_NAME)
 
-
-def build_today_intro_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, "intro.mp4")
-
-
-def build_today_video_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, "video.mp4")
-
-
-def build_today_bg_music_path(index: str, today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, index, "bg_music.mp4")
-
-
-def build_today_index_path(index: str, today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, index)
+def build_today_bg_music_path():
+    return os.path.join(CN_NEWS_FOLDER_NAME,"bg_music.mp4")
 
 
 def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR):
@@ -74,35 +62,6 @@ def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MA
 
     image.save(BACKGROUND_IMAGE_PATH)
     return image
-
-
-def create_region_bg(width, height, color='#FFFFFF', duration=1):
-    img = Image.new("RGB", (width, height), color)
-    draw = ImageDraw.Draw(img)
-    draw.rounded_rectangle(
-        [(0, 0),
-         (width, height)],
-        fill=color
-    )
-    temp_path = f"temp/region_bg_{width}x{height}.png"
-    img.save(temp_path)
-    return ImageClip(temp_path).with_duration(duration)
-
-
-def create_region_bg(width, height, color='#FFFFFF', duration=1, radius=20):
-    img = Image.new("RGB", (width, height), color)
-    draw = ImageDraw.Draw(img)
-    draw.rounded_rectangle(
-        [(0, 0),
-         (width, height)],
-        radius=radius,
-        fill=color
-    )
-    temp_path = f"temp/region_bg_{width}x{height}.png"
-    img.save(temp_path)
-    return ImageClip(temp_path).with_duration(duration)
-
-
 def add_newline_every_n_chars(text, n):
     """
     每隔固定的字数在文本中添加换行符
@@ -171,102 +130,6 @@ def truncate_after_find_period(text: str,end_pos:int = 400) -> str:
         # 300字符后无句号，返回全文（或截断并添加省略号）
         return text  # 或返回 text[:end_pos] + "..."（按需选择）
 
-
-def generate_quad_layout_video(audio_path, image_path_top, txt_cn, title, summary, output_path, is_preview=True):
-    txt_cn = truncate_after_find_period(txt_cn)
-    # 加载背景和音频
-    bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(255, 255, 255))  # 白色背景
-    audio_clip = AudioFileClip(audio_path)
-    duration = audio_clip.duration
-    bg_clip = bg_clip.with_duration(duration).with_audio(audio_clip)
-    bg_width, bg_height = bg_clip.size
-
-    # 计算各区域尺寸
-    HEIGHT_RATIO = 0.7
-    top_height = int(bg_height * HEIGHT_RATIO)
-    bottom_height = bg_height - top_height
-    WIDTH_RATIO = 0.4
-    left_width = int(bg_width * WIDTH_RATIO)
-    right_width = bg_width - left_width
-    bottom_left_width = int(bg_width * HEIGHT_RATIO)
-    bottom_right_width = bg_width - bottom_left_width
-
-    # 左上图片处理
-    top_left_img = ImageClip(image_path_top)
-    if top_left_img.w > left_width or top_left_img.h > top_height:
-        scale = min(left_width / top_left_img.w, top_height / top_left_img.h)
-        top_left_img = top_left_img.resized(scale)
-    offset_w, offest_h = (left_width - top_left_img.w) // 2, (top_height - top_left_img.h) // 2
-    top_left_img = top_left_img.with_position((offset_w, offest_h)).with_duration(duration)
-
-    # 右上文字处理
-    font_size, chars_per_line = calculate_font_size_and_line_length(txt_cn, right_width * 95 / 100,
-                                                                    top_height * 95 / 100)
-    txt_cn = '\n'.join([txt_cn[i:i + chars_per_line] for i in range(0, len(txt_cn), chars_per_line)])
-    top_right_txt = TextClip(
-        interline=font_size // 2,
-        text=txt_cn,
-        font_size=font_size,
-        color='black',
-        font='./font/simhei.ttf',
-        size=(right_width, top_height),
-        method='label'
-    ).with_duration(duration).with_position((left_width, 'top'))
-    # 左下文字处理
-    font_size, chars_per_line = calculate_font_size_and_line_length(summary, bottom_left_width * 95 / 100,
-                                                                    bottom_height * 95 / 100)
-    summary = '\n'.join([summary[i:i + chars_per_line] for i in range(0, len(summary), chars_per_line)])
-    bottom_left_txt = TextClip(
-        text=summary,
-        interline=font_size // 2,
-        font_size=font_size,
-        color='black',
-        font='./font/simhei.ttf',
-        size=(bottom_left_width, bottom_height),
-        method='caption'
-    ).with_duration(duration).with_position(('left', top_height))
-
-    bottom_right_img = ImageClip('images/male_announcer.png')
-    if bottom_right_img.w > bottom_right_width or bottom_right_img.h > bottom_height:
-        scale = min(bottom_right_width / bottom_right_img.w, bottom_height / bottom_right_img.h)
-        bottom_right_img = bottom_right_img.resized(scale)
-    bottom_right_img = bottom_right_img.with_position((bottom_left_width, top_height)).with_duration(duration)
-
-    title_font_size = 40
-    top_title = TextClip(
-        interline=title_font_size // 2,
-        text=title,
-        font_size=title_font_size,
-        color='black',
-        font='./font/simhei.ttf',
-        method='label'
-    ).with_duration(duration).with_position(('left', 'top'))
-
-    # 创建各区域背景框
-    top_left_bg = create_region_bg(left_width, top_height, '#FFFFFF', duration=duration)
-    top_right_bg = create_region_bg(right_width, top_height, '#FFFFFF', duration=duration)
-    bottom_left_bg = create_region_bg(bottom_left_width, bottom_height, '#EEEEEE', duration=duration)
-    bottom_right_bg = create_region_bg(bottom_right_width, bottom_height, '#EEEEEE', duration=duration)
-
-    # 合成最终视频
-    final_video = CompositeVideoClip([
-        bg_clip,
-        top_left_bg.with_position(('left', 'top')),
-        top_right_bg.with_position((left_width, 'top')),
-        bottom_left_bg.with_position(('left', top_height)),
-        bottom_right_bg.with_position((bottom_left_width, top_height)),
-        top_left_img,
-        top_right_txt,
-        bottom_left_txt,
-        bottom_right_img,
-        top_title
-    ], size=(bg_width, bg_height))
-    if is_preview:
-        final_video.preview()
-    else:
-        final_video.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
-
-
 def calculate_segment_times(duration, num_segments):
     """
     将总时长分成若干段，并计算每段的开始和结束时间。
@@ -287,7 +150,7 @@ def calculate_segment_times(duration, num_segments):
     return segment_times
 
 
-def generate_quad_layout_video_v2(audio_path, image_list, title, summary, output_path, index, is_preview=True):
+def generate_three_layout_video(audio_path, image_list, title, summary, output_path, index, is_preview=True):
     title = "" + index + " " + title
     # 加载背景和音频
     bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(255, 255, 255))  # 白色背景
@@ -435,6 +298,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
         final_clip.preview()
     else:
         final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
+    return topics,duration
 
 def combine_videos_with_transitions(video_paths, output_path):
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
@@ -455,69 +319,27 @@ def combine_videos_with_transitions(video_paths, output_path):
         # 将视频放置在背景上
         clips.append(video_with_bg)
 
-    # 合并视频，添加1秒的过渡效果
     final_clip = concatenate_videoclips(clips, method="compose")
     # 导出最终视频
     final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
     # final_clip.preview()
 
 
-
-def find_highest_resolution_image(directory: str) -> tuple[str, int, int] | None:
-    """
-    遍历指定目录（包括子目录）找出分辨率最高的图片
-
-    参数:
-    directory (str): 要搜索的目录路径
-
-    返回:
-    tuple: (图片路径, 宽度, 高度) 或 None(如果未找到图片)
-    """
-    if not os.path.isdir(directory):
-        raise NotADirectoryError(f"指定的路径 '{directory}' 不是有效目录")
-
-    # 支持的图片扩展名集合
-    IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.webp', '.gif'}
-
-    highest_resolution = 0
-    best_image = None
-
-    # 使用 os.walk 遍历目录树
-    for root, _, files in os.walk(directory):
-        for file in files:
-            # 检查文件扩展名是否为支持的图片格式
-            ext = Path(file).suffix.lower()
-            if ext in IMAGE_EXTENSIONS:
-                file_path = os.path.join(root, file)
-
-                try:
-                    # 使用 PIL 打开图片并获取尺寸
-                    with Image.open(file_path) as img:
-                        width, height = img.size
-                        resolution = width * height
-
-                        # 如果当前图片分辨率更高，则更新最佳图片
-                        if resolution > highest_resolution:
-                            highest_resolution = resolution
-                            best_image = (file_path, width, height)
-                except Exception as e:
-                    logger.info(f"无法处理图片 {file_path}: {e}")
-
-    return best_image
-
-
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     video_paths = []
-    intro_path = build_today_intro_path(today)
+    intro_path = build_today_introduction_path(today)
     if not os.path.exists(intro_path):
         logger.info(f"{intro_path}不存在，生成")
         generate_video_introduction(intro_path, today)
     video_paths.append(intro_path)
     cn_paths = generate_all_news_video(source=CHINADAILY, today=today)
     bbc_paths = generate_all_news_video(source=BBC, today=today)
-    [video_paths.append(i) for i in bbc_paths]
-    [video_paths.append(i) for i in cn_paths]
-    combine_videos_with_transitions(video_paths, build_today_video_path(today))
+    for i in range(max(len(bbc_paths), len(cn_paths))):
+        if i < len(bbc_paths):
+            video_paths.append(bbc_paths[i])
+        if i < len(cn_paths):
+            video_paths.append(cn_paths[i])
+    combine_videos_with_transitions(video_paths, build_today_final_video_path(today))
 
 
 def generate_all_news_video(source: str, today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
@@ -541,7 +363,7 @@ def generate_all_news_video(source: str, today: str = datetime.now().strftime("%
         img_list = []
         for image in article.images:
             img_list.append(os.path.join(folder_path, article.folder, image))
-        generate_quad_layout_video_v2(
+        generate_three_layout_video(
             output_path=video_output_path,
             audio_path=audio_output_path,
             image_list=img_list,
@@ -585,7 +407,7 @@ def test_video_text_align():
         'news/20250604/chinadaily/0000/683fd3da6b8efd9fa6284efe_m.jpg'
         ]
 
-    generate_quad_layout_video_v2(
+    generate_three_layout_video(
         output_path="news/20250604/chinadaily/0000/video.mp4",
         audio_path="news/20250604/chinadaily/0000/summary_audio.aiff",
         image_list=list,
