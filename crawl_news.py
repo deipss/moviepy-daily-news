@@ -557,19 +557,30 @@ def generate_audio(text: str, output_file: str = "audio.wav") -> None:
     sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
 
-
+import time
 def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
-    logger.info(f'start downloading {today}')
+    logger.info("开始爬取新闻")
+    start = time.time()
     cs = ChinaDailyScraper(source_url='https://cn.chinadaily.com.cn/', source=CHINADAILY, news_type='国内新闻')
     cs.download_images(today)
     bbc_scraper = BbcScraper(source_url='https://www.bbc.com/news/', source=BBC, news_type='国际新闻')
     bbc_scraper.download_images(today)
+    end = time.time()
+    logger.info(f"爬取新闻耗时: {end - start:.2f} 秒")
 
+    logger.info("开始AI生成摘要")
+    start = time.time()
     process_news_results(source=CHINADAILY, today=today)
     process_news_results(source=BBC, today=today)
+    end = time.time()
+    logger.info(f"AI生成摘要耗时: {end - start:.2f} 秒")
 
+    logger.info("开始生成音频")
+    start = time.time()
     generate_all_news_audio(source=CHINADAILY, today=today)
     generate_all_news_audio(source=BBC, today=today)
+    end = time.time()
+    logger.info(f"生成音频耗时: {end - start:.2f} 秒")
 
 
 if __name__ == "__main__":

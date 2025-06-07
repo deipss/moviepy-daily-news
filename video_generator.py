@@ -30,7 +30,7 @@ EVENING = False
 logger.info(
     f"GLOBAL_WIDTH:{GLOBAL_WIDTH}\nGLOBAL_HEIGHT:{GLOBAL_HEIGHT}\n W_H_RADIO:{W_H_RADIO}\n  FPS:{FPS}\n  BACKGROUND_IMAGE_PATH:{BACKGROUND_IMAGE_PATH}\nGAP:{GAP}\nINNER_WIDTH:{INNER_WIDTH}\nINNER_HEIGHT:{INNER_HEIGHT}")
 
-
+import time
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp4")
@@ -327,6 +327,7 @@ def combine_videos_with_transitions(video_paths, output_path):
 
 
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
+    start_time = time.time()
     video_paths = []
     intro_path = build_today_introduction_path(today)
     if not os.path.exists(intro_path):
@@ -341,6 +342,9 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
         if i < len(cn_paths):
             video_paths.append(cn_paths[i])
     combine_videos_with_transitions(video_paths, build_today_final_video_path(today))
+    end_time = time.time()  # 结束计时
+    elapsed_time = end_time - start_time
+    logger.info(f"视频整合生成总耗时: {elapsed_time:.2f} 秒")
 
 
 def generate_all_news_video(source: str, today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
@@ -420,7 +424,7 @@ def test_video_text_align():
 
 # 示例使用
 if __name__ == "__main__":
-
+    logger.info("开始执行")
 
     if not os.path.exists('temp'):
         os.mkdir('temp')
