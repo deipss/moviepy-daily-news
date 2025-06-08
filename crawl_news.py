@@ -550,7 +550,7 @@ def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%
     folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
     json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
     if not os.path.exists(json_file_path):
-        logger.warn(f"{json_file_path}不存在，跳过生成音频。")
+        logger.warning(f"{json_file_path}不存在，跳过生成音频。")
         return
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
@@ -605,7 +605,7 @@ def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):
 def get_today_morning_urls(today=datetime.now().strftime("%Y%m%d")):
     json_path = build_today_json_path(today=today)
     if not os.path.exists(json_path):
-        logger.warn(f"{json_path}不存在，请先执行爬取新闻任务")
+        logger.warning(f"{json_path}不存在，请先执行爬取新闻任务")
         return []
     json_data = json.load(open(json_path, 'r', encoding='utf-8'))
     return json_data['urls']

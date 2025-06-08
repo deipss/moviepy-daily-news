@@ -475,8 +475,8 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
     client = OllamaClient()
-    folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, BBC)
-    json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
+    cn_folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, CHINADAILY)
+    json_file_path = os.path.join(cn_folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
 
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
