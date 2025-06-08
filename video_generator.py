@@ -451,8 +451,10 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     json_file_path = build_today_json_path(today)
     if os.path.exists(json_file_path):
         json_data = json.load(open(json_file_path, 'r', encoding='utf-8'))
-        json_data['topic'] += topic.repalce("\n", "|")
-        json_data['urls'].append(urls)
+        topic = "|" + topic.repalce("\n", "|")
+        json_data['topic'] += topic
+        [json_data['urls'].append(i) for i in urls]
+
     else:
         json_data = {
             'topic': topic.repalce("\n", "|"),
