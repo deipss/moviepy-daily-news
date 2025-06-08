@@ -88,7 +88,7 @@ class NewsArticle:
         self.author = author
         self.tags = tags or []
         self.summary = summary
-        self.show = True
+        self.show = show
 
     def to_dict(self):
         return self.__dict__

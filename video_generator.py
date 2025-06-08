@@ -383,14 +383,14 @@ def generate_all_news_video(source: str, today: str = datetime.now().strftime("%
     for news_item in news_data:
         article = NewsArticle(**news_item)
         if not article.show:
-            logger.info(f"{article.folder}{article.title}新闻已隐藏，跳过生成")
+            logger.info(f"{article.source}{article.folder}{article.title}新闻已隐藏，跳过生成")
             continue
 
         # 新增逻辑：将摘要转换为音频并保存
         folder_path = os.path.dirname(json_file_path)  # 获取新闻图片所在的文件夹路径
         video_output_path = os.path.join(folder_path, article.folder, "%s" % VIDEO_FILE_NAME)
         if os.path.exists(video_output_path) and not REWRITE:
-            logger.info(f"{article.folder}视频已存在，跳过生成,path={video_output_path}")
+            logger.info(f"{article.source}{article.folder}视频已存在，跳过生成,path={video_output_path}")
             video_output_paths.append(video_output_path)
             continue
         logger.info(f"{article.folder}{article.title}新闻开始生成")
