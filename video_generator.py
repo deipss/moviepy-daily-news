@@ -8,7 +8,7 @@ import math
 from PIL import Image
 from moviepy.video.fx import Loop
 from crawl_news import generate_audio
-from crawl_news import FINAL_VIDEOS_FOLDER_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, \
+from crawl_news import FINAL_VIDEOS_FOLDER_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME,EVENING_TAG, \
     AUDIO_FILE_NAME, CHINADAILY, BBC, NewsArticle
 from ollama_client import OllamaClient
 from logging_config import logger
@@ -124,7 +124,7 @@ def calculate_font_size_and_line_length(text, box_width, box_height, font_ratio=
     return 40, len(text)
 
 
-def truncate_after_find_period(text: str, end_pos: int = 400) -> str:
+def truncate_after_find_period(text: str,end_pos:int = 400) -> str:
     if len(text) <= end_pos:
         return text
     # 从end_pos位置开始向后查找第一个句号
@@ -136,7 +136,6 @@ def truncate_after_find_period(text: str, end_pos: int = 400) -> str:
     else:
         # 300字符后无句号，返回全文（或截断并添加省略号）
         return text  # 或返回 text[:end_pos] + "..."（按需选择）
-
 
 def calculate_segment_times(duration, num_segments):
     """
@@ -251,8 +250,7 @@ def get_full_date(today=datetime.now()):
     return "今天是{}, \n农历{}, \n{},欢迎收看【今日快电】".format(solar_date, lunar_date, weekday)
 
 
-def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),
-                                is_preview=False):
+def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),is_preview=False):
     """生成带日期文字和背景音乐的片头视频
 
     Args:
@@ -357,7 +355,11 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
 
 
 def generate_all_news_video(source: str, today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
-    json_file_path, news_data = load_json_by_source(source, today)
+    folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
+    json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
+
+    with open(json_file_path, 'r', encoding='utf-8') as json_file:
+        news_data = json.load(json_file)
     video_output_paths = []
     for news_item in news_data:
         article = NewsArticle(**news_item)
@@ -365,6 +367,7 @@ def generate_all_news_video(source: str, today: str = datetime.now().strftime("%
             logger.info(f"{article.folder}{article.title}新闻已隐藏，跳过生成")
             continue
 
+        # 新增逻辑：将摘要转换为音频并保存
         folder_path = os.path.dirname(json_file_path)  # 获取新闻图片所在的文件夹路径
         video_output_path = os.path.join(folder_path, article.folder, "%s" % VIDEO_FILE_NAME)
         if os.path.exists(video_output_path) and not REWRITE:
@@ -453,8 +456,7 @@ def test_video_text_align():
         is_preview=False
     )
 
-
-# 示例使用
+import argparse
 if __name__ == "__main__":
     logger.info("开始执行")
 
@@ -462,21 +464,24 @@ if __name__ == "__main__":
         os.mkdir('temp')
     if not os.path.exists('videos'):
         os.mkdir('videos')
+    if not os.path.exists('final_videos'):
+        os.mkdir('final_videos')
 
-    args = sys.argv[1:]
-    logger.info(f"接收到 {len(args)} 个参数: {args}")
+    parser = argparse.ArgumentParser(description="新闻爬取和处理工具")
+    parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
+    parser.add_argument("--evening", type=bool, default=False, help="是否执行晚间任务")
+    parser.add_argument("--rewrite", type=bool, default=False, help="是否重写")
+    args = parser.parse_args()
+    logger.info(f"args={args}")
 
     # 示例：处理参数
-    for arg in args:
-        logger.info(f"参数: {arg}")
+    if args.evening:
+        logger.info("执行晚间任务")
+        BBC = BBC + EVENING_TAG
+        CHINADAILY = CHINADAILY + EVENING_TAG
 
-    if len(args) > 1:
+    if args.rewrite:
         REWRITE = True
         logger.info("指定强制重写")
 
-    if len(args) > 0 and args[0]:
-        logger.info("指定日期，使用当前日期")
-        combine_videos(today=args[0])
-    else:
-        today = datetime.now().strftime("%Y%m%d")
-        combine_videos(today=today)
+    combine_videos(today=args.today)

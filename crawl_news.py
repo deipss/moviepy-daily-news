@@ -24,6 +24,7 @@ NEWS_JSON_FILE_NAME = "news_results.json"
 PROCESSED_NEWS_JSON_FILE_NAME = "processed_news_results.json"
 CN_NEWS_FOLDER_NAME = "news"
 FINAL_VIDEOS_FOLDER_NAME = "final_videos"
+EVENING_TAG = "_E"
 
 CHINADAILY = 'chinadaily'
 BBC = 'bbc'
@@ -585,17 +586,19 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     end = time.time()
     logger.info(f"生成音频耗时: {end - start:.2f} 秒")
 
-
+import argparse
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    logger.info(f"接收到 {len(args)} 个参数: {args}")
+    parser = argparse.ArgumentParser(description="新闻爬取和处理工具")
+    parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
+    parser.add_argument("--evening", type=bool, default=False, help="是否执行晚间任务")
+    parser.add_argument("--rewrite", type=bool, default=False, help="是否重写")
+    args = parser.parse_args()
+    logger.info(f"新闻爬取和处理工具 args={args}")
+
 
     # 示例：处理参数
-    for arg in args:
-        logger.info(f"参数: {arg}")
-    if len(args) > 0 and args[0]:
-        logger.info("指定日期"+args[0])
-        auto_download_daily(today=args[0])
-    else:
-        today = datetime.now().strftime("%Y%m%d")
-        auto_download_daily(today=today)
+    if args.evening:
+        logger.info("执行晚间任务")
+        BBC= BBC + EVENING_TAG
+        CHINADAILY= CHINADAILY + EVENING_TAG
+    auto_download_daily(today=args.today)
