@@ -364,9 +364,9 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     bbc_paths = generate_all_news_video(source=BBC, today=today)
     for i in range(max(len(bbc_paths), len(cn_paths))):
         if i < len(bbc_paths):
-            video_paths.append(bbc_paths[i])
-        if i < len(cn_paths):
             video_paths.append(cn_paths[i])
+        if i < len(cn_paths):
+            video_paths.append(bbc_paths[i])
     combine_videos_with_transitions(video_paths, build_today_final_video_path(today), topics, today)
     end_time = time.time()  # 结束计时
     elapsed_time = end_time - start_time
