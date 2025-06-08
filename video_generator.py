@@ -444,6 +444,9 @@ def generate_all_news_video(source: str, today: str = datetime.now().strftime("%
 def load_json_by_source(source, today):
     folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
     json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
+    if not os.path.exists(json_file_path):
+        logger.info(f"{source}新闻json文件不存在,path={json_file_path}")
+        return json_file_path, None
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     return json_file_path, news_data
@@ -453,8 +456,10 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     _, cn = load_json_by_source(CHINADAILY, today)
     _, bbc = load_json_by_source(BBC, today)
     urls = []
-    [urls.append(i['url']) for i in cn]
-    [urls.append(i['url']) for i in bbc]
+    if cn:
+        [urls.append(i['url']) for i in cn]
+    if bbc:
+        [urls.append(i['url']) for i in bbc]
 
     json_file_path = build_today_json_path(today)
     if os.path.exists(json_file_path):
@@ -475,11 +480,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
     client = OllamaClient()
-    cn_folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, CHINADAILY)
-    json_file_path = os.path.join(cn_folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
-
-    with open(json_file_path, 'r', encoding='utf-8') as json_file:
-        news_data = json.load(json_file)
+    news_data = load_json_by_source(CHINADAILY, today)
     txt = ";".join([news_item['title'] for news_item in news_data])
     data = client.generate_top_topic(txt)
     logger.info(f'topic is \n{data}')
