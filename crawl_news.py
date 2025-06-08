@@ -136,7 +136,7 @@ class NewsScraper:
             response.raise_for_status()
             return response.text
         except requests.RequestException as e:
-            logger.error(f"[WARN] 请求失败: {url} 错误信息： {e}")
+            logger.error(f"fetch_page请求失败: {url} 错误信息： {e}")
             return None
 
 
@@ -225,7 +225,7 @@ class ChinaDailyScraper(NewsScraper):
             html = self.fetch_page(base_url)
             if not html:
                 logger.info("无法获取初始页面内容，程序退出。")
-                return
+                continue
 
             # 提取所有链接
             urls = self.extract_links(html, visited_urls, today)
@@ -400,8 +400,8 @@ class BbcScraper(NewsScraper):
             logger.info(f"正在{self.source}爬取 {base_url}")
             html = self.fetch_page(base_url)
             if not html:
-                logger.info("无法获取初始页面内容，程序退出。")
-                return
+                logger.info("extract_all_not_visit_urls无法获取初始页面内容，程序退出。")
+                continue
 
             # 提取所有链接
             urls = self.extract_links(html, visited_urls, today)
@@ -419,7 +419,7 @@ class BbcScraper(NewsScraper):
         morning_urls = get_today_morning_urls(today)
         results = []
         if urls is None:
-            logger.info("无法获取初始页面内容，程序退出。")
+            logger.info("crawling_news_meta无法获取初始页面内容，程序退出。")
             return results
         for id, url in enumerate(urls):
             if url in morning_urls:
