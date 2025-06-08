@@ -288,7 +288,9 @@ class ChinaDailyScraper(NewsScraper):
             article.index_inner = id
             article.index_show = id
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
-        json_results = [i.to_dict() for i in results]
+        if len(results) >15 :
+            logger.info("results sub array front 15")
+        json_results = [i.to_dict() for i in results[:15]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
         return results
@@ -458,7 +460,9 @@ class BbcScraper(NewsScraper):
             article.index_inner = id
             article.index_show = id
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
-        json_results = [i.to_dict() for i in results]
+        if len(results) >15 :
+            logger.info("results sub array front 15")
+        json_results = [i.to_dict() for i in results[:15]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
         return results
@@ -623,6 +627,7 @@ def get_today_morning_urls(today=datetime.now().strftime("%Y%m%d")):
         return []
     json_data = json.load(open(json_path, 'r', encoding='utf-8'))
     return json_data['urls']
+
 
 import argparse
 if __name__ == "__main__":
