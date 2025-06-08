@@ -302,7 +302,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     date_obj = datetime.strptime(today, "%Y%m%d")
     date_text = get_full_date(date_obj)
     audio_path = build_today_introduction_audio_path(today)
-    generate_audio(date_text, audio_path)
+    generate_audio(date_text, audio_path,rewrite=True)
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
 
@@ -393,7 +393,9 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     logger.info(f"生成当前的JSON文件...")
     save_today_news_json(topics, today)
     logger.info(f"根据子视频生成主视频并整合...")
-    combine_videos_with_transitions(video_paths, build_today_final_video_path(today), topics, today)
+    path = build_today_final_video_path(today)
+    logger.info(f"视频整合生成path={path}")
+    combine_videos_with_transitions(video_paths, path)
     end_time = time.time()  # 结束计时
     elapsed_time = end_time - start_time
     logger.info(f"视频整合生成总耗时: {elapsed_time:.2f} 秒")

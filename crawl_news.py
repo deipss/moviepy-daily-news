@@ -13,12 +13,12 @@ import requests
 from datetime import datetime
 from logging_config import logger
 
+from fake_useragent import UserAgent
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # 设置请求头，模拟浏览器访问
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
-}
+
+
 
 NEWS_JSON_FILE_NAME = "news_results.json"
 PROCESSED_NEWS_JSON_FILE_NAME = "processed_news_results.json"
@@ -132,6 +132,16 @@ class NewsScraper:
 
     def fetch_page(self, url):
         try:
+            ua = UserAgent()
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+                "Referer": "https://www.example.com/",  # 来源页，部分网站会校验
+                "Accept-Language": "zh-CN,zh;q=0.9",
+                "DNT": "1",  # 禁止追踪（Do Not Track）
+            }
+            headers["User-Agent"] = ua.random  # 每次请求随机更换
+
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
             return response.text
@@ -568,8 +578,8 @@ def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%
         generate_audio(article.summary, output_file=audio_output_path)
 
 
-def generate_audio(text: str, output_file: str = "audio.wav") -> None:
-    if  os.path.exists(output_file):
+def generate_audio(text: str, output_file: str = "audio.wav",rewrite=False) -> None:
+    if  os.path.exists(output_file) and not rewrite:
         logger.info(f"{output_file}已存在，跳过生成音频。")
         return
     logger.info(f"{output_file}开始生成音频: {text}")
