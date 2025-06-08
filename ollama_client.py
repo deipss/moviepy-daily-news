@@ -125,7 +125,7 @@ class OllamaClient:
         return summary
 
     def generate_top_topic(self, text: str, model: str = "deepseek-r1:8b", max_tokens: int = 50) -> str:
-        prompt = f"请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到10个字左右，同时请排除一些未成年内容：\n{text}"
+        prompt = f"请从以下新闻主题，提取出影响力最高的4个，这4个主题每个主题再精简到10个字左右，同时请排除一些未成年内容,只需返回按序号排列4个主题：\n{text}"
         response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
         summary = response.get("response", "")
         summary = self._extract_think(summary, is_replace_line=False)
@@ -133,7 +133,7 @@ class OllamaClient:
         if len(summary) > max_tokens:
             logger.info(f"当前主题={summary}")
             logger.info(f"当前主题={len(summary)},主题超过{max_tokens}个字，再次生成主题")
-            prompt = f"请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到10个字左右，同时请排除一些未成年内容：\n{summary}"
+            prompt = f"请从以下新闻主题，提取出影响力最高的4个，这4个主题每个主题再精简到10个字左右，同时请排除一些未成年内容，只需返回按序号排列4个主题：：\n{summary}"
             response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
             summary = response.get("response", "")
             summary = self._extract_think(summary, is_replace_line=False)

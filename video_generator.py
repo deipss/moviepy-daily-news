@@ -69,13 +69,13 @@ def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MA
     draw = ImageDraw.Draw(image)
 
     # 计算边框宽度(1%的宽度)
-    border_width = GAP
+    border_width = GAP*1.5
 
     # 绘制圆角矩形(内部灰白色)
     draw.rounded_rectangle(
         [(border_width, border_width), (width - border_width, height - border_width)],
-        radius=30,  # 圆角半径
-        fill="#F0F0F0"  # 灰白色填充
+        radius=40,  # 圆角半径
+        fill="#FCFEFE"  # 灰白色填充
     )
 
     image.save(BACKGROUND_IMAGE_PATH)
@@ -265,6 +265,23 @@ def get_full_date(today=datetime.now()):
     return "今天是{}, \n农历{}, \n{},欢迎收看【今日快电】".format(solar_date, lunar_date, weekday)
 
 
+def get_weekday_color():
+    # 星期与颜色的映射关系 (0 = Monday, 6 = Sunday)
+    weekday_color_map = {
+        0: 'Red',       # 周一 - 红色
+        1: 'Orange',    # 周二 - 橙色
+        2: 'Yellow',    # 周三 - 黄色
+        3: 'Green',     # 周四 - 绿色
+        4: 'Blue',      # 周五 - 蓝色
+        5: 'Purple',    # 周六 - 紫色
+        6: 'Pink'       # 周日 - 粉色
+    }
+
+    # 获取当前星期几 (0=Monday, 6=Sunday)
+    weekday = datetime.today().weekday()
+
+    # 返回对应颜色
+    return weekday_color_map[weekday]
 def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),
                                 is_preview=False):
     """生成带日期文字和背景音乐的片头视频
@@ -299,23 +316,24 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
 
     txt_clip = TextClip(
         text=date_text,
-        font_size=int(GLOBAL_WIDTH / max_length * 0.9),
-        color='white',
+        font_size=int(GLOBAL_WIDTH / max_length * 0.8),
+        color=MAIN_BG_COLOR,
         font='./font/simhei.ttf',
         stroke_color='black',
         stroke_width=2
-    ).with_duration(duration).with_position(('center', 0.65), relative=True)
+    ).with_duration(duration).with_position(('center', 0.7), relative=True)
 
     topics = generate_top_topic_by_ollama(today)
     logger.info(f"topics={topics}")
     topic_txt_clip = TextClip(
         text=topics,
         font_size=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.6),
-        color='blue',
+        color=get_weekday_color(),
+        interline=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.6) // 4,
         font='./font/simhei.ttf',
-        stroke_color='blue',
-        stroke_width=1
-    ).with_duration(duration).with_position(('center', 0.05), relative=True)
+        stroke_color=MAIN_BG_COLOR,
+        stroke_width=3
+    ).with_duration(duration).with_position(('center', 0.1), relative=True)
 
     # 合成最终视频
     final_clip = CompositeVideoClip([bg_clip, txt_clip, topic_txt_clip], size=bg_clip.size)
@@ -455,7 +473,7 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"))
     return data
 
 
-def test_generate():
+def test_generate_all():
     today = '20250604'
     generate_all_news_video(source=BBC, today=today)
     generate_all_news_video(source=CHINADAILY, today=today)
@@ -464,7 +482,9 @@ def test_generate():
     combine_videos_with_transitions(
         ['cn_news/20250512/intro.mp4', 'cn_news/20250512/0000/video.mp4', 'cn_news/20250512/0001/video.mp4'], 'a.mp4',
         '', today)
-
+def test_generate_video_introduction():
+    REWRITE=True
+    generate_video_introduction(today='20250606',is_preview=True)
 
 def test_video_text_align():
     list = [
