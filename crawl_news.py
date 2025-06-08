@@ -242,11 +242,15 @@ class ChinaDailyScraper(NewsScraper):
     def crawling_news_meta(self, today) -> List[NewsArticle]:
         folder_path = self.create_folder(today)
         urls = self.extract_all_not_visit_urls(today)
+        morning_urls=get_today_morning_urls(today)
         results = []
         if urls is None:
             logger.info("无法获取初始页面内容，程序退出。")
             return results
         for id, url in enumerate(urls):
+            if url in morning_urls:
+                logger.info(f"{self.source}跳过早上的新闻: {url}")
+                continue
             article = self.extract_news_content(url)
             if not article:
                 logger.info(f"无法获取新闻内容: {url}")
@@ -406,11 +410,14 @@ class BbcScraper(NewsScraper):
     def crawling_news_meta(self, today) -> List[NewsArticle]:
         folder_path = self.create_folder(today)
         urls = self.extract_all_not_visit_urls(today)
+        morning_urls = get_today_morning_urls(today)
         results = []
         if urls is None:
             logger.info("无法获取初始页面内容，程序退出。")
             return results
         for id, url in enumerate(urls):
+            if url in morning_urls:
+                logger.info(f"{self.source}跳过早上的新闻: {url}")
             article = self.extract_news_content(url)
             if not article:
                 logger.info(f"无法获取新闻内容: {url}")
@@ -585,6 +592,18 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     generate_all_news_audio(source=BBC, today=today)
     end = time.time()
     logger.info(f"生成音频耗时: {end - start:.2f} 秒")
+
+
+def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):
+    return os.path.join(CN_NEWS_FOLDER_NAME, today, "all.json")
+
+def get_today_morning_urls(today=datetime.now().strftime("%Y%m%d")):
+    json_path = build_today_json_path(today=today)
+    if not os.path.exists(json_path):
+        logger.info(f"{json_path}不存在，请先执行爬取新闻任务")
+        return []
+    json_data = json.load(open(json_path, 'r', encoding='utf-8'))
+    return json_data['urls']
 
 import argparse
 if __name__ == "__main__":
