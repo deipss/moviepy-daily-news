@@ -295,8 +295,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
     if os.path.exists(output_path) and not REWRITE:
         logger.info(f"片头{output_path}已存在,直接返回")
-        # todo
-        return "", 0
+        return generate_top_topic_by_ollama(today), 0
         # 加载背景图片
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
 
@@ -451,13 +450,13 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     json_file_path = build_today_json_path(today)
     if os.path.exists(json_file_path):
         json_data = json.load(open(json_file_path, 'r', encoding='utf-8'))
-        topic = "|" + topic.repalce("\n", "|")
+        topic = "|" + topic.replace("\n", "|")
         json_data['topic'] += topic
         [json_data['urls'].append(i) for i in urls]
 
     else:
         json_data = {
-            'topic': topic.repalce("\n", "|"),
+            'topic': topic.replace("\n", "|"),
             'urls': urls
         }
     json.dump(json_data, open(json_file_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=4)
