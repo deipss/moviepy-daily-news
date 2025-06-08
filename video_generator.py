@@ -387,7 +387,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
             video_paths.append(cn_paths[i])
         if i < len(bbc_paths):
             video_paths.append(bbc_paths[i])
-    logger.info(f"根据子视频生成主视频并整合到{intro_path}中,{intro_path}...")
+    logger.info(f"根据子视频生成主视频并整合...")
     combine_videos_with_transitions(video_paths, build_today_final_video_path(today), topics, today)
     end_time = time.time()  # 结束计时
     elapsed_time = end_time - start_time
