@@ -5,6 +5,7 @@ from logging_config import logger
 import time
 from functools import wraps
 
+
 def timeit(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -14,12 +15,16 @@ def timeit(func):
         elapsed_time = end_time - start_time
         logger.info(f"函数 {func.__name__} 耗时 {elapsed_time:.4f} 秒")
         return result
+
     return wrapper
+
+
 def timeit_methods(cls):
     for name, value in vars(cls).items():
         if callable(value) and not name.startswith("_"):  # 忽略私有方法
             setattr(cls, name, timeit(value))
     return cls
+
 
 @timeit_methods
 class OllamaClient:
@@ -34,6 +39,17 @@ class OllamaClient:
         :param base_url: Ollama服务的基础URL，默认为"http://47.120.48.245:11434"
         """
         self.base_url = base_url
+
+    def _extract_think(self, summary, is_replace_line=True):
+        # 直接找到 </think> 的位置进行截断，并清理前后空格和换行符
+        think_end = summary.find('</think>')
+        if think_end != -1:
+            summary = summary[think_end + len('</think>'):].strip()
+        else:
+            summary = summary.strip()
+        if is_replace_line:
+            summary = summary.replace("\n", "")
+        return summary
 
     def _generate_text(self, prompt: str, model: str = "deepseek-r1:8b", options: Dict[str, Any] = None) -> Dict[
         str, Any]:
@@ -101,7 +117,7 @@ class OllamaClient:
         if len(summary) > max_tokens:
             logger.info(f"当前摘要={summary}")
             logger.info(f"当前摘要={len(summary)},摘要超过{max_tokens}个字，再次生成摘要")
-            prompt = f"请为以下文本生成一个简洁的中文摘要（不超过{max_tokens // 9 * 10}个字）：\n{summary}"
+            prompt = f"请为以下文本生成一个简洁的中文摘要（不超过{max_tokens}个字）：\n{summary}"
             response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
             summary = response.get("response", "")
             summary = self._extract_think(summary)
@@ -112,27 +128,16 @@ class OllamaClient:
         prompt = f"请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到10个字左右，同时请排除一些未成年内容：\n{text}"
         response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
         summary = response.get("response", "")
-        summary = self._extract_think(summary,is_replace_line=False)
+        summary = self._extract_think(summary, is_replace_line=False)
         summary = summary.replace("**", "")
         if len(summary) > max_tokens:
-            logger.info(f"当前摘要={summary}")
-            logger.info(f"当前摘要={len(summary)},摘要超过{max_tokens}个字，再次生成摘要")
+            logger.info(f"当前主题={summary}")
+            logger.info(f"当前主题={len(summary)},主题超过{max_tokens}个字，再次生成主题")
             prompt = f"请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到10个字左右，同时请排除一些未成年内容：\n{summary}"
             response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
             summary = response.get("response", "")
             summary = self._extract_think(summary, is_replace_line=False)
             summary = summary.replace("**", "")
-        return summary
-
-    def _extract_think(self, summary,is_replace_line=True):
-        # 直接找到 </think> 的位置进行截断，并清理前后空格和换行符
-        think_end = summary.find('</think>')
-        if think_end != -1:
-            summary = summary[think_end + len('</think>'):].strip()
-        else:
-            summary = summary.strip()
-        if is_replace_line:
-            summary = summary.replace("\n", "")
         return summary
 
     def translate_to_chinese(self, text: str, model: str = "deepseek-r1:8b") -> str:
@@ -147,8 +152,6 @@ class OllamaClient:
         response = self._generate_text(prompt, model)
         return self._extract_think(response.get("response", ""))
 
-
-
     def translate_to_english(self, text: str, model: str = "deepseek-r1:8b") -> str:
         """
         将英文文本翻译成中文。
@@ -160,5 +163,3 @@ class OllamaClient:
         prompt = f"请将以下英文文本翻译成英文：\n{text}"
         response = self._generate_text(prompt, model)
         return self._extract_think(response.get("response", ""))
-
-

@@ -13,6 +13,7 @@ import requests
 from datetime import datetime
 from logging_config import logger
 
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # 设置请求头，模拟浏览器访问
 headers = {
@@ -22,6 +23,7 @@ headers = {
 NEWS_JSON_FILE_NAME = "news_results.json"
 PROCESSED_NEWS_JSON_FILE_NAME = "processed_news_results.json"
 CN_NEWS_FOLDER_NAME = "news"
+FINAL_VIDEOS_FOLDER_NAME = "final_videos"
 
 CHINADAILY = 'chinadaily'
 BBC = 'bbc'
@@ -499,7 +501,7 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
             article.title_en = ollama_client.translate_to_english(text=article.title)
 
         # 提取中文摘要
-        summary = ollama_client.generate_summary(article.content_cn, max_tokens=200)
+        summary = ollama_client.generate_summary(article.content_cn, max_tokens=100)
         article.summary = summary
         logger.info(f"{article.url} - {article.title} - 补充完成")
         processed_news.append(article)

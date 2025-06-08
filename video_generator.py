@@ -8,7 +8,7 @@ import math
 from PIL import Image
 from moviepy.video.fx import Loop
 from crawl_news import generate_audio
-from crawl_news import NEWS_JSON_FILE_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, \
+from crawl_news import FINAL_VIDEOS_FOLDER_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, \
     AUDIO_FILE_NAME, CHINADAILY, BBC, NewsArticle
 from ollama_client import OllamaClient
 from logging_config import logger
@@ -31,7 +31,7 @@ logger.info(
     f"GLOBAL_WIDTH:{GLOBAL_WIDTH}\nGLOBAL_HEIGHT:{GLOBAL_HEIGHT}\n W_H_RADIO:{W_H_RADIO}\n  FPS:{FPS}\n  BACKGROUND_IMAGE_PATH:{BACKGROUND_IMAGE_PATH}\nGAP:{GAP}\nINNER_WIDTH:{INNER_WIDTH}\nINNER_HEIGHT:{INNER_HEIGHT}")
 
 import time
-
+REWRITE = False
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp4")
 def build_today_introduction_audio_path(today=datetime.now().strftime("%Y%m%d")):
@@ -39,7 +39,7 @@ def build_today_introduction_audio_path(today=datetime.now().strftime("%Y%m%d"))
 
 
 def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, VIDEO_FILE_NAME)
+    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today+"_"+VIDEO_FILE_NAME)
 
 def build_today_bg_music_path():
     return os.path.join(CN_NEWS_FOLDER_NAME,"bg_music.mp4")
@@ -251,8 +251,8 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
         output_path: 输出视频路径
     """
     generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
-    if os.path.exists(output_path):
-        logger.info(f"{output_path}已存在")
+    if os.path.exists(output_path) and not REWRITE:
+        logger.info(f"片头{output_path}已存在,直接返回")
         return
         # 加载背景图片
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
@@ -330,9 +330,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     start_time = time.time()
     video_paths = []
     intro_path = build_today_introduction_path(today)
-    if not os.path.exists(intro_path):
-        logger.info(f"{intro_path}不存在，生成")
-        generate_video_introduction(intro_path, today)
+    generate_video_introduction(intro_path, today)
     video_paths.append(intro_path)
     cn_paths = generate_all_news_video(source=CHINADAILY, today=today)
     bbc_paths = generate_all_news_video(source=BBC, today=today)
@@ -356,11 +354,14 @@ def generate_all_news_video(source: str, today: str = datetime.now().strftime("%
     video_output_paths = []
     for news_item in news_data:
         article = NewsArticle(**news_item)
+        if not article.show:
+            logger.info(f"{article.folder}{article.title}新闻已隐藏，跳过生成")
+            continue
 
         # 新增逻辑：将摘要转换为音频并保存
         folder_path = os.path.dirname(json_file_path)  # 获取新闻图片所在的文件夹路径
         video_output_path = os.path.join(folder_path, article.folder, "%s" % VIDEO_FILE_NAME)
-        if os.path.exists(video_output_path):
+        if os.path.exists(video_output_path) and not REWRITE:
             logger.info(f"{article.folder}视频已存在，跳过生成,path={video_output_path}")
             video_output_paths.append(video_output_path)
             continue
@@ -437,6 +438,11 @@ if __name__ == "__main__":
     # 示例：处理参数
     for arg in args:
         logger.info(f"参数: {arg}")
+
+    if len(args) > 1:
+        REWRITE = True
+        logger.info("指定强制重写")
+
     if len(args)>0 and args[0]:
         logger.info("指定日期，使用当前日期")
         combine_videos(today=args[0])
