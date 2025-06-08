@@ -260,7 +260,8 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
     if os.path.exists(output_path) and not REWRITE:
         logger.info(f"片头{output_path}已存在,直接返回")
-        return
+        # todo
+        return "",0
         # 加载背景图片
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
 
@@ -339,6 +340,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     start_time = time.time()
     video_paths = []
     intro_path = build_today_introduction_path(today)
+    logger.info(f"正在生成视频{intro_path}...")
     topics, duration = generate_video_introduction(intro_path, today)
     video_paths.append(intro_path)
     cn_paths = generate_all_news_video(source=CHINADAILY, today=today)
