@@ -313,6 +313,10 @@ class BbcScraper(NewsScraper):
     def origin_url(self) -> list[str]:
         return [
             'https://www.bbc.com/news',
+            'https://www.bbc.com/business',
+            'https://www.bbc.com/innovation',
+            'https://www.bbc.com/arts',
+            'https://www.bbc.com/future-planet',
             'https://www.bbc.com'
         ]
 
@@ -393,7 +397,7 @@ class BbcScraper(NewsScraper):
         visited_urls = set()
         full_urls = []
         for base_url in self.origin_url():
-
+            logger.info(f"正在{self.source}爬取 {base_url}")
             html = self.fetch_page(base_url)
             if not html:
                 logger.info("无法获取初始页面内容，程序退出。")
@@ -404,7 +408,7 @@ class BbcScraper(NewsScraper):
             logger.info(f"{base_url} 共发现 {len(urls)} 个链接。")
 
         for url in visited_urls:
-            if url.startswith("/news/articles"):
+            if "/articles" in  url:
                 full_urls.append("https://www.bbc.com" + url)
         logger.info(f"去重,拼接后共发现 {len(full_urls)} 个链接。")
         return full_urls
