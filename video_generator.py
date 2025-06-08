@@ -69,7 +69,7 @@ def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MA
     draw = ImageDraw.Draw(image)
 
     # 计算边框宽度(1%的宽度)
-    border_width = GAP*1.5
+    border_width = GAP * 1.5
 
     # 绘制圆角矩形(内部灰白色)
     draw.rounded_rectangle(
@@ -268,13 +268,13 @@ def get_full_date(today=datetime.now()):
 def get_weekday_color():
     # 星期与颜色的映射关系 (0 = Monday, 6 = Sunday)
     weekday_color_map = {
-        0: 'Red',       # 周一 - 红色
-        1: 'Orange',    # 周二 - 橙色
-        2: 'Yellow',    # 周三 - 黄色
-        3: 'Green',     # 周四 - 绿色
-        4: 'Blue',      # 周五 - 蓝色
-        5: 'Purple',    # 周六 - 紫色
-        6: 'Pink'       # 周日 - 粉色
+        0: 'Red',  # 周一 - 红色
+        1: 'Orange',  # 周二 - 橙色
+        2: 'Yellow',  # 周三 - 黄色
+        3: 'Green',  # 周四 - 绿色
+        4: 'Blue',  # 周五 - 蓝色
+        5: 'Purple',  # 周六 - 紫色
+        6: 'Pink'  # 周日 - 粉色
     }
 
     # 获取当前星期几 (0=Monday, 6=Sunday)
@@ -282,6 +282,8 @@ def get_weekday_color():
 
     # 返回对应颜色
     return weekday_color_map[weekday]
+
+
 def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),
                                 is_preview=False):
     """生成带日期文字和背景音乐的片头视频
@@ -385,6 +387,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
             video_paths.append(cn_paths[i])
         if i < len(bbc_paths):
             video_paths.append(bbc_paths[i])
+    logger.info(f"根据子视频生成主视频并整合到{intro_path}中,{intro_path}...")
     combine_videos_with_transitions(video_paths, build_today_final_video_path(today), topics, today)
     end_time = time.time()  # 结束计时
     elapsed_time = end_time - start_time
@@ -482,9 +485,12 @@ def test_generate_all():
     combine_videos_with_transitions(
         ['cn_news/20250512/intro.mp4', 'cn_news/20250512/0000/video.mp4', 'cn_news/20250512/0001/video.mp4'], 'a.mp4',
         '', today)
+
+
 def test_generate_video_introduction():
-    REWRITE=True
-    generate_video_introduction(today='20250606',is_preview=True)
+    REWRITE = True
+    generate_video_introduction(today='20250606', is_preview=True)
+
 
 def test_video_text_align():
     list = [
