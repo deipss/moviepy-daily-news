@@ -510,7 +510,7 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
             article.title_en = ollama_client.translate_to_english(text=article.title)
 
         # 提取中文摘要
-        summary = ollama_client.generate_summary(article.content_cn, max_tokens=100)
+        summary = ollama_client.generate_summary(article.content_cn, max_tokens=150)
         article.summary = summary
         logger.info(f"{article.url} - {article.title} - 补充完成")
         processed_news.append(article)
