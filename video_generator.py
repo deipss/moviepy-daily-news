@@ -449,6 +449,7 @@ def load_json_by_source(source, today):
         return json_file_path, None
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
+    logger.info(f"{source}新闻json文{json_file_path}件加载成功,news_data={news_data}")
     return json_file_path, news_data
 
 
