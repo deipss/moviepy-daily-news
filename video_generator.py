@@ -467,12 +467,12 @@ if __name__ == "__main__":
     if not os.path.exists('final_videos'):
         os.mkdir('final_videos')
 
-    parser = argparse.ArgumentParser(description="新闻爬取和处理工具")
+    parser = argparse.ArgumentParser(description="新闻视频生成工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
     parser.add_argument("--evening", type=bool, default=False, help="是否执行晚间任务")
     parser.add_argument("--rewrite", type=bool, default=False, help="是否重写")
     args = parser.parse_args()
-    logger.info(f"args={args}")
+    logger.info(f"新闻视频生成工具 参数args={args}")
 
     # 示例：处理参数
     if args.evening:
