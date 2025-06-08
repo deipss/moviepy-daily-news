@@ -376,6 +376,8 @@ def generate_all_news_video(source: str, today: str = datetime.now().strftime("%
             logger.info(f"{article.folder}视频已存在，跳过生成,path={video_output_path}")
             video_output_paths.append(video_output_path)
             continue
+        logger.info(f"{article.folder}{article.title}新闻开始生成")
+
         audio_output_path = os.path.join(folder_path, article.folder, "%s" % AUDIO_FILE_NAME)
         img_list = []
         for image in article.images:
