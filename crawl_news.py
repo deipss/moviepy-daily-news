@@ -69,7 +69,8 @@ class NewsArticle:
                  publish_time: str = None,
                  author: str = None,
                  tags: List[str] = None,
-                 summary: str = None):
+                 summary: str = None,
+                 show: bool = None):
         self.title = title
         self.title_en = title_en
         self.images = images or []
