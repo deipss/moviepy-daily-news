@@ -272,6 +272,7 @@ class ChinaDailyScraper(NewsScraper):
                 continue
             article.folder = "{:04d}".format(id)
             results.append(article)
+        logger.info(f"{self.source} 共发现 {len(results)} 条新闻。")
         for id, article in enumerate(results):
             article.folder = "{:04d}".format(id)
             article.index_inner = id
@@ -437,6 +438,7 @@ class BbcScraper(NewsScraper):
                 continue
             article.folder = "{:04d}".format(id)
             results.append(article)
+        logger.info(f"{self.source} 共发现 {len(results)} 条新闻。")
         for id, article in enumerate(results):
             article.folder = "{:04d}".format(id)
             article.index_inner = id
