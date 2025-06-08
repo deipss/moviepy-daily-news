@@ -189,7 +189,6 @@ def generate_three_layout_video(audio_path, image_list, title, summary, output_p
     bottom_right_width = int(bg_width * 0.2)
     bottom_left_width = bg_width - bottom_right_width
 
-    # 右下图片处理 地球仪
     bottom_right_img = VideoFileClip('videos/lady_announcer.mp4').with_effects([Loop(duration=duration)])
     if bottom_right_img.w > bottom_right_width or bottom_right_img.h > bottom_height:
         scale = min(bottom_right_width / bottom_right_img.w, bottom_height / bottom_right_img.h)
@@ -317,15 +316,15 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
 
     txt_clip = TextClip(
         text=date_text,
-        font_size=int(GLOBAL_WIDTH / max_length * 0.8),
+        font_size=int(GLOBAL_WIDTH / max_length * 0.75),
         color=MAIN_BG_COLOR,
         font='./font/simhei.ttf',
         stroke_color='black',
         stroke_width=2
-    ).with_duration(duration).with_position(('center', 0.7), relative=True)
+    ).with_duration(duration).with_position((GAP * 1.75, GLOBAL_HEIGHT * 0.7))
 
     topics = generate_top_topic_by_ollama(today)
-    logger.info(f"topics={topics}")
+    logger.info(f"generate introduction topics=\n{topics}")
     topic_txt_clip = TextClip(
         text=topics,
         font_size=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.6),
@@ -334,10 +333,13 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
         font='./font/simhei.ttf',
         stroke_color=MAIN_BG_COLOR,
         stroke_width=3
-    ).with_duration(duration).with_position(('center', 0.1), relative=True)
+    ).with_duration(duration).with_position((GAP * 1.75, GLOBAL_HEIGHT * 0.1))
+
+    lady = (VideoFileClip('videos/lady_announcer.mp4').with_effects([Loop(duration=duration)])
+            .with_position((GLOBAL_WIDTH * 0.68, GLOBAL_HEIGHT * 0.47)).resized(0.7))
 
     # 合成最终视频
-    final_clip = CompositeVideoClip([bg_clip, txt_clip, topic_txt_clip], size=bg_clip.size)
+    final_clip = CompositeVideoClip([bg_clip, txt_clip, topic_txt_clip, lady], size=bg_clip.size)
     if is_preview:
         final_clip.preview()
     else:
@@ -345,7 +347,10 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     return topics, duration
 
 
-def combine_videos_with_transitions(video_paths, output_path, topics, today):
+def combine_videos_with_transitions(video_paths, output_path):
+    if os.path.exists(output_path) and not REWRITE:
+        logger.info(f"视频整合生成{output_path}已存在,直接返回")
+        return
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
 
     # 加载视频和音频
@@ -367,7 +372,6 @@ def combine_videos_with_transitions(video_paths, output_path, topics, today):
     final_clip = concatenate_videoclips(clips, method="compose")
     # 导出最终视频
     final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
-    save_today_news_json(topics, today)
     logger.info(f"视频整合生成完成,path={output_path}")
     # final_clip.preview()
 
@@ -386,6 +390,8 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
             video_paths.append(cn_paths[i])
         if i < len(bbc_paths):
             video_paths.append(bbc_paths[i])
+    logger.info(f"生成当前的JSON文件...")
+    save_today_news_json(topics, today)
     logger.info(f"根据子视频生成主视频并整合...")
     combine_videos_with_transitions(video_paths, build_today_final_video_path(today), topics, today)
     end_time = time.time()  # 结束计时
@@ -396,6 +402,9 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
 def generate_all_news_video(source: str, today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
     folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
     json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
+    if not os.path.exists(json_file_path):
+        logger.info(f"{source}新闻json文件不存在,path={json_file_path}")
+        return []
 
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
