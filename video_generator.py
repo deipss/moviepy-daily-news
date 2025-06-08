@@ -34,15 +34,22 @@ import time
 REWRITE = False
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp4")
+
+
+def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):
+    return os.path.join(CN_NEWS_FOLDER_NAME, today, "all.json")
+
+
 def build_today_introduction_audio_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp3")
 
 
 def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today+"_"+VIDEO_FILE_NAME)
+    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + VIDEO_FILE_NAME)
+
 
 def build_today_bg_music_path():
-    return os.path.join(CN_NEWS_FOLDER_NAME,"bg_music.mp4")
+    return os.path.join(CN_NEWS_FOLDER_NAME, "bg_music.mp4")
 
 
 def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR):
@@ -117,7 +124,7 @@ def calculate_font_size_and_line_length(text, box_width, box_height, font_ratio=
     return 40, len(text)
 
 
-def truncate_after_find_period(text: str,end_pos:int = 400) -> str:
+def truncate_after_find_period(text: str, end_pos: int = 400) -> str:
     if len(text) <= end_pos:
         return text
     # 从end_pos位置开始向后查找第一个句号
@@ -129,6 +136,7 @@ def truncate_after_find_period(text: str,end_pos:int = 400) -> str:
     else:
         # 300字符后无句号，返回全文（或截断并添加省略号）
         return text  # 或返回 text[:end_pos] + "..."（按需选择）
+
 
 def calculate_segment_times(duration, num_segments):
     """
@@ -243,7 +251,8 @@ def get_full_date(today=datetime.now()):
     return "今天是{}, \n农历{}, \n{},欢迎收看【今日快电】".format(solar_date, lunar_date, weekday)
 
 
-def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),is_preview=False):
+def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),
+                                is_preview=False):
     """生成带日期文字和背景音乐的片头视频
 
     Args:
@@ -299,9 +308,10 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
         final_clip.preview()
     else:
         final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
-    return topics,duration
+    return topics, duration
 
-def combine_videos_with_transitions(video_paths, output_path):
+
+def combine_videos_with_transitions(video_paths, output_path, topics, today):
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
 
     # 加载视频和音频
@@ -323,6 +333,7 @@ def combine_videos_with_transitions(video_paths, output_path):
     final_clip = concatenate_videoclips(clips, method="compose")
     # 导出最终视频
     final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
+    save_today_news_json(topics, today)
     # final_clip.preview()
 
 
@@ -330,7 +341,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     start_time = time.time()
     video_paths = []
     intro_path = build_today_introduction_path(today)
-    generate_video_introduction(intro_path, today)
+    topics, duration = generate_video_introduction(intro_path, today)
     video_paths.append(intro_path)
     cn_paths = generate_all_news_video(source=CHINADAILY, today=today)
     bbc_paths = generate_all_news_video(source=BBC, today=today)
@@ -339,18 +350,14 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
             video_paths.append(bbc_paths[i])
         if i < len(cn_paths):
             video_paths.append(cn_paths[i])
-    combine_videos_with_transitions(video_paths, build_today_final_video_path(today))
+    combine_videos_with_transitions(video_paths, build_today_final_video_path(today), topics, today)
     end_time = time.time()  # 结束计时
     elapsed_time = end_time - start_time
     logger.info(f"视频整合生成总耗时: {elapsed_time:.2f} 秒")
 
 
 def generate_all_news_video(source: str, today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
-    folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
-    json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
-
-    with open(json_file_path, 'r', encoding='utf-8') as json_file:
-        news_data = json.load(json_file)
+    json_file_path, news_data = load_json_by_source(source, today)
     video_output_paths = []
     for news_item in news_data:
         article = NewsArticle(**news_item)
@@ -358,7 +365,6 @@ def generate_all_news_video(source: str, today: str = datetime.now().strftime("%
             logger.info(f"{article.folder}{article.title}新闻已隐藏，跳过生成")
             continue
 
-        # 新增逻辑：将摘要转换为音频并保存
         folder_path = os.path.dirname(json_file_path)  # 获取新闻图片所在的文件夹路径
         video_output_path = os.path.join(folder_path, article.folder, "%s" % VIDEO_FILE_NAME)
         if os.path.exists(video_output_path) and not REWRITE:
@@ -382,6 +388,29 @@ def generate_all_news_video(source: str, today: str = datetime.now().strftime("%
     return video_output_paths
 
 
+def load_json_by_source(source, today):
+    folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
+    json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
+    with open(json_file_path, 'r', encoding='utf-8') as json_file:
+        news_data = json.load(json_file)
+    return json_file_path, news_data
+
+
+def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
+    _, cn = load_json_by_source(CHINADAILY, today)
+    _, bbc = load_json_by_source(BBC, today)
+    urls = []
+    [urls.append(i['url']) for i in cn]
+    [urls.append(i['url']) for i in bbc]
+
+    json_file_path = build_today_json_path(today)
+    json_data = {
+        'topic': topic,
+        'urls': urls
+    }
+    json.dump(json_data, open(json_file_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=4)
+
+
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
     client = OllamaClient()
     folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, BBC)
@@ -396,13 +425,14 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"))
 
 
 def test_generate():
-    generate_all_news_video(source=BBC, today='20250604')
-    generate_all_news_video(source=CHINADAILY, today='20250604')
+    today = '20250604'
+    generate_all_news_video(source=BBC, today=today)
+    generate_all_news_video(source=CHINADAILY, today=today)
     generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
     generate_video_introduction()
     combine_videos_with_transitions(
-        ['cn_news/20250512/intro.mp4', 'cn_news/20250512/0000/video.mp4', 'cn_news/20250512/0001/video.mp4'], 'a.mp4')
-
+        ['cn_news/20250512/intro.mp4', 'cn_news/20250512/0000/video.mp4', 'cn_news/20250512/0001/video.mp4'], 'a.mp4',
+        '', today)
 
 
 def test_video_text_align():
@@ -411,7 +441,7 @@ def test_video_text_align():
         'news/20250604/chinadaily/0000/683fd3d96b8efd9fa6284efa_m.jpg',
         'news/20250604/chinadaily/0000/683fd3d96b8efd9fa6284efc_m.jpg',
         'news/20250604/chinadaily/0000/683fd3da6b8efd9fa6284efe_m.jpg'
-        ]
+    ]
 
     generate_three_layout_video(
         output_path="news/20250604/chinadaily/0000/video.mp4",
@@ -422,6 +452,7 @@ def test_video_text_align():
         index="0000",
         is_preview=False
     )
+
 
 # 示例使用
 if __name__ == "__main__":
@@ -443,7 +474,7 @@ if __name__ == "__main__":
         REWRITE = True
         logger.info("指定强制重写")
 
-    if len(args)>0 and args[0]:
+    if len(args) > 0 and args[0]:
         logger.info("指定日期，使用当前日期")
         combine_videos(today=args[0])
     else:
