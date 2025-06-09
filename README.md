@@ -4,7 +4,7 @@
 主要用的技术：
 
 - 爬虫：BeautifulSoup
-- ~~机器翻译：字节旗下的[火山翻译](https://www.volcengine.com/docs/4640/65067)（每月有免费额度，不够用，已移除，使用deepseek翻译）~~ 
+- 机器翻译：~~字节旗下的[火山翻译](https://www.volcengine.com/docs/4640/65067)~~（每月有免费额度，不够用，已移除，使用deepseek翻译） 
 - 摘要提取：ollama 部署了  [deepseek-r1:8b](https://ollama.com/library/deepseek-r1 "点击打开ollama")
 - 文字转语音:刚开始打算使用[字节的megaTTS](https://github.com/bytedance/MegaTTS3)，8G的显示不够，使用微软的edge-tts，效果还可以。
 - 视频生成：moviepy
@@ -53,15 +53,18 @@ python vedio_generator.py 20250605
 - [x] ollama进行摘要提取
 - [ ] ~~ollama进行摘要提取后，增加一个小的评论~~
 - [x] 信息的过滤，对于政治类的信息，中英文的都要去除
-- [ ] 照片去重
+- [ ] ~~照片去重~~
 - [x] 晚间新闻
-- [ ] 重试入口
+- [x] 重试入口
 - [ ] 背景音乐
 - [ ] 视频爬取
 - [x] 内容过滤
 - [x] 时长过多，要精简
 - [x] 片头优化
 - [ ] 自动上传B站
+- [ ] china daily 英文版
+- [x] bbc 下线，因为爬虫被检测到，封禁了
+- [ ] china daily asis 版
 # 7. 附件
 
 爬取的数据样例：

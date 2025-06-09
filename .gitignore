@@ -198,3 +198,4 @@ cython_debug/
 .cursorindexingignore
 app.log
 nohup.out
+output.log

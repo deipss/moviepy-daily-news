@@ -9,7 +9,7 @@ from PIL import Image
 from moviepy.video.fx import Loop
 from crawl_news import generate_audio
 from crawl_news import FINAL_VIDEOS_FOLDER_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, EVENING_TAG, \
-    AUDIO_FILE_NAME, CHINADAILY, BBC, NewsArticle
+    append_and_save_month_urls, AUDIO_FILE_NAME, CHINADAILY, CHINADAILY_HK, CHINADAILY_EN, NewsArticle
 from ollama_client import OllamaClient
 from logging_config import logger
 import sys
@@ -36,6 +36,13 @@ import time
 REWRITE = False
 EVENING = False
 
+hint_information = """
+    信息来源:
+    1. chinadailyasia.com
+    2. chinadaily.com.cn
+    3. china.chinadaily.com.cn
+    """
+
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
     if EVENING:
@@ -57,6 +64,12 @@ def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
     if EVENING:
         return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + EVENING_TAG + "_" + VIDEO_FILE_NAME)
     return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + VIDEO_FILE_NAME)
+
+
+def build_today_final_temp_video_path(today=datetime.now().strftime("%Y%m%d")):
+    if EVENING:
+        return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_t_" + EVENING_TAG + "_" + VIDEO_FILE_NAME)
+    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_t_" + VIDEO_FILE_NAME)
 
 
 def build_today_bg_music_path():
@@ -302,7 +315,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     date_obj = datetime.strptime(today, "%Y%m%d")
     date_text = get_full_date(date_obj)
     audio_path = build_today_introduction_audio_path(today)
-    generate_audio(date_text, audio_path,rewrite=True)
+    generate_audio(date_text, audio_path, rewrite=True)
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
 
@@ -380,24 +393,29 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     start_time = time.time()
     video_paths = []
     intro_path = build_today_introduction_path(today)
-    logger.info(f"正在生成视频{intro_path}...")
+    logger.info(f"正在生成视频片头{intro_path}...")
     topics, duration = generate_video_introduction(intro_path, today)
-    video_paths.append(intro_path)
     cn_paths = generate_all_news_video(source=CHINADAILY, today=today)
-    bbc_paths = generate_all_news_video(source=BBC, today=today)
-    for i in range(max(len(bbc_paths), len(cn_paths))):
+    en_paths = generate_all_news_video(source=CHINADAILY_EN, today=today)
+    hk_paths = generate_all_news_video(source=CHINADAILY_HK, today=today)
+    for i in range(max(len(en_paths), len(cn_paths))):
         if i < len(cn_paths):
             video_paths.append(cn_paths[i])
-        if i < len(bbc_paths):
-            video_paths.append(bbc_paths[i])
+        if i < len(en_paths):
+            video_paths.append(en_paths[i])
+    [video_paths.append(i) for i in hk_paths]
     logger.info(f"生成当前的JSON文件...")
-    save_today_news_json(topics, today)
     logger.info(f"根据子视频生成主视频并整合...")
-    path = build_today_final_video_path(today)
-    logger.info(f"视频整合生成path={path}")
-    combine_videos_with_transitions(video_paths, path)
+    final_path = build_today_final_video_path(today)
+    final_temp_path = build_today_final_temp_video_path(today)
+    logger.info(f"视频整合生成path={final_temp_path}")
+    combine_videos_with_transitions(video_paths, final_temp_path)
+    logger.info(f"视频添加片头={final_path}")
+    combine_videos_with_transitions([intro_path, final_temp_path], final_path)
+
     end_time = time.time()  # 结束计时
     elapsed_time = end_time - start_time
+    save_today_news_json(topics, today)
     logger.info(f"视频整合生成总耗时: {elapsed_time:.2f} 秒")
 
 
@@ -457,23 +475,26 @@ def load_json_by_source(source, today):
 
 def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     _, cn = load_json_by_source(CHINADAILY, today)
-    _, bbc = load_json_by_source(BBC, today)
+    _, en = load_json_by_source(CHINADAILY_EN, today)
+    _, hk = load_json_by_source(CHINADAILY_HK, today)
     urls = []
     if cn:
         [urls.append(i['url']) for i in cn]
-    if bbc:
-        [urls.append(i['url']) for i in bbc]
-
+    if en:
+        [urls.append(i['url']) for i in en]
+    if hk:
+        [urls.append(i['url']) for i in hk]
+    append_and_save_month_urls(today[:6], set(urls))
     json_file_path = build_today_json_path(today)
     if os.path.exists(json_file_path):
         json_data = json.load(open(json_file_path, 'r', encoding='utf-8'))
-        topic = "|" + topic.replace("\n", "|")
+        topic = "\n" + today + + topic.replace("\n", "|")
         json_data['topic'] += topic
         [json_data['urls'].append(i) for i in urls]
-
     else:
         json_data = {
-            'topic': topic.replace("\n", "|"),
+            'hint_information': hint_information,
+            'topic': today + topic.replace("\n", "|"),
             'urls': urls
         }
     json.dump(json_data, open(json_file_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=4)
@@ -483,8 +504,10 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
     client = OllamaClient()
-    _,news_data = load_json_by_source(CHINADAILY, today)
+    _, news_data = load_json_by_source(CHINADAILY, today)
+    _, news_data_en = load_json_by_source(CHINADAILY_EN, today)
     txt = ";".join([news_item['title'] for news_item in news_data])
+    txt += ";".join([news_item['title'] for news_item in news_data_en])
     data = client.generate_top_topic(txt)
     logger.info(f'topic is \n{data}')
     return data
@@ -492,7 +515,7 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"))
 
 def test_generate_all():
     today = '20250604'
-    generate_all_news_video(source=BBC, today=today)
+    generate_all_news_video(source=CHINADAILY_EN, today=today)
     generate_all_news_video(source=CHINADAILY, today=today)
     generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
     generate_video_introduction()
@@ -547,9 +570,10 @@ if __name__ == "__main__":
     # 示例：处理参数
     if args.evening:
         logger.info("执行晚间任务")
-        BBC = BBC + EVENING_TAG
         EVENING = True
         CHINADAILY = CHINADAILY + EVENING_TAG
+        CHINADAILY_EN = CHINADAILY_EN + EVENING_TAG
+        CHINADAILY_HK = CHINADAILY_HK + EVENING_TAG
 
     if args.rewrite:
         REWRITE = True

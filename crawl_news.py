@@ -1,4 +1,5 @@
 import json
+
 from ollama_client import OllamaClient
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
@@ -14,10 +15,10 @@ from datetime import datetime
 from logging_config import logger
 
 from fake_useragent import UserAgent
+import random
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # 设置请求头，模拟浏览器访问
-
 
 
 NEWS_JSON_FILE_NAME = "news_results.json"
@@ -27,7 +28,10 @@ FINAL_VIDEOS_FOLDER_NAME = "final_videos"
 EVENING_TAG = "_E"
 
 CHINADAILY = 'chinadaily'
+CHINADAILY_EN = 'chinadaily_en'
+CHINADAILY_HK = 'chinadaily_hk'
 BBC = 'bbc'
+
 AUDIO_FILE_NAME = "summary_audio.mp3"
 
 
@@ -96,7 +100,7 @@ class NewsArticle:
 
 class NewsScraper:
 
-    def __init__(self, source_url: str, source: str, news_type: str):
+    def __init__(self, source_url: str, source: str, news_type: str, sleep_time: int = 0):
         """
         初始化新闻对象.
 
@@ -108,6 +112,7 @@ class NewsScraper:
         self.source_url = source_url
         self.source = source
         self.news_type = news_type
+        self.sleep_time = sleep_time
 
     @abstractmethod
     def origin_url(self):
@@ -116,7 +121,7 @@ class NewsScraper:
 
     def is_sensitive_word_cn(self, word) -> bool:
         cnt = 0
-        sensitive_words = ["平", "%%", "习", "&&&&&#", "近", "县","杀"]  # 去除了重复项
+        sensitive_words = ["平", "%%", "习", "&&&&&#", "近", "县", "杀"]  # 去除了重复项
         for sensitive_word in sensitive_words:
             if sensitive_word in word:
                 cnt += 1
@@ -132,6 +137,9 @@ class NewsScraper:
 
     def fetch_page(self, url):
         try:
+            if self.sleep_time > 0:
+                time.sleep(random.randint(self.sleep_time // 2, self.sleep_time))
+                logger.info(f"{self.source}sleep {self.sleep_time} seconds")
             ua = UserAgent()
 
             headers = {
@@ -252,7 +260,8 @@ class ChinaDailyScraper(NewsScraper):
     def crawling_news_meta(self, today) -> List[NewsArticle]:
         folder_path = self.create_folder(today)
         urls = self.extract_all_not_visit_urls(today)
-        morning_urls=get_today_morning_urls(today)
+        morning_urls = get_today_morning_urls(today)
+        month_urls = load_month_urls(today[:6])
         results = []
         if urls is None:
             logger.info("无法获取初始页面内容，程序退出。")
@@ -260,6 +269,9 @@ class ChinaDailyScraper(NewsScraper):
         for id, url in enumerate(urls):
             if url in morning_urls:
                 logger.info(f"{self.source}跳过早上的新闻: {url}")
+                continue
+            if url in month_urls:
+                logger.info(f"{self.source}跳过本月已访问过的新闻: {url}")
                 continue
             article = self.extract_news_content(url)
             if not article:
@@ -272,6 +284,12 @@ class ChinaDailyScraper(NewsScraper):
                 logger.info(f"标题包含敏感词: {url}")
                 continue
             if self.is_sensitive_word_cn(article.content_cn):
+                logger.info(f"标题包含敏感词: {url}")
+                continue
+            if article.title_en and self.is_sensitive_word_en(article.title_en):
+                logger.info(f"标题包含敏感词: {url}")
+                continue
+            if article.content_en and self.is_sensitive_word_en(article.content_en):
                 logger.info(f"标题包含敏感词: {url}")
                 continue
             if '/gtx/' in url:
@@ -288,7 +306,7 @@ class ChinaDailyScraper(NewsScraper):
             article.index_inner = id
             article.index_show = id
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
-        if len(results) >15 :
+        if len(results) > 15:
             logger.info("results sub array front 15")
         json_results = [i.to_dict() for i in results[:15]]
         with open(json_path, "w", encoding="utf-8") as json_file:
@@ -318,6 +336,226 @@ class ChinaDailyScraper(NewsScraper):
                     except requests.RequestException as e:
                         logger.error(f"下载图片失败: {image_url} - {e}")
         logger.info(f"{today}图片下载完成。")
+
+
+class ChinaDailyENScraper(ChinaDailyScraper):
+    def origin_url(self) -> list[str]:
+        return [
+            'https://www.chinadaily.com.cn',
+            'https://www.chinadaily.com.cn/world',
+            'https://www.chinadaily.com.cn/business'
+        ]
+
+    def truncate_find_period(self, text: str, end_pos: 4000) -> str:
+        if len(text) <= end_pos:
+            return text
+        # 从end_pos位置开始向后查找第一个句号
+        last_period = text.find('.', end_pos)
+
+        if last_period != -1:
+            return text[:last_period + 1]
+        else:
+            return text  # 或返回 text[:end_pos] + "..."（按需选择）
+
+    def extract_news_content(self, url) -> NewsArticle | None:
+        """提取新闻页面的标题、图片和正文内容"""
+        try:
+
+            # 获取页面内容
+            html = self.fetch_page(url)
+            if not html:
+                return None
+
+            soup = BeautifulSoup(html, "html.parser")
+
+            # 提取标题
+            title = soup.find("h1").get_text(strip=True) if soup.find("h1") else "无标题"
+            title = '【CHINA DAILY EN】' + title
+            # 提取正文图片
+            image_urls = []
+            article_div = soup.find("div", class_="main_art")
+            if article_div:
+                for img in article_div.select("img"):
+                    img_url = img.get("src")
+                    if img_url and not img_url.startswith("data:"):
+                        image_urls.append(urljoin(url, img_url))
+
+            # 提取正文文本
+            content = ""
+            for p in soup.select("p"):
+                text = p.get_text(strip=True)
+                if text and len(text) > 10:  # 过滤短文本
+                    content += text + " "
+            content = self.truncate_find_period(content, 4000)
+            article = NewsArticle(source=self.source, news_type=self.news_type)
+            article.title_en = title
+            article.content_en = content.strip()
+            article.url = url
+            article.image_urls = image_urls
+            article.images = [os.path.basename(i) for i in image_urls]
+            return article
+
+        except Exception as e:
+            logger.error(f"{self.source}提取新闻内容出错: {e}")
+            return None
+
+
+class ChinaDailyHKScraper(NewsScraper):
+    def origin_url(self) -> list[str]:
+        return [
+            'https://www.chinadailyasia.com/hk/'
+        ]
+
+    def truncate_find_period(self, text: str, end_pos: 4000) -> str:
+        if len(text) <= end_pos:
+            return text
+        # 从end_pos位置开始向后查找第一个句号
+        last_period = text.find('.', end_pos)
+
+        if last_period != -1:
+            return text[:last_period + 1]
+        else:
+            return text  # 或返回 text[:end_pos] + "..."（按需选择）
+
+    def extract_news_content(self, url) -> NewsArticle | None:
+        """提取新闻页面的标题、图片和正文内容"""
+        try:
+
+            # 获取页面内容
+            html = self.fetch_page(url)
+            if not html:
+                return None
+
+            soup = BeautifulSoup(html, "html.parser")
+
+            # 提取标题
+            title = soup.find("h1").get_text(strip=True) if soup.find("h1") else "无标题"
+            title = '【CHINA DAILY HK】' + title
+            # 提取正文图片
+            image_urls = []
+            article_div = soup.find("div", class_="ck-content")
+            if article_div:
+                for img in article_div.select("img"):
+                    img_url = img.get("src")
+                    if img_url and not img_url.startswith("data:"):
+                        image_urls.append(urljoin(url, img_url))
+
+            # 提取正文文本
+            content = ""
+            for p in soup.select("p"):
+                text = p.get_text(strip=True)
+                if text and len(text) > 10:  # 过滤短文本
+                    content += text + " "
+            content = self.truncate_find_period(content, 4000)
+            article = NewsArticle(source=self.source, news_type=self.news_type)
+            article.title = title
+            article.content_en = content.strip()
+            article.url = url
+            article.image_urls = image_urls
+            article.images = [os.path.basename(i) for i in image_urls]
+            return article
+
+        except Exception as e:
+            logger.error(f"提取新闻内容出错: {e}")
+            return None
+
+    def extract_links(self, html, visited_urls, today) -> set[str]:
+        """解析 HTML，提取所有链接"""
+        soup = BeautifulSoup(html, "html.parser")
+        urls = set()
+        for a_tag in soup.find_all("a", href=True):
+            href = a_tag["href"]
+            if href not in visited_urls:
+                visited_urls.add(href)
+                urls.add(href)
+        return urls
+
+    def extract_all_not_visit_urls(self, today):
+        # 初始爬取目标页面
+        visited_urls = set()
+        full_urls = []
+        for base_url in self.origin_url():
+            logger.info(f"正在{self.source}爬取 {base_url}")
+            html = self.fetch_page(base_url)
+            if not html:
+                logger.info("extract_all_not_visit_urls无法获取初始页面内容，程序退出。")
+                continue
+
+            # 提取所有链接
+            urls = self.extract_links(html, visited_urls, today)
+            logger.info(f"{base_url} 共发现 {len(urls)} 个链接。")
+
+        for url in visited_urls:
+            if "/article" in url:
+                full_urls.append("https://www.chinadailyasia.com/hk" + url)
+        logger.info(f"去重,拼接后共发现 {len(full_urls)} 个链接。")
+        return full_urls
+
+    def crawling_news_meta(self, today) -> List[NewsArticle]:
+        folder_path = self.create_folder(today)
+        urls = self.extract_all_not_visit_urls(today)
+        morning_urls = get_today_morning_urls(today)
+        results = []
+        if urls is None:
+            logger.info("crawling_news_meta无法获取初始页面内容，程序退出。")
+            return results
+        for id, url in enumerate(urls):
+            if url in morning_urls:
+                logger.info(f"{self.source}跳过早上的新闻: {url}")
+            article = self.extract_news_content(url)
+            if not article:
+                logger.info(f"无法获取新闻内容: {url}")
+                continue
+            if len(article.images) == 0:
+                logger.info(f"未找到图片: {url}")
+                continue
+            if len(article.content_en) < 10:
+                logger.info(f"内容过短: {url}")
+                continue
+            if self.is_sensitive_word_en(article.title_en):
+                logger.info(f"标题包含敏感词: {url}")
+                continue
+            if self.is_sensitive_word_en(article.content_en):
+                logger.info(f"内容含敏感词: {url}")
+                continue
+            article.folder = "{:04d}".format(id)
+            results.append(article)
+        logger.info(f"{self.source} 共发现 {len(results)} 条新闻。")
+        for id, article in enumerate(results):
+            article.folder = "{:04d}".format(id)
+            article.index_inner = id
+            article.index_show = id
+        json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
+        if len(results) > 15:
+            logger.info("results sub array front 15")
+        json_results = [i.to_dict() for i in results[:15]]
+        with open(json_path, "w", encoding="utf-8") as json_file:
+            json.dump(json_results, json_file, ensure_ascii=False, indent=4)
+        return results
+
+    def download_images(self, today: datetime.now().strftime("%Y%m%d")):
+        today_path = os.path.join(CN_NEWS_FOLDER_NAME, today, self.source)
+        results = []
+        if not os.path.exists(today_path):
+            results = self.crawling_news_meta(today)
+        else:
+            logger.info("数据已存在，跳过爬取。")
+        for result in results:
+            folder = result.folder
+            img_folder_path = os.path.join(today_path, folder)
+            os.makedirs(img_folder_path, exist_ok=True)
+            for id, image_url in enumerate(result.image_urls):
+                image_name = os.path.basename(image_url.replace(".webp", ""))
+                image_path = os.path.join(img_folder_path, image_name)
+                if not os.path.exists(image_path):
+                    try:
+                        response = requests.get(image_url)
+                        response.raise_for_status()
+                        with open(image_path, "wb") as image_file:
+                            image_file.write(response.content)
+                    except requests.RequestException as e:
+                        logger.error(f"下载图片失败: {image_url} - {e}")
+        logger.info(f"{self.source}图片下载完成。")
 
 
 class BbcScraper(NewsScraper):
@@ -420,7 +658,7 @@ class BbcScraper(NewsScraper):
             logger.info(f"{base_url} 共发现 {len(urls)} 个链接。")
 
         for url in visited_urls:
-            if "/articles" in  url:
+            if "/articles" in url:
                 full_urls.append("https://www.bbc.com" + url)
         logger.info(f"去重,拼接后共发现 {len(full_urls)} 个链接。")
         return full_urls
@@ -460,7 +698,7 @@ class BbcScraper(NewsScraper):
             article.index_inner = id
             article.index_show = id
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
-        if len(results) >15 :
+        if len(results) > 15:
             logger.info("results sub array front 15")
         json_results = [i.to_dict() for i in results[:15]]
         with open(json_path, "w", encoding="utf-8") as json_file:
@@ -582,8 +820,8 @@ def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%
         generate_audio(article.summary, output_file=audio_output_path)
 
 
-def generate_audio(text: str, output_file: str = "audio.wav",rewrite=False) -> None:
-    if  os.path.exists(output_file) and not rewrite:
+def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False) -> None:
+    if os.path.exists(output_file) and not rewrite:
         logger.info(f"{output_file}已存在，跳过生成音频。")
         return
     logger.info(f"{output_file}开始生成音频: {text}")
@@ -591,34 +829,47 @@ def generate_audio(text: str, output_file: str = "audio.wav",rewrite=False) -> N
     sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
 
+
 import time
+
+
 def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     logger.info("开始爬取新闻")
     start = time.time()
-    cs = ChinaDailyScraper(source_url='https://cn.chinadaily.com.cn/', source=CHINADAILY, news_type='国内新闻')
+    cs = ChinaDailyScraper(source_url='https://cn.chinadaily.com.cn/', source=CHINADAILY, news_type='国内新闻',
+                           sleep_time=0)
     cs.download_images(today)
-    bbc_scraper = BbcScraper(source_url='https://www.bbc.com/news/', source=BBC, news_type='国际新闻')
-    bbc_scraper.download_images(today)
+
+    en = ChinaDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='国内新闻',
+                           sleep_time=0)
+    en.download_images(today)
+
+    hk = ChinaDailyHKScraper(source_url='https://www.chinadailyasia.com/hk/', source=CHINADAILY_HK, news_type='国内新闻',
+                           sleep_time=0)
+    hk.download_images(today)
     end = time.time()
     logger.info(f"爬取新闻耗时: {end - start:.2f} 秒")
 
     logger.info("开始AI生成摘要")
     start = time.time()
     process_news_results(source=CHINADAILY, today=today)
-    process_news_results(source=BBC, today=today)
+    process_news_results(source=CHINADAILY_HK, today=today)
+    process_news_results(source=CHINADAILY_EN, today=today)
     end = time.time()
     logger.info(f"AI生成摘要耗时: {end - start:.2f} 秒")
 
     logger.info("开始生成音频")
     start = time.time()
     generate_all_news_audio(source=CHINADAILY, today=today)
-    generate_all_news_audio(source=BBC, today=today)
+    generate_all_news_audio(source=CHINADAILY_HK, today=today)
+    generate_all_news_audio(source=CHINADAILY_EN, today=today)
     end = time.time()
     logger.info(f"生成音频耗时: {end - start:.2f} 秒")
 
 
 def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "all.json")
+
 
 def get_today_morning_urls(today=datetime.now().strftime("%Y%m%d")):
     json_path = build_today_json_path(today=today)
@@ -629,7 +880,42 @@ def get_today_morning_urls(today=datetime.now().strftime("%Y%m%d")):
     return json_data['urls']
 
 
+def load_month_urls(year_month: str) -> set:
+    """
+    加载指定年月的已访问 URL 集合，并在追加新 URL 时写回文件。
+
+    :param year_month: 年月字符串，格式为 YYYYMM
+    :return: 包含已访问 URL 的集合
+    """
+    json_file_path = f"{year_month}_visited_urls.json"
+    urls_set = set()
+
+    # 尝试加载已存在的 JSON 文件
+    if os.path.exists(json_file_path):
+        with open(json_file_path, 'r', encoding='utf-8') as json_file:
+            urls_set = set(json.load(json_file))
+    logger.info(f"已加载 {year_month} 的已访问 URL{len(urls_set)}个")
+    return urls_set
+
+
+def append_and_save_month_urls(year_month: str, new_urls: set) -> None:
+    """
+    向指定年月的已访问 URL 集合中追加新 URL，并保存到 JSON 文件。
+
+    :param year_month: 年月字符串，格式为 YYYYMM
+    :param new_urls: 要追加的新 URL 集合
+    """
+    json_file_path = f"{year_month}_visited_urls.json"
+    existing_urls = load_month_urls(year_month)
+    updated_urls = existing_urls.union(new_urls)
+
+    with open(json_file_path, 'w', encoding='utf-8') as json_file:
+        json.dump(list(updated_urls), json_file, ensure_ascii=False, indent=4)
+    logger.info(f"已保存 {year_month} 的已访问 URL{len(new_urls)}个到 {json_file_path}")
+
+
 import argparse
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="新闻爬取和处理工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
@@ -638,10 +924,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logger.info(f"新闻爬取和处理工具 args={args}")
 
-
     # 示例：处理参数
     if args.evening:
         logger.info("执行晚间任务")
-        BBC= BBC + EVENING_TAG
-        CHINADAILY= CHINADAILY + EVENING_TAG
+        BBC = BBC + EVENING_TAG
+        CHINADAILY = CHINADAILY + EVENING_TAG
     auto_download_daily(today=args.today)
