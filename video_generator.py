@@ -550,7 +550,7 @@ def dtest_video_text_align():
 import argparse
 
 if __name__ == "__main__":
-    print('========================start generation==============================')
+    logger.info('========================start generation==============================')
 
     if not os.path.exists('temp'):
         os.mkdir('temp')
