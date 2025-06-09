@@ -92,7 +92,7 @@ class NewsArticle:
         self.author = author
         self.tags = tags or []
         self.summary = summary
-        self.show = True
+        self.show = show
 
     def to_dict(self):
         return self.__dict__
@@ -207,7 +207,7 @@ class ChinaDailyScraper(NewsScraper):
                 if text and len(text) > 10:  # 过滤短文本
                     content += text + " "
             content = self.truncate_find_period(content, 700)
-            article = NewsArticle(source=self.source, news_type=self.news_type)
+            article = NewsArticle(source=self.source, news_type=self.news_type,show=True)
             article.title = title
             article.content_cn = content.strip()
             article.url = url
@@ -387,7 +387,7 @@ class ChinaDailyENScraper(ChinaDailyScraper):
                 if text and len(text) > 10:  # 过滤短文本
                     content += text + " "
             content = self.truncate_find_period(content, 4000)
-            article = NewsArticle(source=self.source, news_type=self.news_type)
+            article = NewsArticle(source=self.source, news_type=self.news_type,show=True)
             article.title_en = title
             article.content_en = content.strip()
             article.url = url
@@ -446,7 +446,7 @@ class ChinaDailyHKScraper(NewsScraper):
                 if text and len(text) > 10:  # 过滤短文本
                     content += text + " "
             content = self.truncate_find_period(content, 4000)
-            article = NewsArticle(source=self.source, news_type=self.news_type)
+            article = NewsArticle(source=self.source, news_type=self.news_type,show=True)
             article.title = title
             article.content_en = content.strip()
             article.url = url
@@ -623,7 +623,7 @@ class BbcScraper(NewsScraper):
                 text = p.get_text(strip=True)
                 if text and len(text) > 10:  # 过滤短文本
                     content += text + " "
-            article = NewsArticle(source=self.source, news_type=self.news_type)
+            article = NewsArticle(source=self.source, news_type=self.news_type,show=True)
             article.title_en = title
             article.content_en = content.strip()
             article.url = url
