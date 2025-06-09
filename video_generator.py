@@ -399,13 +399,11 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     topics, duration = generate_video_introduction(intro_path, today)
     cn_paths = generate_all_news_video(source=CHINADAILY, today=today)
     en_paths = generate_all_news_video(source=CHINADAILY_EN, today=today)
-    # hk_paths = generate_all_news_video(source=CHINADAILY_HK, today=today)
     for i in range(max(len(en_paths), len(cn_paths))):
         if i < len(cn_paths):
             video_paths.append(cn_paths[i])
         if i < len(en_paths):
             video_paths.append(en_paths[i])
-    # [video_paths.append(i) for i in hk_paths]
     logger.info(f"生成当前的JSON文件...")
     logger.info(f"根据子视频生成主视频并整合...")
     final_path = build_today_final_video_path(today)
@@ -430,6 +428,7 @@ def generate_all_news_video(source: str, today: str = datetime.now().strftime("%
     video_output_paths = []
     for news_item in news_data:
         article = NewsArticle(**news_item)
+        logger.info(f"{article.source}{article.folder}{article.show}{article.title}新闻正在处理...")
         if not article.show:
             logger.info(f"{article.source}{article.folder}{article.title}新闻已隐藏，跳过生成")
             continue
