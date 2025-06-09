@@ -308,7 +308,7 @@ class ChinaDailyScraper(NewsScraper):
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
         if len(results) > 10:
             results = results[:10]
-            logger.info(f"{self.source}  results sub array front 15")
+            logger.info(f"{self.source}  results sub array front 10")
         json_results = [i.to_dict() for i in results[:10]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
@@ -534,7 +534,7 @@ class ChinaDailyHKScraper(NewsScraper):
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
         if len(results) > 10:
             results = results[:10]
-            logger.info(f"{self.source}results sub array front 15")
+            logger.info(f"{self.source}results sub array front 10")
         json_results = [i.to_dict() for i in results[:10]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
@@ -707,7 +707,7 @@ class BbcScraper(NewsScraper):
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
         if len(results) > 10:
             results = results[:10]
-            logger.info(f"{self.source}results sub array front 15")
+            logger.info(f"{self.source}results sub array front 10")
         json_results = [i.to_dict() for i in results[:10]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
