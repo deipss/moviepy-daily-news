@@ -419,12 +419,14 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
 def generate_all_news_video(source: str, today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
     folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
     json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
+    logger.info(f"{source}新闻json文件,path={json_file_path}")
     if not os.path.exists(json_file_path):
         logger.info(f"{source}新闻json文件不存在,path={json_file_path}")
         return []
 
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
+
     video_output_paths = []
     for news_item in news_data:
         article = NewsArticle(**news_item)
