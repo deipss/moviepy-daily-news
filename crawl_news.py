@@ -121,7 +121,7 @@ class NewsScraper:
 
     def is_sensitive_word_cn(self, word) -> bool:
         cnt = 0
-        sensitive_words = ["平", "%%", "习", "&&&&&#", "近", "县", "杀"]  # 去除了重复项
+        sensitive_words = ["平", "%%", "习", "&&&&&#", "近", "县", "杀","总书记"]  # 去除了重复项
         for sensitive_word in sensitive_words:
             if sensitive_word in word:
                 cnt += 1
