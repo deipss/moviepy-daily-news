@@ -191,7 +191,6 @@ class ChinaDailyScraper(NewsScraper):
 
             # 提取标题
             title = soup.find("h1").get_text(strip=True) if soup.find("h1") else "无标题"
-            title = '【CHINA DAILY】' + title
             # 提取正文图片
             image_urls = []
             article_div = soup.find("div", class_="Artical_Content")
@@ -372,7 +371,6 @@ class ChinaDailyENScraper(ChinaDailyScraper):
 
             # 提取标题
             title = soup.find("h1").get_text(strip=True) if soup.find("h1") else "无标题"
-            title = '【CHINA DAILY EN】' + title
             # 提取正文图片
             image_urls = []
             article_div = soup.select_one("div#Content")
@@ -432,7 +430,6 @@ class ChinaDailyHKScraper(NewsScraper):
 
             # 提取标题
             title = soup.find("h1").get_text(strip=True) if soup.find("h1") else "无标题"
-            title = '【CHINA DAILY HK】' + title
             # 提取正文图片
             image_urls = []
             article_div = soup.find("div", class_="ck-content")
