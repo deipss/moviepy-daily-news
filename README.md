@@ -62,9 +62,9 @@ python vedio_generator.py 20250605
 - [x] 时长过多，要精简
 - [x] 片头优化
 - [ ] 自动上传B站
-- [ ] china daily 英文版
+- [x] china daily 英文版
 - [x] bbc 下线，因为爬虫被检测到，封禁了
-- [ ] china daily asis 版
+- [x] ~~china daily asis 版~~
 # 7. 附件
 
 爬取的数据样例：
