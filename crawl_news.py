@@ -280,10 +280,10 @@ class ChinaDailyScraper(NewsScraper):
             if len(article.images) == 0:
                 logger.info(f"未找到图片: {url}")
                 continue
-            if self.is_sensitive_word_cn(article.title):
+            if article.title and self.is_sensitive_word_cn(article.title):
                 logger.info(f"标题包含敏感词: {url}")
                 continue
-            if self.is_sensitive_word_cn(article.content_cn):
+            if article.content_cn and self.is_sensitive_word_cn(article.content_cn):
                 logger.info(f"标题包含敏感词: {url}")
                 continue
             if article.title_en and self.is_sensitive_word_en(article.title_en):
@@ -295,7 +295,7 @@ class ChinaDailyScraper(NewsScraper):
             if '/gtx/' in url:
                 logger.info(f"URL 包含敏感词gtx : {url}")
                 continue
-            if len(article.content_cn) < 10:
+            if article.content_cn and len(article.content_cn) < 8:
                 logger.info(f"内容过短: {url}")
                 continue
             article.folder = "{:04d}".format(id)
@@ -306,14 +306,16 @@ class ChinaDailyScraper(NewsScraper):
             article.index_inner = id
             article.index_show = id
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
-        if len(results) > 15:
-            logger.info("results sub array front 15")
-        json_results = [i.to_dict() for i in results[:15]]
+        if len(results) > 10:
+            results = results[:10]
+            logger.info(f"{self.source}  results sub array front 15")
+        json_results = [i.to_dict() for i in results[:10]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
         return results
 
     def download_images(self, today: datetime.now().strftime("%Y%m%d")):
+        logger.info(f"开始下载 {self.source} 图片。")
         today_path = os.path.join(CN_NEWS_FOLDER_NAME, today, self.source)
         results = []
         if not os.path.exists(today_path):
@@ -335,7 +337,7 @@ class ChinaDailyScraper(NewsScraper):
                             image_file.write(response.content)
                     except requests.RequestException as e:
                         logger.error(f"下载图片失败: {image_url} - {e}")
-        logger.info(f"{today}图片下载完成。")
+        logger.info(f"{self.source}图片下载完成。")
 
 
 class ChinaDailyENScraper(ChinaDailyScraper):
@@ -373,7 +375,7 @@ class ChinaDailyENScraper(ChinaDailyScraper):
             title = '【CHINA DAILY EN】' + title
             # 提取正文图片
             image_urls = []
-            article_div = soup.find("div", class_="main_art")
+            article_div = soup.select_one("div#Content")
             if article_div:
                 for img in article_div.select("img"):
                     img_url = img.get("src")
@@ -437,7 +439,7 @@ class ChinaDailyHKScraper(NewsScraper):
             if article_div:
                 for img in article_div.select("img"):
                     img_url = img.get("src")
-                    if img_url and not img_url.startswith("data:"):
+                    if img_url:
                         image_urls.append(urljoin(url, img_url))
 
             # 提取正文文本
@@ -472,6 +474,10 @@ class ChinaDailyHKScraper(NewsScraper):
 
     def extract_all_not_visit_urls(self, today):
         # 初始爬取目标页面
+        if today is None:
+            today = datetime.now().strftime("%Y%m/%d")
+        else:
+            today = datetime.strptime(today, "%Y%m%d").strftime("%Y-%m-%d")
         visited_urls = set()
         full_urls = []
         for base_url in self.origin_url():
@@ -486,7 +492,7 @@ class ChinaDailyHKScraper(NewsScraper):
             logger.info(f"{base_url} 共发现 {len(urls)} 个链接。")
 
         for url in visited_urls:
-            if "/article" in url:
+            if "/article" in url and today in url:
                 full_urls.append("https://www.chinadailyasia.com/hk" + url)
         logger.info(f"去重,拼接后共发现 {len(full_urls)} 个链接。")
         return full_urls
@@ -512,10 +518,10 @@ class ChinaDailyHKScraper(NewsScraper):
             if len(article.content_en) < 10:
                 logger.info(f"内容过短: {url}")
                 continue
-            if self.is_sensitive_word_en(article.title_en):
+            if article.title_en and self.is_sensitive_word_en(article.title_en):
                 logger.info(f"标题包含敏感词: {url}")
                 continue
-            if self.is_sensitive_word_en(article.content_en):
+            if article.content_en and self.is_sensitive_word_en(article.content_en):
                 logger.info(f"内容含敏感词: {url}")
                 continue
             article.folder = "{:04d}".format(id)
@@ -526,9 +532,10 @@ class ChinaDailyHKScraper(NewsScraper):
             article.index_inner = id
             article.index_show = id
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
-        if len(results) > 15:
-            logger.info("results sub array front 15")
-        json_results = [i.to_dict() for i in results[:15]]
+        if len(results) > 10:
+            results = results[:10]
+            logger.info(f"{self.source}results sub array front 15")
+        json_results = [i.to_dict() for i in results[:10]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
         return results
@@ -698,9 +705,10 @@ class BbcScraper(NewsScraper):
             article.index_inner = id
             article.index_show = id
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
-        if len(results) > 15:
-            logger.info("results sub array front 15")
-        json_results = [i.to_dict() for i in results[:15]]
+        if len(results) > 10:
+            results = results[:10]
+            logger.info(f"{self.source}results sub array front 15")
+        json_results = [i.to_dict() for i in results[:10]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
         return results
@@ -736,6 +744,7 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
     :param json_file_path: JSON 文件路径
     :return: 包含摘要和翻译后内容的 NewsArticle 列表
     """
+
     # 初始化 Ollama 客户端
     ollama_client = OllamaClient()
 
@@ -838,22 +847,18 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     start = time.time()
     cs = ChinaDailyScraper(source_url='https://cn.chinadaily.com.cn/', source=CHINADAILY, news_type='国内新闻',
                            sleep_time=0)
-    cs.download_images(today)
 
     en = ChinaDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='国内新闻',
-                           sleep_time=0)
-    en.download_images(today)
+                             sleep_time=0)
 
-    hk = ChinaDailyHKScraper(source_url='https://www.chinadailyasia.com/hk/', source=CHINADAILY_HK, news_type='国内新闻',
-                           sleep_time=0)
-    hk.download_images(today)
+    cs.download_images(today)
+    en.download_images(today)
     end = time.time()
     logger.info(f"爬取新闻耗时: {end - start:.2f} 秒")
 
     logger.info("开始AI生成摘要")
     start = time.time()
     process_news_results(source=CHINADAILY, today=today)
-    process_news_results(source=CHINADAILY_HK, today=today)
     process_news_results(source=CHINADAILY_EN, today=today)
     end = time.time()
     logger.info(f"AI生成摘要耗时: {end - start:.2f} 秒")
@@ -861,7 +866,6 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     logger.info("开始生成音频")
     start = time.time()
     generate_all_news_audio(source=CHINADAILY, today=today)
-    generate_all_news_audio(source=CHINADAILY_HK, today=today)
     generate_all_news_audio(source=CHINADAILY_EN, today=today)
     end = time.time()
     logger.info(f"生成音频耗时: {end - start:.2f} 秒")
@@ -927,6 +931,7 @@ if __name__ == "__main__":
     # 示例：处理参数
     if args.evening:
         logger.info("执行晚间任务")
-        BBC = BBC + EVENING_TAG
+        CHINADAILY_EN = CHINADAILY_EN + EVENING_TAG
+        CHINADAILY_HK = CHINADAILY_HK + EVENING_TAG
         CHINADAILY = CHINADAILY + EVENING_TAG
     auto_download_daily(today=args.today)

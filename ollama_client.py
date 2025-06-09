@@ -134,7 +134,7 @@ class OllamaClient:
             logger.info(f"当前主题={summary}")
             logger.info(f"当前主题={len(summary)},主题超过{max_tokens}个字，再次生成主题")
             prompt = f"请从以下新闻主题，提取出影响力最高的4个，这4个主题每个主题再精简到8个字左右，同时请排除一些未成年内容，只需返回按序号排列4个主题：：\n{summary}"
-            response = self._generate_text(prompt, model, {"max_tokens": max_tokens // 10 * 8})
+            response = self._generate_text(prompt, model, {"max_tokens": max_tokens // 10 * 9})
             summary = response.get("response", "")
             summary = self._extract_think(summary, is_replace_line=False)
             summary = summary.replace("**", "")

@@ -199,3 +199,4 @@ cython_debug/
 app.log
 nohup.out
 output.log
+*_visited_urls.json

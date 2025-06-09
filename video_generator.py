@@ -372,6 +372,7 @@ def combine_videos_with_transitions(video_paths, output_path):
         # 加载视频
         video = VideoFileClip(video_path)
         if (video.duration < 2):
+            logger.info(f"视频{video_path}时长不足2秒,跳过")
             continue
         video = video.with_position(('center', 'center'), relative=True)
         # 将视频放置在背景上
@@ -393,25 +394,23 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     start_time = time.time()
     video_paths = []
     intro_path = build_today_introduction_path(today)
+    video_paths.append(intro_path)
     logger.info(f"正在生成视频片头{intro_path}...")
     topics, duration = generate_video_introduction(intro_path, today)
     cn_paths = generate_all_news_video(source=CHINADAILY, today=today)
     en_paths = generate_all_news_video(source=CHINADAILY_EN, today=today)
-    hk_paths = generate_all_news_video(source=CHINADAILY_HK, today=today)
+    # hk_paths = generate_all_news_video(source=CHINADAILY_HK, today=today)
     for i in range(max(len(en_paths), len(cn_paths))):
         if i < len(cn_paths):
             video_paths.append(cn_paths[i])
         if i < len(en_paths):
             video_paths.append(en_paths[i])
-    [video_paths.append(i) for i in hk_paths]
+    # [video_paths.append(i) for i in hk_paths]
     logger.info(f"生成当前的JSON文件...")
     logger.info(f"根据子视频生成主视频并整合...")
     final_path = build_today_final_video_path(today)
-    final_temp_path = build_today_final_temp_video_path(today)
-    logger.info(f"视频整合生成path={final_temp_path}")
-    combine_videos_with_transitions(video_paths, final_temp_path)
     logger.info(f"视频添加片头={final_path}")
-    combine_videos_with_transitions([intro_path, final_temp_path], final_path)
+    combine_videos_with_transitions(video_paths, final_path)
 
     end_time = time.time()  # 结束计时
     elapsed_time = end_time - start_time
@@ -488,7 +487,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     json_file_path = build_today_json_path(today)
     if os.path.exists(json_file_path):
         json_data = json.load(open(json_file_path, 'r', encoding='utf-8'))
-        topic = "\n" + today + + topic.replace("\n", "|")
+        topic = "\n" + today + topic.replace("\n", "|")
         json_data['topic'] += topic
         [json_data['urls'].append(i) for i in urls]
     else:
@@ -513,7 +512,7 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"))
     return data
 
 
-def test_generate_all():
+def dtest_generate_all():
     today = '20250604'
     generate_all_news_video(source=CHINADAILY_EN, today=today)
     generate_all_news_video(source=CHINADAILY, today=today)
@@ -524,12 +523,12 @@ def test_generate_all():
         '', today)
 
 
-def test_generate_video_introduction():
+def dtest_generate_video_introduction():
     REWRITE = True
     generate_video_introduction(today='20250606', is_preview=True)
 
 
-def test_video_text_align():
+def dtest_video_text_align():
     list = [
         'news/20250604/chinadaily/0000/683fd3d86b8efd9fa6284ef8_m.png',
         'news/20250604/chinadaily/0000/683fd3d96b8efd9fa6284efa_m.jpg',
