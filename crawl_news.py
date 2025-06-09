@@ -921,6 +921,7 @@ def append_and_save_month_urls(year_month: str, new_urls: set) -> None:
 import argparse
 
 if __name__ == "__main__":
+    print('========================start crawl==============================')
     parser = argparse.ArgumentParser(description="新闻爬取和处理工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
     parser.add_argument("--evening", type=bool, default=False, help="是否执行晚间任务")
