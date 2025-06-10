@@ -179,7 +179,7 @@ def calculate_segment_times(duration, num_segments):
 def generate_three_layout_video(audio_path, image_list, title, summary, output_path, index, is_preview=False):
     title = "" + index + " " + title
     # 加载背景和音频
-    bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(255, 255, 255))  # 白色背景
+    bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(252, 254, 254))  # 白色背景
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
     bg_clip = bg_clip.with_duration(duration).with_audio(audio_clip)
