@@ -140,8 +140,9 @@ class NewsScraper:
     def fetch_page(self, url):
         try:
             if self.sleep_time > 0:
-                time.sleep(random.randint(self.sleep_time // 2, self.sleep_time))
-                logger.info(f"{self.source}sleep {self.sleep_time} seconds")
+                randint = random.randint(self.sleep_time // 2, self.sleep_time)
+                time.sleep(randint)
+                logger.info(f"{self.source}sleep {randint} seconds")
             ua = UserAgent()
 
             headers = {
