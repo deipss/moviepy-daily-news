@@ -407,7 +407,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     logger.info(f"生成当前的JSON文件...")
     logger.info(f"根据子视频生成主视频并整合...")
     final_path = build_today_final_video_path(today)
-    logger.info(f"视频添加片头={final_path}")
+    logger.info(f"视频保存在={final_path}")
     combine_videos_with_transitions(video_paths, final_path)
 
     end_time = time.time()  # 结束计时
@@ -476,26 +476,29 @@ def load_json_by_source(source, today):
 def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     _, cn = load_json_by_source(CHINADAILY, today)
     _, en = load_json_by_source(CHINADAILY_EN, today)
-    _, hk = load_json_by_source(CHINADAILY_HK, today)
     urls = []
+    titles = []
     if cn:
         [urls.append(i['url']) for i in cn]
+        [titles.append(i['titles']) for i in cn]
     if en:
         [urls.append(i['url']) for i in en]
-    if hk:
-        [urls.append(i['url']) for i in hk]
+        [titles.append(i['titles']) for i in en]
     append_and_save_month_urls(today[:6], set(urls))
     json_file_path = build_today_json_path(today)
     if os.path.exists(json_file_path):
         json_data = json.load(open(json_file_path, 'r', encoding='utf-8'))
-        topic = "\n" + today + topic.replace("\n", "|")
+        topic = "###" + today + " |" + topic.replace("\n", "|")
         json_data['topic'] += topic
         [json_data['urls'].append(i) for i in urls]
+        json_data['titles'].append("---------------------")
+        [json_data['titles'].append(i) for i in titles]
     else:
         json_data = {
             'hint_information': hint_information,
-            'topic': today + topic.replace("\n", "|"),
-            'urls': urls
+            'topic': today + "|" + topic.replace("\n", "|"),
+            'urls': urls,
+            'titles': titles
         }
     json.dump(json_data, open(json_file_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=4)
     logger.info(f"保存今日新闻json文件到 {json_file_path}")
