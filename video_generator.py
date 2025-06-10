@@ -416,7 +416,7 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
         news_data = json.load(json_file)
 
     video_output_paths = []
-    for i, news_item in range(news_data, 1):
+    for i, news_item in enumerate(news_data, start=1):
         article = NewsArticle(**news_item)
         dir_path = os.path.join(CN_NEWS_FOLDER_NAME, today, article.source, article.folder)
         logger.info(f"{article.source}{article.folder}{article.show}{article.title}新闻正在处理...")
@@ -494,10 +494,10 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
     client = OllamaClient()
-    _, news_data = load_json_by_source(CHINADAILY, today)
-    _, news_data_en = load_json_by_source(CHINADAILY_EN, today)
-    txt = ";".join([news_item['title'] for news_item in news_data])
-    txt += ";".join([news_item['title'] for news_item in news_data_en])
+    json_file_path = build_today_json_path(today)
+    with open(json_file_path, 'r', encoding='utf-8') as json_file:
+        news_data = json.load(json_file)
+    txt = ";".join([news_item['title'] if news_item['show'] else '' for news_item in news_data])
     data = client.generate_top_topic(txt)
     logger.info(f'topic is \n{data}')
     return data

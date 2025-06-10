@@ -13,12 +13,10 @@ import os
 import requests
 from datetime import datetime
 from logging_config import logger
-
 from fake_useragent import UserAgent
 import random
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-# 设置请求头，模拟浏览器访问
 
 
 NEWS_JSON_FILE_NAME = "news_results.json"
@@ -39,27 +37,6 @@ SUB_COUNT=15
 
 @dataclass
 class NewsArticle:
-    """
-    数据类，用于存储新闻文章的相关信息。
-
-    Attributes:
-        title (str): 新闻标题。
-        images (List[str]): 新闻文章中的图片文件名列表。
-        image_urls (List[str]): 新闻文章中图片的URL列表。
-        content_cn (str): 新闻内容的中文版本。
-        content_en (str): 新闻内容的英文版本。
-        folder (str): 新闻所属的文件夹名称。
-        index_inner (int): 新闻在内部索引中的位置。
-        index_show (int): 新闻在展示索引中的位置。
-        url (str): 新闻的原始URL。
-        source (str): 新闻来源。
-        news_type (str): 新闻类型（如：国内新闻、国际新闻等）。
-        publish_time (str): 新闻发布时间。
-        author (str): 新闻作者。
-        tags (List[str]): 新闻标签列表。
-        summary (str): 新闻摘要。
-    """
-
     def __init__(self,
                  title: str = None,
                  title_en: str = None,
