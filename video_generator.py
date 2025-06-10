@@ -33,12 +33,7 @@ import time
 REWRITE = False
 EVENING = False
 
-hint_information = """
-    信息来源:
-    1. chinadailyasia.com
-    2. chinadaily.com.cn
-    3. china.chinadaily.com.cn
-    """
+hint_information = """ 信息来源: 1. chinadailyasia.com 2. chinadaily.com.cn 3. china.chinadaily.com.cn """
 
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
@@ -474,7 +469,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     _, cn = load_json_by_source(CHINADAILY, today)
     _, en = load_json_by_source(CHINADAILY_EN, today)
     urls = []
-    titles = []
+    titles = [hint_information]
     if cn:
         [urls.append(i['url']) for i in cn]
         [titles.append(i['title']) for i in cn]
@@ -483,16 +478,15 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
         [titles.append(i['title']) for i in en]
     append_and_save_month_urls(today[:6], set(urls))
     json_file_path = build_today_json_path(today)
+
     if os.path.exists(json_file_path):
         json_data = json.load(open(json_file_path, 'r', encoding='utf-8'))
         topic = "###" + today + " |" + topic.replace("\n", "|")
         json_data['topic'] += topic
         [json_data['urls'].append(i) for i in urls]
-        json_data['titles'].append("---------------------")
         [json_data['titles'].append(i) for i in titles]
     else:
         json_data = {
-            'hint_information': hint_information,
             'topic': today + "|" + topic.replace("\n", "|"),
             'urls': urls,
             'titles': titles
