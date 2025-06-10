@@ -480,10 +480,10 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     titles = []
     if cn:
         [urls.append(i['url']) for i in cn]
-        [titles.append(i['titles']) for i in cn]
+        [titles.append(i['title']) for i in cn]
     if en:
         [urls.append(i['url']) for i in en]
-        [titles.append(i['titles']) for i in en]
+        [titles.append(i['title']) for i in en]
     append_and_save_month_urls(today[:6], set(urls))
     json_file_path = build_today_json_path(today)
     if os.path.exists(json_file_path):
