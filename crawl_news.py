@@ -34,6 +34,8 @@ BBC = 'bbc'
 
 AUDIO_FILE_NAME = "summary_audio.mp3"
 
+SUB_COUNT=15
+
 
 @dataclass
 class NewsArticle:
@@ -305,10 +307,10 @@ class ChinaDailyScraper(NewsScraper):
             article.index_inner = id
             article.index_show = id
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
-        if len(results) > 10:
-            results = results[:10]
+        if len(results) > SUB_COUNT:
+            results = results[:SUB_COUNT]
             logger.info(f"{self.source}  results sub array front 10")
-        json_results = [i.to_dict() for i in results[:10]]
+        json_results = [i.to_dict() for i in results[:SUB_COUNT]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
         return results
@@ -529,10 +531,10 @@ class ChinaDailyHKScraper(NewsScraper):
             article.index_inner = id
             article.index_show = id
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
-        if len(results) > 10:
-            results = results[:10]
+        if len(results) > SUB_COUNT:
+            results = results[:SUB_COUNT]
             logger.info(f"{self.source}results sub array front 10")
-        json_results = [i.to_dict() for i in results[:10]]
+        json_results = [i.to_dict() for i in results[:SUB_COUNT]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
         return results
@@ -702,10 +704,10 @@ class BbcScraper(NewsScraper):
             article.index_inner = id
             article.index_show = id
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
-        if len(results) > 10:
-            results = results[:10]
+        if len(results) > SUB_COUNT:
+            results = results[:SUB_COUNT]
             logger.info(f"{self.source}results sub array front 10")
-        json_results = [i.to_dict() for i in results[:10]]
+        json_results = [i.to_dict() for i in results[:SUB_COUNT]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
         return results
@@ -781,8 +783,18 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
         processed_news.append(article)
     return processed_news
 
+def load_json_by_source(source, today):
+    folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
+    json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
+    if not os.path.exists(json_file_path):
+        logger.info(f"{source}新闻json文件不存在,path={json_file_path}")
+        return json_file_path, None
+    with open(json_file_path, 'r', encoding='utf-8') as json_file:
+        news_data = json.load(json_file)
+    logger.info(f"{source}新闻json文{json_file_path}件加载成功,news_data={len(news_data)}")
+    return json_file_path, news_data
 
-def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m%d")) -> None:
+def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m%d"))-> List[NewsArticle]:
     """
     处理指定日期的新闻结果文件，提取摘要并翻译内容。
 
@@ -791,18 +803,19 @@ def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m
     logger.info(f"开始处理 {source} 的新闻结果文件...")
     folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
     json_file_path = os.path.join(folder_path, NEWS_JSON_FILE_NAME)
-
     if os.path.exists(json_file_path):
         processed_json_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
         if os.path.exists(processed_json_path):
-            logger.info(f"{processed_json_path}已存在处理后的新闻结果文件，跳过处理。")
-            return
+            logger.info(f"{processed_json_path}已存在处理后的新闻结果文件，跳过处理,直接返回")
+            _,data = load_json_by_source(source, today)
+            return [NewsArticle(**i) for i in data]
         processed_news = load_and_summarize_news(json_file_path)
 
         with open(processed_json_path, 'w', encoding='utf-8') as json_file:
             json.dump([article.to_dict() for article in processed_news], json_file, ensure_ascii=False, indent=4)
 
         logger.info(f"处理完成，已保存到 {processed_json_path}")
+        return processed_news
     else:
         logger.info(f"未找到新闻结果文件: {json_file_path}")
     logger.info(f"处理 {source} 的新闻结果文件完成")
@@ -855,10 +868,11 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
 
     logger.info("开始AI生成摘要")
     start = time.time()
-    process_news_results(source=CHINADAILY, today=today)
-    process_news_results(source=CHINADAILY_EN, today=today)
+    articles=process_news_results(source=CHINADAILY, today=today)
+    en_articles=process_news_results(source=CHINADAILY_EN, today=today)
     end = time.time()
     logger.info(f"AI生成摘要耗时: {end - start:.2f} 秒")
+    build_new_articles_json(today,articles, en_articles)
 
     logger.info("开始生成音频")
     start = time.time()
@@ -866,6 +880,32 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     generate_all_news_audio(source=CHINADAILY_EN, today=today)
     end = time.time()
     logger.info(f"生成音频耗时: {end - start:.2f} 秒")
+
+def build_new_articles_path(today=datetime.now().strftime("%Y%m%d"),is_evening=False):
+    if is_evening:
+        return os.path.join(CN_NEWS_FOLDER_NAME, today,'new_articles'+EVENING_TAG+'.json')
+    return os.path.join(CN_NEWS_FOLDER_NAME, today,'new_articles.json')
+
+def build_new_articles_json(today,articles, en_articles):
+    new_articles = []
+    idx = 1
+    for article in articles:
+        article.content_en = ''
+        article.content_cn = ''
+        article.index_inner = idx
+        idx += 1
+        new_articles.append(article)
+    for article in en_articles:
+        article.content_en = ''
+        article.content_cn = ''
+        article.index_inner = idx
+        idx += 1
+        new_articles.append(article)
+    path = build_new_articles_path(today)
+    with open(path, 'w', encoding='utf-8') as json_file:
+        json.dump([article.to_dict() for article in new_articles], json_file, ensure_ascii=False, indent=4)
+    logger.info(f"生成new_articles.json成功,path={path}")
+
 
 
 def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):

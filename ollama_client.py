@@ -140,6 +140,15 @@ class OllamaClient:
             summary = summary.replace("**", "")
         return summary
 
+    def generate_top_title(self,  text: str, model: str = "deepseek-r1:8b",
+                           max_tokens: int = 80,count: int = 15) -> str:
+        prompt = f"请从以下带有序号的新闻主题，提取出影响力最高的{count}个，过滤一些区县市的新闻，最终返回影响力最高的新闻的原始序号（用英文逗号隔开）：\n{text}"
+        response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
+        summary = response.get("response", "")
+        summary = self._extract_think(summary, is_replace_line=False)
+        summary = summary.replace("**", "")
+        return summary
+
     def translate_to_chinese(self, text: str, model: str = "deepseek-r1:8b") -> str:
         """
         将英文文本翻译成中文。
