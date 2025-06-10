@@ -843,10 +843,10 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     logger.info("开始爬取新闻")
     start = time.time()
     cs = ChinaDailyScraper(source_url='https://cn.chinadaily.com.cn/', source=CHINADAILY, news_type='国内新闻',
-                           sleep_time=0)
+                           sleep_time=4)
 
     en = ChinaDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='国内新闻',
-                             sleep_time=0)
+                             sleep_time=4)
 
     cs.download_images(today)
     en.download_images(today)
