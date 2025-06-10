@@ -28,9 +28,6 @@ FPS = 40
 MAIN_BG_COLOR = "#FF9900"
 VIDEO_FILE_NAME = "video.mp4"
 
-logger.info(
-    f"GLOBAL_WIDTH:{GLOBAL_WIDTH}\nGLOBAL_HEIGHT:{GLOBAL_HEIGHT}\n W_H_RADIO:{W_H_RADIO}\n  FPS:{FPS}\n  BACKGROUND_IMAGE_PATH:{BACKGROUND_IMAGE_PATH}\nGAP:{GAP}\nINNER_WIDTH:{INNER_WIDTH}\nINNER_HEIGHT:{INNER_HEIGHT}")
-
 import time
 
 REWRITE = False
@@ -555,6 +552,9 @@ import argparse
 
 if __name__ == "__main__":
     logger.info('========================start generation==============================')
+
+    logger.info(
+        f"\nGLOBAL_WIDTH:{GLOBAL_WIDTH}\nGLOBAL_HEIGHT:{GLOBAL_HEIGHT}\n W_H_RADIO:{W_H_RADIO}\n  FPS:{FPS}\n  BACKGROUND_IMAGE_PATH:{BACKGROUND_IMAGE_PATH}\nGAP:{GAP}\nINNER_WIDTH:{INNER_WIDTH}\nINNER_HEIGHT:{INNER_HEIGHT}")
 
     if not os.path.exists('temp'):
         os.mkdir('temp')
