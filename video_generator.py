@@ -456,10 +456,11 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
         news_data = json.load(json_file)
 
     video_output_paths = []
+    idx = 1
     for i, news_item in enumerate(news_data, start=1):
         article = NewsArticle(**news_item)
         dir_path = os.path.join(CN_NEWS_FOLDER_NAME, today, article.source, article.folder)
-        logger.info(f"{article.source}{article.folder}{article.show}{article.title}新闻正在处理...")
+        logger.info(f"{article.source}{article.folder}{article.show}{article.title}   新闻正在处理...")
         if not article.show:
             logger.warning(f"{article.source}{article.folder}{article.title}新闻已隐藏，跳过生成")
             continue
@@ -467,7 +468,7 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
         # 新增逻辑：将摘要转换为音频并保存
         video_output_path = os.path.join(dir_path, VIDEO_FILE_NAME)
         if os.path.exists(video_output_path) and not REWRITE:
-            logger.warning(f"{article.source}{article.folder}视频已存在，跳过生成,path={video_output_path}")
+            logger.warning(f"{article.source}{article.folder}  视频已存在，跳过生成,path={video_output_path}")
             video_output_paths.append(video_output_path)
             continue
         logger.info(f"{article.folder}{article.title}新闻开始生成")
@@ -482,9 +483,10 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
             image_list=img_list,
             summary=article.summary,
             title=article.title,
-            index=str(i),
+            index=str(idx),
             is_preview=False
         )
+        idx += 1
         video_output_paths.append(video_output_path)
     return video_output_paths
 
