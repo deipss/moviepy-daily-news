@@ -183,7 +183,11 @@ def generate_three_layout_video(audio_path, image_list, title, summary, output_p
     title = "" + index + " " + title
     # 加载背景和音频
     bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(252, 254, 254))  # 白色背景
-    audio_clip = AudioFileClip(audio_path)
+    try:
+        audio_clip = AudioFileClip(audio_path)
+    except IOError as e:
+        logger.error(f"音频文件加载失败，{audio_path}", e)
+        return False
     duration = audio_clip.duration
     if duration < 2:
         logger.warning(f"{title} 音频文件时长过短，请检查音频文件{audio_path}")
@@ -546,7 +550,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
     client = OllamaClient()
-    json_file_path = build_new_articles_path(today,EVENING)
+    json_file_path = build_new_articles_path(today, EVENING)
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     txt = ";".join([news_item['title'] if news_item['show'] else '' for news_item in news_data])
@@ -630,4 +634,4 @@ if __name__ == "__main__":
     try:
         combine_videos(today=args.today)
     except Exception as e:
-        logger.error(f"视频生成主线失败,error={e}",e,exc_info=True)
+        logger.error(f"视频生成主线失败,error={e}", e, exc_info=True)
