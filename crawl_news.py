@@ -290,7 +290,7 @@ class ChinaDailyScraper(NewsScraper):
         if not os.path.exists(today_path):
             results = self.crawling_news_meta(today)
         else:
-            logger.info(f"{today_path} 数据已存在，跳过爬取。")
+            logger.warning(f"{today_path} 数据已存在，跳过爬取。")
         for result in results:
             folder = result.folder
             img_folder_path = os.path.join(today_path, folder)

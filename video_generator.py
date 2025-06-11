@@ -404,7 +404,7 @@ def combine_videos_with_transitions(video_paths, output_path):
         # 加载视频
         video = VideoFileClip(video_path)
         if (video.duration < 2):
-            logger.info(f"视频{video_path}时长不足2秒,跳过")
+            logger.warning(f"视频{video_path}时长不足2秒,跳过")
             continue
         video = video.with_position(('center', 'center'), relative=True)
         # 将视频放置在背景上
@@ -449,7 +449,7 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
     json_file_path = build_new_articles_path(today, EVENING)
 
     if not os.path.exists(json_file_path):
-        logger.info(f"新闻json文件不存在,path={json_file_path}")
+        logger.warning(f"新闻json文件不存在,path={json_file_path}")
         return []
 
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
@@ -461,13 +461,13 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
         dir_path = os.path.join(CN_NEWS_FOLDER_NAME, today, article.source, article.folder)
         logger.info(f"{article.source}{article.folder}{article.show}{article.title}新闻正在处理...")
         if not article.show:
-            logger.info(f"{article.source}{article.folder}{article.title}新闻已隐藏，跳过生成")
+            logger.warning(f"{article.source}{article.folder}{article.title}新闻已隐藏，跳过生成")
             continue
 
         # 新增逻辑：将摘要转换为音频并保存
         video_output_path = os.path.join(dir_path, VIDEO_FILE_NAME)
         if os.path.exists(video_output_path) and not REWRITE:
-            logger.info(f"{article.source}{article.folder}视频已存在，跳过生成,path={video_output_path}")
+            logger.warning(f"{article.source}{article.folder}视频已存在，跳过生成,path={video_output_path}")
             video_output_paths.append(video_output_path)
             continue
         logger.info(f"{article.folder}{article.title}新闻开始生成")
@@ -493,7 +493,7 @@ def load_json_by_source(source, today):
     folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
     json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
     if not os.path.exists(json_file_path):
-        logger.info(f"{source}新闻json文件不存在,path={json_file_path}")
+        logger.warning(f"{source}新闻json文件不存在,path={json_file_path}")
         return json_file_path, None
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
@@ -505,7 +505,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     json_file_path = build_new_articles_path(today, EVENING)
 
     if not os.path.exists(json_file_path):
-        logger.info(f"新闻json文件不存在,path={json_file_path}")
+        logger.warning(f"新闻json文件不存在,path={json_file_path}")
         return []
 
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
