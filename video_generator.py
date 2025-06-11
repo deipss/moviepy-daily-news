@@ -67,12 +67,6 @@ def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + VIDEO_FILE_NAME)
 
 
-def build_today_final_temp_video_path(today=datetime.now().strftime("%Y%m%d")):
-    if EVENING:
-        return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_t_" + EVENING_TAG + "_" + VIDEO_FILE_NAME)
-    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_t_" + VIDEO_FILE_NAME)
-
-
 def build_today_bg_music_path():
     return os.path.join(CN_NEWS_FOLDER_NAME, "bg_music.mp4")
 
