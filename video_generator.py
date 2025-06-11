@@ -185,6 +185,9 @@ def generate_three_layout_video(audio_path, image_list, title, summary, output_p
     bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(252, 254, 254))  # 白色背景
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
+    if duration < 2:
+        logger.warning(f"{title} 音频文件时长过短，请检查音频文件{audio_path}")
+        return False
     bg_clip = bg_clip.with_duration(duration).with_audio(audio_clip)
     bg_width, bg_height = bg_clip.size
 
@@ -253,6 +256,7 @@ def generate_three_layout_video(audio_path, image_list, title, summary, output_p
         final_video.preview()
     else:
         final_video.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
+    return True
 
 
 def get_full_date(today=datetime.now()):
@@ -477,7 +481,7 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
         img_list = []
         for image in article.images:
             img_list.append(os.path.join(dir_path, image))
-        generate_three_layout_video(
+        generated_result = generate_three_layout_video(
             output_path=video_output_path,
             audio_path=audio_output_path,
             image_list=img_list,
@@ -486,8 +490,9 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
             index=str(idx),
             is_preview=False
         )
-        idx += 1
-        video_output_paths.append(video_output_path)
+        if generated_result:
+            idx += 1
+            video_output_paths.append(video_output_path)
     return video_output_paths
 
 
