@@ -23,7 +23,7 @@ PROCESSED_NEWS_JSON_FILE_NAME = "processed_news_results.json"
 CN_NEWS_FOLDER_NAME = "news"
 FINAL_VIDEOS_FOLDER_NAME = "final_videos"
 EVENING_TAG = "_E"
-
+EVENING =False
 CHINADAILY = 'chinadaily'
 CHINADAILY_EN = 'chinadaily_en'
 CHINADAILY_HK = 'chinadaily_hk'
@@ -841,6 +841,7 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
 
 def build_new_articles_path(today=datetime.now().strftime("%Y%m%d"), is_evening=False):
     if is_evening:
+        logger.info(f"build_new_articles_path,is_evening={is_evening}")
         return os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles' + EVENING_TAG + '.json')
     return os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles.json')
 
@@ -860,7 +861,7 @@ def build_new_articles_json(today, articles, en_articles):
         article.index_inner = idx
         idx += 1
         new_articles.append(article)
-    path = build_new_articles_path(today)
+    path = build_new_articles_path(today,EVENING)
     with open(path, 'w', encoding='utf-8') as json_file:
         json.dump([article.to_dict() for article in new_articles], json_file, ensure_ascii=False, indent=4)
     logger.info(f"生成new_articles.json成功,path={path}")
@@ -930,4 +931,5 @@ if __name__ == "__main__":
         CHINADAILY_EN = CHINADAILY_EN + EVENING_TAG
         CHINADAILY_HK = CHINADAILY_HK + EVENING_TAG
         CHINADAILY = CHINADAILY + EVENING_TAG
+        EVENING = True
     auto_download_daily(today=args.today)
