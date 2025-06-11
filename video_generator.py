@@ -43,6 +43,10 @@ def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp4")
 
 
+def build_end_path():
+    return os.path.join(CN_NEWS_FOLDER_NAME, "end.mp4")
+
+
 def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "all.json")
 
@@ -51,6 +55,10 @@ def build_today_introduction_audio_path(today=datetime.now().strftime("%Y%m%d"))
     if EVENING:
         return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction_evening.mp3")
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp3")
+
+
+def build_today_end_audio_path():
+    return os.path.join(CN_NEWS_FOLDER_NAME, "end.mp3")
 
 
 def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
@@ -353,6 +361,43 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     return topics, duration
 
 
+def generate_video_end(is_preview=False):
+    output_path = build_end_path()
+    if os.path.exists(output_path) and not REWRITE:
+        logger.info(f"片尾{output_path}已存在,直接返回")
+    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
+    bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
+    audio_path = build_today_end_audio_path()
+
+    generate_audio("今天的信息，至此结束，下次见", audio_path, rewrite=True)
+    audio_clip = AudioFileClip(audio_path)
+    duration = audio_clip.duration
+
+    # 设置背景视频时长
+    bg_clip = bg_clip.with_duration(duration).with_audio(audio_clip)
+
+    # 创建日期文字
+    txt_clip = TextClip(
+        text="谢谢收看",
+        font_size=int(GLOBAL_HEIGHT * 0.15),
+        color=MAIN_BG_COLOR,
+        font='./font/simhei.ttf',
+        stroke_color='black',
+        stroke_width=2
+    ).with_duration(duration).with_position(('center', GLOBAL_HEIGHT * 0.7))
+
+    lady = (VideoFileClip('videos/lady_announcer.mp4').with_duration(duration)
+            .with_position((GLOBAL_WIDTH * 0.38, GLOBAL_HEIGHT * 0.17)).resized(0.7))
+
+    # 合成最终视频
+    final_clip = CompositeVideoClip([bg_clip, txt_clip, lady], size=bg_clip.size)
+    if is_preview:
+        final_clip.preview()
+    else:
+        final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
+    return output_path
+
+
 def combine_videos_with_transitions(video_paths, output_path):
     if os.path.exists(output_path) and not REWRITE:
         logger.info(f"视频整合生成{output_path}已存在,直接返回")
@@ -393,6 +438,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     all_paths = generate_all_news_video(today=today)
     for i in range(len(all_paths)):
         video_paths.append(all_paths[i])
+    video_paths.append(generate_video_end())
     logger.info(f"生成当前的JSON文件...")
     logger.info(f"根据子视频生成主视频并整合...")
     final_path = build_today_final_video_path(today)
@@ -541,6 +587,10 @@ def dtest_video_text_align():
         index="0000",
         is_preview=False
     )
+
+
+def test_generate_video_end():
+    generate_video_end(is_preview=True)
 
 
 import argparse
