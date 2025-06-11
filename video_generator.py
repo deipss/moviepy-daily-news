@@ -462,16 +462,21 @@ def load_json_by_source(source, today):
 
 
 def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
-    _, cn = load_json_by_source(CHINADAILY, today)
-    _, en = load_json_by_source(CHINADAILY_EN, today)
+    json_file_path = build_new_articles_path(today, EVENING)
+
+    if not os.path.exists(json_file_path):
+        logger.info(f"新闻json文件不存在,path={json_file_path}")
+        return []
+
+    with open(json_file_path, 'r', encoding='utf-8') as json_file:
+        news_data = json.load(json_file)
     urls = []
     titles = [hint_information]
-    if cn:
-        [urls.append(i['url']) for i in cn]
-        [titles.append(i['title']) for i in cn]
-    if en:
-        [urls.append(i['url']) for i in en]
-        [titles.append(i['title']) for i in en]
+    if news_data:
+        for i in news_data:
+            urls.append(i['url'])
+            if i['show']:
+                urls.append(i['title'])
     append_and_save_month_urls(today[:6], set(urls))
     json_file_path = build_today_json_path(today)
 
