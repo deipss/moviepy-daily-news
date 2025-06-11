@@ -18,7 +18,6 @@ import random
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-
 NEWS_JSON_FILE_NAME = "news_results.json"
 PROCESSED_NEWS_JSON_FILE_NAME = "processed_news_results.json"
 CN_NEWS_FOLDER_NAME = "news"
@@ -32,7 +31,7 @@ BBC = 'bbc'
 
 AUDIO_FILE_NAME = "summary_audio.mp3"
 
-SUB_COUNT=15
+SUB_COUNT = 15
 
 
 @dataclass
@@ -100,7 +99,7 @@ class NewsScraper:
 
     def is_sensitive_word_cn(self, word) -> bool:
         cnt = 0
-        sensitive_words = ["平", "%%", "习", "&&&&&#", "近", "县", "杀","总书记"]  # 去除了重复项
+        sensitive_words = ["平", "%%", "习", "&&&&&#", "近", "县", "杀", "总书记"]  # 去除了重复项
         for sensitive_word in sensitive_words:
             if sensitive_word in word:
                 cnt += 1
@@ -150,16 +149,14 @@ class ChinaDailyScraper(NewsScraper):
     def truncate_find_period(self, text: str, end_pos: 700) -> str:
         if len(text) <= end_pos:
             return text
-        # 从end_pos位置开始向后查找第一个句号
         last_period = text.find('。', end_pos)
 
         if last_period != -1:
             return text[:last_period + 1]
         else:
-            return text  # 或返回 text[:end_pos] + "..."（按需选择）
+            return text
 
     def extract_news_content(self, url) -> NewsArticle | None:
-        """提取新闻页面的标题、图片和正文内容"""
         try:
 
             # 获取页面内容
@@ -187,7 +184,7 @@ class ChinaDailyScraper(NewsScraper):
                 if text and len(text) > 10:  # 过滤短文本
                     content += text + " "
             content = self.truncate_find_period(content, 700)
-            article = NewsArticle(source=self.source, news_type=self.news_type,show=True)
+            article = NewsArticle(source=self.source, news_type=self.news_type, show=True)
             article.title = title
             article.content_cn = content.strip()
             article.url = url
@@ -239,55 +236,48 @@ class ChinaDailyScraper(NewsScraper):
     def crawling_news_meta(self, today) -> List[NewsArticle]:
         folder_path = self.create_folder(today)
         urls = self.extract_all_not_visit_urls(today)
-        morning_urls = get_today_morning_urls(today)
         month_urls = load_month_urls(today[:6])
         results = []
         if urls is None:
             logger.info("无法获取初始页面内容，程序退出。")
             return results
-        for id, url in enumerate(urls):
-            if url in morning_urls:
-                logger.info(f"{self.source}跳过早上的新闻: {url}")
-                continue
+        for idx, url in enumerate(urls):
             if url in month_urls:
-                logger.info(f"{self.source}跳过本月已访问过的新闻: {url}")
+                logger.info(f" {self.source} 跳过本月已访问过的新闻: {url}")
                 continue
             article = self.extract_news_content(url)
             if not article:
                 logger.info(f"无法获取新闻内容: {url}")
                 continue
             if len(article.images) == 0:
-                logger.info(f"未找到图片: {url}")
+                logger.info(f"{article.source} 未找到图片: {url}")
                 continue
             if article.title and self.is_sensitive_word_cn(article.title):
-                logger.info(f"标题包含敏感词: {url}")
+                logger.info(f"{article.source} 标题包含敏感词: {url}")
                 continue
             if article.content_cn and self.is_sensitive_word_cn(article.content_cn):
-                logger.info(f"标题包含敏感词: {url}")
+                logger.info(f"{article.source} 内容包含敏感词: {url}")
                 continue
             if article.title_en and self.is_sensitive_word_en(article.title_en):
-                logger.info(f"标题包含敏感词: {url}")
+                logger.info(f"{article.title_en} 标题包含敏感词: {url}")
                 continue
             if article.content_en and self.is_sensitive_word_en(article.content_en):
-                logger.info(f"标题包含敏感词: {url}")
-                continue
-            if '/gtx/' in url:
-                logger.info(f"URL 包含敏感词gtx : {url}")
+                logger.info(f"{article.source} 内容包含敏感词: {url}")
                 continue
             if article.content_cn and len(article.content_cn) < 8:
-                logger.info(f"内容过短: {url}")
+                logger.info(f"{article.source} 内容过短: {url}")
                 continue
-            article.folder = "{:04d}".format(id)
+            article.folder = "{:04d}".format(idx)
             results.append(article)
-        logger.info(f"{self.source} 共发现 {len(results)} 条新闻。")
-        for id, article in enumerate(results):
-            article.folder = "{:04d}".format(id)
-            article.index_inner = id
-            article.index_show = id
-        json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
+        logger.info(f"{self.source} ，脱敏，过滤后，共发现 {len(results)} 条新闻。")
+        for idx, article in enumerate(results):
+            article.folder = "{:04d}".format(idx)
+            article.index_inner = idx
+            article.index_show = idx
+        json_path = os.path.join(folder_path, NEWS_JSON_FILE_NAME)
         if len(results) > SUB_COUNT:
             results = results[:SUB_COUNT]
-            logger.info(f"{self.source}  results sub array front 10")
+            logger.info(f"{self.source}  results sub array {SUB_COUNT}")
         json_results = [i.to_dict() for i in results[:SUB_COUNT]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
@@ -330,16 +320,14 @@ class ChinaDailyENScraper(ChinaDailyScraper):
     def truncate_find_period(self, text: str, end_pos: 4000) -> str:
         if len(text) <= end_pos:
             return text
-        # 从end_pos位置开始向后查找第一个句号
         last_period = text.find('.', end_pos)
 
         if last_period != -1:
             return text[:last_period + 1]
         else:
-            return text  # 或返回 text[:end_pos] + "..."（按需选择）
+            return text
 
     def extract_news_content(self, url) -> NewsArticle | None:
-        """提取新闻页面的标题、图片和正文内容"""
         try:
 
             # 获取页面内容
@@ -367,7 +355,7 @@ class ChinaDailyENScraper(ChinaDailyScraper):
                 if text and len(text) > 10:  # 过滤短文本
                     content += text + " "
             content = self.truncate_find_period(content, 4000)
-            article = NewsArticle(source=self.source, news_type=self.news_type,show=True)
+            article = NewsArticle(source=self.source, news_type=self.news_type, show=True)
             article.title_en = title
             article.content_en = content.strip()
             article.url = url
@@ -389,16 +377,14 @@ class ChinaDailyHKScraper(NewsScraper):
     def truncate_find_period(self, text: str, end_pos: 4000) -> str:
         if len(text) <= end_pos:
             return text
-        # 从end_pos位置开始向后查找第一个句号
         last_period = text.find('.', end_pos)
 
         if last_period != -1:
             return text[:last_period + 1]
         else:
-            return text  # 或返回 text[:end_pos] + "..."（按需选择）
+            return text  
 
     def extract_news_content(self, url) -> NewsArticle | None:
-        """提取新闻页面的标题、图片和正文内容"""
         try:
 
             # 获取页面内容
@@ -426,7 +412,7 @@ class ChinaDailyHKScraper(NewsScraper):
                 if text and len(text) > 10:  # 过滤短文本
                     content += text + " "
             content = self.truncate_find_period(content, 4000)
-            article = NewsArticle(source=self.source, news_type=self.news_type,show=True)
+            article = NewsArticle(source=self.source, news_type=self.news_type, show=True)
             article.title = title
             article.content_en = content.strip()
             article.url = url
@@ -439,7 +425,6 @@ class ChinaDailyHKScraper(NewsScraper):
             return None
 
     def extract_links(self, html, visited_urls, today) -> set[str]:
-        """解析 HTML，提取所有链接"""
         soup = BeautifulSoup(html, "html.parser")
         urls = set()
         for a_tag in soup.find_all("a", href=True):
@@ -477,41 +462,38 @@ class ChinaDailyHKScraper(NewsScraper):
     def crawling_news_meta(self, today) -> List[NewsArticle]:
         folder_path = self.create_folder(today)
         urls = self.extract_all_not_visit_urls(today)
-        morning_urls = get_today_morning_urls(today)
         results = []
         if urls is None:
             logger.info("crawling_news_meta无法获取初始页面内容，程序退出。")
             return results
-        for id, url in enumerate(urls):
-            if url in morning_urls:
-                logger.info(f"{self.source}跳过早上的新闻: {url}")
+        for idx, url in enumerate(urls):
             article = self.extract_news_content(url)
             if not article:
-                logger.info(f"无法获取新闻内容: {url}")
+                logger.info(f"{article.title} 无法获取新闻内容: {url}")
                 continue
             if len(article.images) == 0:
-                logger.info(f"未找到图片: {url}")
+                logger.info(f"{article.title} 未找到图片: {url}")
                 continue
             if len(article.content_en) < 10:
-                logger.info(f"内容过短: {url}")
+                logger.info(f"{article.title} 内容过短: {url}")
                 continue
             if article.title_en and self.is_sensitive_word_en(article.title_en):
-                logger.info(f"标题包含敏感词: {url}")
+                logger.info(f"{article.title_en} 标题包含敏感词: {url}")
                 continue
             if article.content_en and self.is_sensitive_word_en(article.content_en):
-                logger.info(f"内容含敏感词: {url}")
+                logger.info(f"{article.content_en} 内容含敏感词: {url}")
                 continue
-            article.folder = "{:04d}".format(id)
+            article.folder = "{:04d}".format(idx)
             results.append(article)
-        logger.info(f"{self.source} 共发现 {len(results)} 条新闻。")
-        for id, article in enumerate(results):
-            article.folder = "{:04d}".format(id)
-            article.index_inner = id
-            article.index_show = id
+        logger.info(f"{self.source} 脱敏、过滤后，共发现 {len(results)} 条新闻。")
+        for idx, article in enumerate(results):
+            article.folder = "{:04d}".format(idx)
+            article.index_inner = idx
+            article.index_show = idx
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
         if len(results) > SUB_COUNT:
             results = results[:SUB_COUNT]
-            logger.info(f"{self.source}results sub array front 10")
+            logger.info(f"{self.source}results sub array {SUB_COUNT}")
         json_results = [i.to_dict() for i in results[:SUB_COUNT]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
@@ -555,9 +537,7 @@ class BbcScraper(NewsScraper):
         ]
 
     def extract_news_content(self, url) -> NewsArticle | None:
-        """提取新闻页面的标题、图片和正文内容"""
         try:
-
             # 获取页面内容
             html = self.fetch_page(url)
             if not html:
@@ -603,7 +583,7 @@ class BbcScraper(NewsScraper):
                 text = p.get_text(strip=True)
                 if text and len(text) > 10:  # 过滤短文本
                     content += text + " "
-            article = NewsArticle(source=self.source, news_type=self.news_type,show=True)
+            article = NewsArticle(source=self.source, news_type=self.news_type, show=True)
             article.title_en = title
             article.content_en = content.strip()
             article.url = url
@@ -650,14 +630,11 @@ class BbcScraper(NewsScraper):
     def crawling_news_meta(self, today) -> List[NewsArticle]:
         folder_path = self.create_folder(today)
         urls = self.extract_all_not_visit_urls(today)
-        morning_urls = get_today_morning_urls(today)
         results = []
         if urls is None:
             logger.info("crawling_news_meta无法获取初始页面内容，程序退出。")
             return results
-        for id, url in enumerate(urls):
-            if url in morning_urls:
-                logger.info(f"{self.source}跳过早上的新闻: {url}")
+        for idx, url in enumerate(urls):
             article = self.extract_news_content(url)
             if not article:
                 logger.info(f"无法获取新闻内容: {url}")
@@ -674,17 +651,17 @@ class BbcScraper(NewsScraper):
             if self.is_sensitive_word_en(article.content_en):
                 logger.info(f"内容含敏感词: {url}")
                 continue
-            article.folder = "{:04d}".format(id)
+            article.folder = "{:04d}".format(idx)
             results.append(article)
         logger.info(f"{self.source} 共发现 {len(results)} 条新闻。")
-        for id, article in enumerate(results):
-            article.folder = "{:04d}".format(id)
-            article.index_inner = id
-            article.index_show = id
+        for idx, article in enumerate(results):
+            article.folder = "{:04d}".format(idx)
+            article.index_inner = idx
+            article.index_show = idx
         json_path = os.path.join(folder_path, "%s" % NEWS_JSON_FILE_NAME)
         if len(results) > SUB_COUNT:
             results = results[:SUB_COUNT]
-            logger.info(f"{self.source}results sub array front 10")
+            logger.info(f"{self.source}results sub array {SUB_COUNT}")
         json_results = [i.to_dict() for i in results[:SUB_COUNT]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
@@ -761,6 +738,7 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
         processed_news.append(article)
     return processed_news
 
+
 def load_json_by_source(source, today):
     folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
     json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
@@ -772,7 +750,8 @@ def load_json_by_source(source, today):
     logger.info(f"{source}新闻json文{json_file_path}件加载成功,news_data={len(news_data)}")
     return json_file_path, news_data
 
-def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m%d"))-> List[NewsArticle]:
+
+def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m%d")) -> List[NewsArticle]:
     """
     处理指定日期的新闻结果文件，提取摘要并翻译内容。
 
@@ -785,7 +764,7 @@ def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m
         processed_json_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
         if os.path.exists(processed_json_path):
             logger.info(f"{processed_json_path}已存在处理后的新闻结果文件，跳过处理,直接返回")
-            _,data = load_json_by_source(source, today)
+            _, data = load_json_by_source(source, today)
             return [NewsArticle(**i) for i in data]
         processed_news = load_and_summarize_news(json_file_path)
 
@@ -846,11 +825,11 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
 
     logger.info("开始AI生成摘要")
     start = time.time()
-    articles=process_news_results(source=CHINADAILY, today=today)
-    en_articles=process_news_results(source=CHINADAILY_EN, today=today)
+    articles = process_news_results(source=CHINADAILY, today=today)
+    en_articles = process_news_results(source=CHINADAILY_EN, today=today)
     end = time.time()
     logger.info(f"AI生成摘要耗时: {end - start:.2f} 秒")
-    build_new_articles_json(today,articles, en_articles)
+    build_new_articles_json(today, articles, en_articles)
 
     logger.info("开始生成音频")
     start = time.time()
@@ -859,12 +838,14 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     end = time.time()
     logger.info(f"生成音频耗时: {end - start:.2f} 秒")
 
-def build_new_articles_path(today=datetime.now().strftime("%Y%m%d"),is_evening=False):
-    if is_evening:
-        return os.path.join(CN_NEWS_FOLDER_NAME, today,'new_articles'+EVENING_TAG+'.json')
-    return os.path.join(CN_NEWS_FOLDER_NAME, today,'new_articles.json')
 
-def build_new_articles_json(today,articles, en_articles):
+def build_new_articles_path(today=datetime.now().strftime("%Y%m%d"), is_evening=False):
+    if is_evening:
+        return os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles' + EVENING_TAG + '.json')
+    return os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles.json')
+
+
+def build_new_articles_json(today, articles, en_articles):
     new_articles = []
     idx = 1
     for article in articles:
@@ -883,7 +864,6 @@ def build_new_articles_json(today,articles, en_articles):
     with open(path, 'w', encoding='utf-8') as json_file:
         json.dump([article.to_dict() for article in new_articles], json_file, ensure_ascii=False, indent=4)
     logger.info(f"生成new_articles.json成功,path={path}")
-
 
 
 def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):
