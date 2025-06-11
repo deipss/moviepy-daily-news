@@ -627,5 +627,7 @@ if __name__ == "__main__":
     if args.rewrite:
         REWRITE = True
         logger.info("指定强制重写")
-
-    combine_videos(today=args.today)
+    try:
+        combine_videos(today=args.today)
+    except Exception as e:
+        logger.error(f"视频生成主线失败,error={e}",e,exc_info=True)
