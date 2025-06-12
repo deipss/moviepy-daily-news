@@ -1,7 +1,6 @@
 import requests
 from typing import Dict, Any
 from logging_config import logger
-
 import time
 from functools import wraps
 
@@ -11,9 +10,8 @@ def timeit(func):
     def wrapper(*args, **kwargs):
         start_time = time.time()
         result = func(*args, **kwargs)
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        logger.info(f"函数 {func.__name__} 耗时 {elapsed_time:.4f} 秒")
+        elapsed_time = time.time() - start_time
+        logger.info(f" 函数 {func.__name__} 耗时 {elapsed_time:.4f} 秒")
         return result
 
     return wrapper
@@ -28,28 +26,19 @@ def timeit_methods(cls):
 
 @timeit_methods
 class OllamaClient:
-    """
-    用于与Ollama服务进行交互的客户端类。
-    """
 
     def __init__(self, base_url: str = "http://47.120.48.245:11434"):
-        """
-        初始化Ollama客户端。
-
-        :param base_url: Ollama服务的基础URL，默认为"http://47.120.48.245:11434"
-        """
         self.base_url = base_url
 
-    def _extract_think(self, summary, is_replace_line=True):
-        # 直接找到 </think> 的位置进行截断，并清理前后空格和换行符
-        think_end = summary.find('</think>')
+    def _extract_think(self, text, is_replace_line=True):
+        think_end = text.find('</think>')
         if think_end != -1:
-            summary = summary[think_end + len('</think>'):].strip()
+            text = text[think_end + len('</think>'):].strip()
         else:
-            summary = summary.strip()
+            text = text.strip()
         if is_replace_line:
-            summary = summary.replace("\n", "")
-        return summary
+            text = text.replace("\n", "")
+        return text
 
     def _generate_text(self, prompt: str, model: str = "deepseek-r1:8b", options: Dict[str, Any] = None) -> Dict[
         str, Any]:
@@ -77,19 +66,14 @@ class OllamaClient:
                 return response.json()
             except ValueError as e:
                 # 处理 JSON 解析失败的情况
-                logger.error(f"JSON 解析失败: {e}")
+                logger.error(f"ollama JSON 解析失败: {e}", exc_info=True)
                 return {"error": "无法解析响应内容"}
         else:
             # 记录错误信息
-            logger.error(f"请求失败，状态码: {response.status_code}, 响应内容: {response.text}")
+            logger.error(f"ollama请求失败，状态码: {response.status_code}, 响应内容: {response.text}")
             return {"error": f"请求失败，状态码: {response.status_code}"}
 
     def get_models(self) -> Dict[str, Any]:
-        """
-        获取可用的模型列表。
-
-        :return: 包含模型信息的字典
-        """
         url = f"{self.base_url}/api/tags"
         response = requests.get(url)
         return response.json()
@@ -109,7 +93,7 @@ class OllamaClient:
         while cnt > 0:
             if "error" in response:
                 response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
-                logger.error(f"生成摘要失败: {response['error']},text={text}")
+                logger.error(f"生成摘要失败,last time is {cnt}: {response['error']},text={text}")
             cnt -= 1
         summary = response.get("response", "")
         summary = self._extract_think(summary)
@@ -140,8 +124,8 @@ class OllamaClient:
             summary = summary.replace("**", "")
         return summary
 
-    def generate_top_title(self,  text: str, model: str = "deepseek-r1:8b",
-                           max_tokens: int = 80,count: int = 15) -> str:
+    def generate_top_title(self, text: str, model: str = "deepseek-r1:8b",
+                           max_tokens: int = 80, count: int = 15) -> str:
         prompt = f"请从以下带有序号的新闻主题，提取出影响力最高的{count}个，过滤一些区县市的新闻，最终返回影响力最高的新闻的原始序号（用英文逗号隔开）：\n{text}"
         response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
         summary = response.get("response", "")
@@ -150,25 +134,13 @@ class OllamaClient:
         return summary
 
     def translate_to_chinese(self, text: str, model: str = "deepseek-r1:8b") -> str:
-        """
-        将英文文本翻译成中文。
 
-        :param text: 输入的英文文本
-        :param model: 使用的模型名称，默认为"deepseek-r1:8b"
-        :return: 翻译后的中文文本
-        """
-        prompt = f"请将以下英文文本翻译成中文：\n{text}"
+        prompt = f"请将以下英文文本翻译成中文,只返回中文：\n{text}"
         response = self._generate_text(prompt, model)
         return self._extract_think(response.get("response", ""))
 
     def translate_to_english(self, text: str, model: str = "deepseek-r1:8b") -> str:
-        """
-        将英文文本翻译成中文。
 
-        :param text: 输入的英文文本
-        :param model: 使用的模型名称，默认为"deepseek-r1:8b"
-        :return: 翻译后的中文文本
-        """
-        prompt = f"请将以下英文文本翻译成英文：\n{text}"
+        prompt = f"请将以下英文文本翻译成英文，只返回英文：\n{text}"
         response = self._generate_text(prompt, model)
         return self._extract_think(response.get("response", ""))
