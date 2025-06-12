@@ -10,7 +10,7 @@ from moviepy.video.fx import Loop
 from crawl_news import generate_audio
 from crawl_news import FINAL_VIDEOS_FOLDER_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, EVENING_TAG, \
     append_and_save_month_urls, AUDIO_FILE_NAME, CHINADAILY, CHINADAILY_HK, CHINADAILY_EN, NewsArticle, \
-    build_new_articles_path,ALJ
+    build_new_articles_path, ALJ
 from ollama_client import OllamaClient
 from logging_config import logger
 import sys
@@ -99,7 +99,6 @@ def add_newline_every_n_chars(text, n):
 
 def calculate_font_size_and_line_length(text, box_width, box_height, font_ratio=1.0, line_height_ratio=1.5,
                                         start_size=72):
-
     # 从最大字体开始尝试，逐步减小直到文本适应文本框
     for font_size in range(start_size, 0, -1):
         # 计算每个字符的平均宽度和行高
@@ -322,7 +321,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
             .with_position((GLOBAL_WIDTH * 0.68, GLOBAL_HEIGHT * 0.47)).resized(0.7))
 
     # 合成最终视频
-    final_clip = CompositeVideoClip([bg_clip, txt_clip, topic_txt_clip, lady], size=bg_clip.size)
+    final_clip = CompositeVideoClip([bg_clip, txt_clip, lady, topic_txt_clip], size=bg_clip.size)
     if is_preview:
         final_clip.preview()
     else:

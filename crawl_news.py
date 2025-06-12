@@ -35,6 +35,10 @@ AUDIO_FILE_NAME = "summary_audio.mp3"
 
 SUB_COUNT = 15
 
+proxies = {
+    'http': 'http://127.0.0.1:10809',
+    'https': 'http://127.0.0.1:10809',
+}
 
 @dataclass
 class NewsArticle:
@@ -128,8 +132,10 @@ class NewsScraper:
 
             headers = {"User-Agent": ua.random, "Referer": "https://www.example.com/",
                        "Accept-Language": "zh-CN,zh;q=0.9", "DNT": "1"}
-
-            response = requests.get(url, headers=headers, timeout=10)
+            if self.source in [BBC,ALJ,CFR]:
+                response = requests.get(url, headers=headers, timeout=10,proxies=proxies)
+            else:
+                response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
             return response.text
         except requests.RequestException as e:
