@@ -40,6 +40,7 @@ proxies = {
     'https': 'http://127.0.0.1:10809',
 }
 
+
 @dataclass
 class NewsArticle:
     def __init__(self,
@@ -130,10 +131,16 @@ class NewsScraper:
                 logger.info(f"{self.source}sleep {randint} seconds")
             ua = UserAgent()
 
-            headers = {"User-Agent": ua.random, "Referer": "https://www.example.com/",
-                       "Accept-Language": "zh-CN,zh;q=0.9", "DNT": "1"}
-            if self.source in [BBC,ALJ,CFR]:
-                response = requests.get(url, headers=headers, timeout=10,proxies=proxies)
+            ua_random = ua.random
+            headers = {"User-Agent": ua_random,
+                       "Accept-Language": "en-US,en;q=0.9", "DNT": "1",
+                       "Connection": "keep-alive",
+                       "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                       "Upgrade-Insecure-Requests": "1"
+                       }
+            if self.source in [BBC, ALJ, CFR]:
+                logger.info(f"use proxy ,user-agent={ua_random},url= {url}")
+                response = requests.get(url, headers=headers, timeout=10, proxies=proxies)
             else:
                 response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
@@ -972,9 +979,9 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='国内新闻',
                     sleep_time=20)
 
+    al.download_images(today)
     cs.download_images(today)
     en.download_images(today)
-    al.download_images(today)
     end = time.time()
     logger.info(f"爬取新闻耗时: {end - start:.2f} 秒")
 
