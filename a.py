@@ -40,8 +40,9 @@ proxies = {
     'https': 'http://127.0.0.1:10809',
 }
 if __name__ == '__main__':
+    url = 'https://www.aljazeera.com/'
     try:
-        url = 'https://www.aljazeera.com/'
+        print(url)
         ua = UserAgent()
 
         ua_random = ua.random
@@ -54,4 +55,4 @@ if __name__ == '__main__':
         response = requests.get(url, headers=headers, timeout=10, proxies=proxies)
         print(response.raise_for_status())
     except requests.RequestException as e:
-        logger.error(f"fetch_page请求失败: {url} 错误信息： {e}")
+        print (f"fetch_page请求失败: {url} 错误信息： {e}")
