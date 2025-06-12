@@ -1001,9 +1001,6 @@ def build_new_articles_json(today, articles, en_articles, al_articles):
     def reset_article_attributes(article):
         article.content_en = ''
         article.content_cn = ''
-        article.image_urls = None
-        article.images = None
-        article.images = None
 
     new_articles = []
     idx = 1
