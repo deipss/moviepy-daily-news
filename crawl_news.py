@@ -23,7 +23,7 @@ PROCESSED_NEWS_JSON_FILE_NAME = "processed_news_results.json"
 CN_NEWS_FOLDER_NAME = "news"
 FINAL_VIDEOS_FOLDER_NAME = "final_videos"
 EVENING_TAG = "_E"
-EVENING =False
+EVENING = False
 CHINADAILY = 'chinadaily'
 CHINADAILY_EN = 'chinadaily_en'
 CHINADAILY_HK = 'chinadaily_hk'
@@ -94,7 +94,6 @@ class NewsScraper:
 
     @abstractmethod
     def origin_url(self):
-        """返回新闻网站的原始URL"""
         pass
 
     def is_sensitive_word_cn(self, word) -> bool:
@@ -121,13 +120,8 @@ class NewsScraper:
                 logger.info(f"{self.source}sleep {randint} seconds")
             ua = UserAgent()
 
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-                "Referer": "https://www.example.com/",  # 来源页，部分网站会校验
-                "Accept-Language": "zh-CN,zh;q=0.9",
-                "DNT": "1",  # 禁止追踪（Do Not Track）
-            }
-            headers["User-Agent"] = ua.random  # 每次请求随机更换
+            headers = {"User-Agent": ua.random, "Referer": "https://www.example.com/",
+                       "Accept-Language": "zh-CN,zh;q=0.9", "DNT": "1"}
 
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
@@ -146,7 +140,7 @@ class ChinaDailyScraper(NewsScraper):
             'https://world.chinadaily.com.cn/'
         ]
 
-    def truncate_find_period(self, text: str, end_pos: 700) -> str:
+    def truncate_by_pos(self, text: str, end_pos: 700) -> str:
         if len(text) <= end_pos:
             return text
         last_period = text.find('。', end_pos)
@@ -162,6 +156,7 @@ class ChinaDailyScraper(NewsScraper):
             # 获取页面内容
             html = self.fetch_page(url)
             if not html:
+                logger.warning(f'{url} not crawl anything', source={self.source})
                 return None
 
             soup = BeautifulSoup(html, "html.parser")
@@ -183,7 +178,7 @@ class ChinaDailyScraper(NewsScraper):
                 text = p.get_text(strip=True)
                 if text and len(text) > 10:  # 过滤短文本
                     content += text + " "
-            content = self.truncate_find_period(content, 700)
+            content = self.truncate_by_pos(content, 700)
             article = NewsArticle(source=self.source, news_type=self.news_type, show=True)
             article.title = title
             article.content_cn = content.strip()
@@ -193,11 +188,10 @@ class ChinaDailyScraper(NewsScraper):
             return article
 
         except Exception as e:
-            logger.error(f"提取新闻内容出错: {e}")
+            logger.error(f"{url}提取新闻内容出错: {e}", exc_info=True)
             return None
 
     def extract_links(self, html, visited_urls, today) -> set[str]:
-        """解析 HTML，提取所有链接"""
         soup = BeautifulSoup(html, "html.parser")
         if today is None:
             today = datetime.now().strftime("%Y%m/%d")
@@ -317,7 +311,7 @@ class ChinaDailyENScraper(ChinaDailyScraper):
             'https://www.chinadaily.com.cn/business'
         ]
 
-    def truncate_find_period(self, text: str, end_pos: 4000) -> str:
+    def truncate_by_pos(self, text: str, end_pos: 4000) -> str:
         if len(text) <= end_pos:
             return text
         last_period = text.find('.', end_pos)
@@ -354,7 +348,7 @@ class ChinaDailyENScraper(ChinaDailyScraper):
                 text = p.get_text(strip=True)
                 if text and len(text) > 10:  # 过滤短文本
                     content += text + " "
-            content = self.truncate_find_period(content, 4000)
+            content = self.truncate_by_pos(content, 4000)
             article = NewsArticle(source=self.source, news_type=self.news_type, show=True)
             article.title_en = title
             article.content_en = content.strip()
@@ -382,7 +376,7 @@ class ChinaDailyHKScraper(NewsScraper):
         if last_period != -1:
             return text[:last_period + 1]
         else:
-            return text  
+            return text
 
     def extract_news_content(self, url) -> NewsArticle | None:
         try:
@@ -861,7 +855,7 @@ def build_new_articles_json(today, articles, en_articles):
         article.index_inner = idx
         idx += 1
         new_articles.append(article)
-    path = build_new_articles_path(today,EVENING)
+    path = build_new_articles_path(today, EVENING)
     with open(path, 'w', encoding='utf-8') as json_file:
         json.dump([article.to_dict() for article in new_articles], json_file, ensure_ascii=False, indent=4)
     logger.info(f"生成new_articles.json成功,path={path}")
@@ -911,13 +905,14 @@ def append_and_save_month_urls(year_month: str, new_urls: set) -> None:
 
     with open(json_file_path, 'w', encoding='utf-8') as json_file:
         json.dump(list(updated_urls), json_file, ensure_ascii=False, indent=4)
-    logger.info(f"已保存 {year_month} 的已访问 URL{len(new_urls)}个到 {json_file_path}")
+    logger.info(f"已保存 {year_month} 的已访问URL {len(new_urls)} 个到 {json_file_path}")
 
 
 import argparse
 
 if __name__ == "__main__":
     logger.info('========================start crawl==============================')
+    start = time.time()
     parser = argparse.ArgumentParser(description="新闻爬取和处理工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
     parser.add_argument("--evening", type=bool, default=False, help="是否执行晚间任务")
@@ -925,7 +920,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logger.info(f"新闻爬取和处理工具 args={args}")
 
-    # 示例：处理参数
     if args.evening:
         logger.info("执行晚间任务")
         CHINADAILY_EN = CHINADAILY_EN + EVENING_TAG
@@ -933,3 +927,4 @@ if __name__ == "__main__":
         CHINADAILY = CHINADAILY + EVENING_TAG
         EVENING = True
     auto_download_daily(today=args.today)
+    logger.info(f"========================end crawl==========time spend = {time.time() - start:.2f} second")
