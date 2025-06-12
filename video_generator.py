@@ -34,7 +34,7 @@ import time
 REWRITE = False
 EVENING = False
 
-hint_information = """ 信息来源: 1. chinadailyasia.com 2. chinadaily.com.cn 3. china.chinadaily.com.cn """
+hint_information = """ 信息来源: 0.https://www.aljazeera.com 1. chinadailyasia.com 2. chinadaily.com.cn 3. china.chinadaily.com.cn """
 
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
@@ -91,16 +91,6 @@ def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MA
 
 
 def add_newline_every_n_chars(text, n):
-    """
-    每隔固定的字数在文本中添加换行符
-
-    参数:
-    text (str): 需要添加换行符的长文本
-    n (int): 指定的固定字数
-
-    返回:
-    str: 添加换行符后的文本
-    """
     if n <= 0:
         return text
 
@@ -109,20 +99,7 @@ def add_newline_every_n_chars(text, n):
 
 def calculate_font_size_and_line_length(text, box_width, box_height, font_ratio=1.0, line_height_ratio=1.5,
                                         start_size=72):
-    """
-    计算适合文本框的字体大小和每行字数
 
-    参数:
-    text (str): 要显示的文本
-    box_width (int): 文本框宽度（像素）
-    box_height (int): 文本框高度（像素）
-    font_ratio (float): 字体大小与平均字符宽度的比例系数
-    line_height_ratio (float): 行高与字体大小的比例系数
-    start_size (int): 开始尝试的最大字体大小
-
-    返回:
-    dict: 包含计算结果的字典，键为 'font_size' 和 'chars_per_line'
-    """
     # 从最大字体开始尝试，逐步减小直到文本适应文本框
     for font_size in range(start_size, 0, -1):
         # 计算每个字符的平均宽度和行高
@@ -160,16 +137,6 @@ def truncate_after_find_period(text: str, end_pos: int = 400) -> str:
 
 
 def calculate_segment_times(duration, num_segments):
-    """
-    将总时长分成若干段，并计算每段的开始和结束时间。
-
-    参数:
-    duration (float): 总时长（秒）
-    num_segments (int): 分段数量
-
-    返回:
-    list: 每段的开始和结束时间列表，格式为 [(start_time, end_time), ...]
-    """
     segment_duration = duration / num_segments
     segment_times = []
     for i in range(num_segments):
