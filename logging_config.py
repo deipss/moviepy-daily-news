@@ -21,7 +21,7 @@ def setup_logger(log_file='app.log', log_level=logging.INFO):
 
         # 定义日志格式
         formatter = logging.Formatter(
-            '%(asctime)s-%(levelname)s-%(message)s'
+            '%(asctime)s - %(levelname)s - %(message)s'
         )
         file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)

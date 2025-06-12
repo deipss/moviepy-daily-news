@@ -559,7 +559,7 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"))
     return data
 
 
-def dtest_generate_all():
+def test_generate_all():
     today = '20250604'
     generate_all_news_video(today=today)
     generate_all_news_video(today=today)
@@ -570,12 +570,12 @@ def dtest_generate_all():
         '', today)
 
 
-def dtest_generate_video_introduction():
+def test_generate_video_introduction():
     REWRITE = True
     generate_video_introduction(today='20250606', is_preview=True)
 
 
-def dtest_video_text_align():
+def test_video_text_align():
     list = [
         'news/20250604/chinadaily/0000/683fd3d86b8efd9fa6284ef8_m.png',
         'news/20250604/chinadaily/0000/683fd3d96b8efd9fa6284efa_m.jpg',
@@ -632,6 +632,6 @@ if __name__ == "__main__":
         REWRITE = True
         logger.info("指定强制重写")
     try:
-        combine_videos(today=args.today)
+        1/0
     except Exception as e:
-        logger.error(f"视频生成主线失败,error={e}", e, exc_info=True)
+        logger.error(f"视频生成主线失败,error={e}", exc_info=True)
