@@ -10,7 +10,7 @@ from moviepy.video.fx import Loop
 from crawl_news import generate_audio
 from crawl_news import FINAL_VIDEOS_FOLDER_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, EVENING_TAG, \
     append_and_save_month_urls, AUDIO_FILE_NAME, CHINADAILY, CHINADAILY_HK, CHINADAILY_EN, NewsArticle, \
-    build_new_articles_path
+    build_new_articles_path,ALJ
 from ollama_client import OllamaClient
 from logging_config import logger
 import sys
@@ -630,6 +630,7 @@ if __name__ == "__main__":
         CHINADAILY = CHINADAILY + EVENING_TAG
         CHINADAILY_EN = CHINADAILY_EN + EVENING_TAG
         CHINADAILY_HK = CHINADAILY_HK + EVENING_TAG
+        ALJ = ALJ + EVENING_TAG
 
     if args.rewrite:
         REWRITE = True
