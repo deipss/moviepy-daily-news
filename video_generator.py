@@ -600,18 +600,21 @@ def test_generate_video_end():
 
 import argparse
 
-if __name__ == "__main__":
-    logger.info('========================start generation==============================')
 
+def print_init_parameters():
+    logger.info('========================start generation==============================')
     logger.info(
         f"\nGLOBAL_WIDTH:{GLOBAL_WIDTH}\nGLOBAL_HEIGHT:{GLOBAL_HEIGHT}\n W_H_RADIO:{W_H_RADIO}\n  FPS:{FPS}\n  BACKGROUND_IMAGE_PATH:{BACKGROUND_IMAGE_PATH}\nGAP:{GAP}\nINNER_WIDTH:{INNER_WIDTH}\nINNER_HEIGHT:{INNER_HEIGHT}")
-
     if not os.path.exists('temp'):
         os.mkdir('temp')
     if not os.path.exists('videos'):
         os.mkdir('videos')
     if not os.path.exists('final_videos'):
         os.mkdir('final_videos')
+
+
+if __name__ == "__main__":
+    print_init_parameters()
 
     parser = argparse.ArgumentParser(description="新闻视频生成工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
@@ -632,6 +635,6 @@ if __name__ == "__main__":
         REWRITE = True
         logger.info("指定强制重写")
     try:
-        1/0
+        combine_videos(args.today)
     except Exception as e:
         logger.error(f"视频生成主线失败,error={e}", exc_info=True)
