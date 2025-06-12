@@ -783,7 +783,8 @@ class ALJScraper(NewsScraper):
             logger.info(f"{base_url} 共发现 {len(urls)} 个链接。")
 
         for url in visited_urls:
-            full_urls.append("https://www.aljazeera.com" + url)
+            if '/liveblog' not in url :
+                full_urls.append("https://www.aljazeera.com" + url)
         logger.info(f"去重,拼接后共发现 {len(full_urls)} 个链接。")
         return full_urls
 
