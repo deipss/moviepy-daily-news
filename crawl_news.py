@@ -36,7 +36,7 @@ SUB_COUNT = 15
 
 PROXY = {
     'http': 'http://127.0.0.1:10809',
-    'https': 'https://127.0.0.1:10809',
+    'https': 'http://127.0.0.1:10809',
 }
 
 
@@ -181,8 +181,9 @@ class NewsScraper:
         try:
             if self.sleep_time > 0:
                 randint = random.randint(self.sleep_time // 2, self.sleep_time)
+                logger.info(f"{self.source} {url} sleep {randint} seconds start")
                 time.sleep(randint)
-                logger.info(f"{self.source} sleep {randint} seconds")
+                logger.info(f"{self.source} {url} sleep {randint} seconds done")
             ua = UserAgent()
 
             ua_random = ua.random
