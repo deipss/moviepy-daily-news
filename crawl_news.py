@@ -871,29 +871,16 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
     for news_item in news_data:
         article = NewsArticle(**news_item)
 
-        # 翻译英文内容为中文
-        if article.content_en:
-            # 如果文本过长，截断为最大长度
-            max_length = 5000  # 假设 API 支持的最大长度为 5000 字符
-            if len(article.content_en) > max_length:
-                # 找到最后一个英文句号的位置
-                last_period_index = article.content_en.rfind('.', 0, max_length)
-                if last_period_index != -1:
-                    article.content_en = article.content_en[:last_period_index + 1]
-                else:
-                    article.content_en = article.content_en[:max_length]
-            translated_content = \
-                ollama_client.translate_to_chinese(text=article.content_en)
-            article.content_cn = translated_content
-
         if article.title_en:
             article.title = ollama_client.translate_to_chinese(text=article.title_en)
-        if article.title and not article.title_en:
-            article.title_en = ollama_client.translate_to_english(text=article.title)
+        # if article.title and not article.title_en:
+        #     article.title_en = ollama_client.translate_to_english(text=article.title)
 
         # 提取中文摘要
-        summary = ollama_client.generate_summary(article.content_cn, max_tokens=150)
-        article.summary = summary
+        if article.content_cn:
+            article.summary = ollama_client.generate_summary(article.content_cn, max_tokens=150)
+        if  article.content_en:
+            article.summary = ollama_client.generate_summary_cn(article.content_en, max_tokens=150)
         logger.info(f"{article.url} - {article.title} - 补充完成")
         processed_news.append(article)
     return processed_news
