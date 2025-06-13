@@ -34,6 +34,11 @@ AUDIO_FILE_NAME = "summary_audio.mp3"
 
 SUB_COUNT = 15
 
+PROXY = {
+    'http': 'http://127.0.0.1:10809',
+    'https': 'https://127.0.0.1:10809',
+}
+
 
 @dataclass
 class NewsArticle:
@@ -80,14 +85,6 @@ class NewsArticle:
 class NewsScraper:
 
     def __init__(self, source_url: str, source: str, news_type: str, sleep_time: int = 0):
-        """
-        初始化新闻对象.
-
-        参数:
-        source_url (str): 新闻来源的URL.
-        source (str): 新闻的来源名称.
-        news_type (str): 新闻的类型.
-        """
         self.source_url = source_url
         self.source = source
         self.news_type = news_type
@@ -196,7 +193,7 @@ class NewsScraper:
                        "Upgrade-Insecure-Requests": "1"
                        }
 
-            response = requests.get(url, headers=headers, timeout=10)
+            response = requests.get(url, headers=headers, timeout=10, proxies=PROXY)
             response.raise_for_status()
             return response.text
         except requests.RequestException as e:
@@ -565,7 +562,7 @@ def do_download_images(article, today_path):
                            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
                            "Upgrade-Insecure-Requests": "1"
                            }
-                response = requests.get(image_url, headers=headers, timeout=7)
+                response = requests.get(image_url, headers=headers, timeout=7, proxies=PROXY)
                 response.raise_for_status()
                 with open(image_path, "wb") as image_file:
                     image_file.write(response.content)
