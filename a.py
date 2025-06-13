@@ -54,7 +54,7 @@ if __name__ == '__main__':
                    "Upgrade-Insecure-Requests": "1"
                    }
         response = requests.get(url, headers=headers, timeout=10, proxies=proxies)
-        print(response.raise_for_status())
+        response.raise_for_status()
         print(response.text)
     except requests.RequestException as e:
         print (f"fetch_page请求失败: {url} 错误信息： {e}")

@@ -10,7 +10,7 @@ from moviepy.video.fx import Loop
 from crawl_news import generate_audio
 from crawl_news import FINAL_VIDEOS_FOLDER_NAME, PROCESSED_NEWS_JSON_FILE_NAME, CN_NEWS_FOLDER_NAME, EVENING_TAG, \
     append_and_save_month_urls, AUDIO_FILE_NAME, CHINADAILY, CHINADAILY_HK, CHINADAILY_EN, NewsArticle, \
-    build_new_articles_path, ALJ
+    build_new_articles_path, ALJ,BBC
 from ollama_client import OllamaClient
 from logging_config import logger
 import sys
@@ -449,7 +449,6 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
             logger.warning(f"{article.source}{article.folder}  视频已存在，跳过生成,path={video_output_path}")
             video_output_paths.append(video_output_path)
             continue
-        logger.info(f"{article.folder}{article.title}新闻开始生成")
 
         audio_output_path = os.path.join(dir_path, AUDIO_FILE_NAME)
         img_list = []
@@ -601,6 +600,7 @@ if __name__ == "__main__":
         CHINADAILY_EN = CHINADAILY_EN + EVENING_TAG
         CHINADAILY_HK = CHINADAILY_HK + EVENING_TAG
         ALJ = ALJ + EVENING_TAG
+        BBC = BBC + EVENING_TAG
 
     if args.rewrite:
         REWRITE = True

@@ -785,7 +785,7 @@ class ALJScraper(NewsScraper):
             logger.info(f"{base_url} 共发现 {len(urls)} 个链接。")
 
         for url in visited_urls:
-            if '/liveblog' not in url :
+            if '/liveblog' not in url:
                 full_urls.append("https://www.aljazeera.com" + url)
         logger.info(f"去重,拼接后共发现 {len(full_urls)} 个链接。")
         return full_urls
@@ -881,7 +881,7 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
         # 提取中文摘要
         if article.content_cn:
             article.summary = ollama_client.generate_summary(article.content_cn, max_tokens=150)
-        if  article.content_en:
+        if article.content_en:
             article.summary = ollama_client.generate_summary_cn(article.content_en, max_tokens=150)
         logger.info(f"{article.url} - {article.title} - 补充完成")
         processed_news.append(article)
@@ -964,31 +964,34 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     cs = ChinaDailyScraper(source_url='https://cn.chinadaily.com.cn/', source=CHINADAILY, news_type='国内新闻',
                            sleep_time=4)
 
-    en = ChinaDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='国内新闻',
+    en = ChinaDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='国外新闻',
                              sleep_time=4)
-    al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='国内新闻',
+    al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='国外新闻',
                     sleep_time=20)
+    bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='国外新闻',
+                     sleep_time=20)
 
     al.download_images(today)
     cs.download_images(today)
     en.download_images(today)
+    bbc.download_images(today)
     end = time.time()
     logger.info(f"爬取新闻耗时: {end - start:.2f} 秒")
 
     logger.info("开始AI生成摘要")
     start = time.time()
+    bbc_articles = process_news_results(source=BBC, today=today)
     articles = process_news_results(source=CHINADAILY, today=today)
     en_articles = process_news_results(source=CHINADAILY_EN, today=today)
     al_articles = process_news_results(source=ALJ, today=today)
     end = time.time()
     logger.info(f"AI生成摘要耗时: {end - start:.2f} 秒")
-    build_new_articles_json(today, articles, en_articles, al_articles)
+    build_new_articles_json(today, articles, en_articles, al_articles, bbc_articles)
 
     logger.info("开始生成音频")
     start = time.time()
-    generate_all_news_audio(source=CHINADAILY, today=today)
-    generate_all_news_audio(source=CHINADAILY_EN, today=today)
-    generate_all_news_audio(source=ALJ, today=today)
+    for i in [BBC, ALJ, CHINADAILY, CHINADAILY_EN]:
+        generate_all_news_audio(source=i, today=today)
     end = time.time()
     logger.info(f"生成音频耗时: {end - start:.2f} 秒")
 
@@ -1000,13 +1003,18 @@ def build_new_articles_path(today=datetime.now().strftime("%Y%m%d"), is_evening=
     return os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles.json')
 
 
-def build_new_articles_json(today, articles, en_articles, al_articles):
+def build_new_articles_json(today, articles, en_articles, al_articles, bbc_articles):
     def reset_article_attributes(article):
         article.content_en = ''
         article.content_cn = ''
 
     new_articles = []
     idx = 1
+    for article in bbc_articles:
+        reset_article_attributes(article)
+        article.index_inner = idx
+        idx += 1
+        new_articles.append(article)
     for article in al_articles:
         reset_article_attributes(article)
         article.index_inner = idx
@@ -1101,6 +1109,7 @@ if __name__ == "__main__":
         CHINADAILY_HK = CHINADAILY_HK + EVENING_TAG
         CHINADAILY = CHINADAILY + EVENING_TAG
         ALJ = ALJ + EVENING_TAG
+        BBC = BBC + EVENING_TAG
         EVENING = True
     auto_download_daily(today=args.today)
     logger.info(f"========================end crawl==========time spend = {time.time() - start:.2f} second")
