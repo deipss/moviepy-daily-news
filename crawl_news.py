@@ -121,12 +121,12 @@ class NewsScraper:
                 logger.info(f" {self.source} 跳过本月已访问过的新闻: {url}")
                 continue
             article = self.extract_news_content(url)
-            article.folder = "{:04d}".format(idx)
-            article.index_inner = idx
-            article.index_show = idx
             if not article:
                 logger.warning(f"无法获取新闻内容: {url}")
                 continue
+            article.folder = "{:04d}".format(idx)
+            article.index_inner = idx
+            article.index_show = idx
             if len(article.images) == 0:
                 logger.warning(f"{article.source} 未找到图片: {url}")
                 continue
@@ -617,7 +617,7 @@ class RTScraper(NewsScraper):
             return article
 
         except Exception as e:
-            logger.error(f" {self.source} 提取新闻内容出错 : {e}", exc_info=True)
+            logger.error(f" {self.source} 提取新闻{url}内容出错 : {e}", exc_info=True)
             return None
 
     def extract_links(self, html, visited_urls, today) -> set[str]:
