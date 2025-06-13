@@ -709,7 +709,9 @@ class ALJScraper(NewsScraper):
 
     def origin_url(self) -> list[str]:
         return [
-            'https://www.aljazeera.com/'
+            'https://www.aljazeera.com/',
+            'https://www.aljazeera.com/us-canada/',
+            'https://www.aljazeera.com/asia-pacific/',
         ]
 
     def extract_news_content(self, url) -> NewsArticle | None:
