@@ -40,7 +40,8 @@ proxies = {
     'https': 'http://127.0.0.1:10809',
 }
 if __name__ == '__main__':
-    url = 'https://www.aljazeera.com/'
+    # url = 'https://www.aljazeera.com/'
+    url = 'https://www.bbc.com'
     try:
         print(url)
         ua = UserAgent()

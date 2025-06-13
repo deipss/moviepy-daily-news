@@ -614,7 +614,7 @@ class BbcScraper(NewsScraper):
         urls = set()
         for a_tag in soup.find_all("a", href=True):
             href = a_tag["href"]
-            if href not in visited_urls:
+            if href not in visited_urls and '/live/' not in href:
                 visited_urls.add(href)
                 urls.add(href)
         return urls
