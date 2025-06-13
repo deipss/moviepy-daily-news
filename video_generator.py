@@ -34,7 +34,11 @@ import time
 REWRITE = False
 EVENING = False
 
-hint_information = """ 信息来源: 0.https://www.aljazeera.com 1. chinadailyasia.com 2. chinadaily.com.cn 3. china.chinadaily.com.cn """
+hint_information = """信息来源: 
+0.https://www.aljazeera.com 
+1. chinadailyasia.com 
+2. chinadaily.com.cn 
+3. china.chinadaily.com.cn """
 
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
