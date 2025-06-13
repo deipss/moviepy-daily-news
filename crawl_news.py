@@ -910,5 +910,8 @@ if __name__ == "__main__":
         BBC = BBC + EVENING_TAG
         RT = RT + EVENING_TAG
         EVENING = True
-    auto_download_daily(today=args.today)
+    try:
+        auto_download_daily(today=args.today)
+    except  Exception as e:
+        logger.error(f"auto_download_daily error:{e}")
     logger.info(f"========================end crawl==========time spend = {time.time() - start:.2f} second")
