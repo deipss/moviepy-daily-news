@@ -128,7 +128,7 @@ class NewsScraper:
             if self.sleep_time > 0:
                 randint = random.randint(self.sleep_time // 2, self.sleep_time)
                 time.sleep(randint)
-                logger.info(f"{self.source}sleep {randint} seconds")
+                logger.info(f"{self.source} sleep {randint} seconds")
             ua = UserAgent()
 
             ua_random = ua.random
@@ -469,7 +469,7 @@ class ChinaDailyHKScraper(NewsScraper):
         for url in visited_urls:
             if "/article" in url and today in url:
                 full_urls.append("https://www.chinadailyasia.com/hk" + url)
-        logger.info(f"去重,拼接后共发现 {len(full_urls)} 个链接。")
+        logger.info(f" {self.source} 去重,拼接后共发现 {len(full_urls)} 个链接。")
         return full_urls
 
     def crawling_news_meta(self, today) -> List[NewsArticle]:
@@ -637,7 +637,7 @@ class BbcScraper(NewsScraper):
         for url in visited_urls:
             if "/articles" in url:
                 full_urls.append("https://www.bbc.com" + url)
-        logger.info(f"去重,拼接后共发现 {len(full_urls)} 个链接。")
+        logger.info(f" {self.source} 去重,拼接后共发现 {len(full_urls)} 个链接。")
         return full_urls
 
     def crawling_news_meta(self, today) -> List[NewsArticle]:
@@ -787,7 +787,7 @@ class ALJScraper(NewsScraper):
         for url in visited_urls:
             if '/liveblog' not in url:
                 full_urls.append("https://www.aljazeera.com" + url)
-        logger.info(f"去重,拼接后共发现 {len(full_urls)} 个链接。")
+        logger.info(f" {self.source} 去重,拼接后共发现 {len(full_urls)} 个链接。")
         return full_urls
 
     def crawling_news_meta(self, today) -> List[NewsArticle]:
@@ -971,10 +971,10 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='国外新闻',
                      sleep_time=20)
 
+    bbc.download_images(today)
     al.download_images(today)
     cs.download_images(today)
     en.download_images(today)
-    bbc.download_images(today)
     end = time.time()
     logger.info(f"爬取新闻耗时: {end - start:.2f} 秒")
 

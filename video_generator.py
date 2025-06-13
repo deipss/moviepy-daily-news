@@ -35,10 +35,10 @@ REWRITE = False
 EVENING = False
 
 hint_information = """信息来源: 
-0.https://www.aljazeera.com 
-1. chinadailyasia.com 
-2. chinadaily.com.cn 
-3. china.chinadaily.com.cn """
+1. chinadaily.com.cn [中国日报国际版] 
+2. https://www.aljazeera.com [中东半岛电视台]
+3. https://www.bbc.com [英国广播公司] 
+4. https://www.rt.com/ [今日俄罗斯电视台]"""
 
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
