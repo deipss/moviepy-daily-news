@@ -825,10 +825,10 @@ def build_new_articles_json(today, articles, en_articles, al_articles, bbc_artic
         article.index_inner = idx
         idx += 1
         new_articles.append(article)
-    path = build_new_articles_path(today, EVENING)
+    path = build_new_articles_path(today)
     with open(path, 'w', encoding='utf-8') as json_file:
         json.dump([article.to_dict() for article in new_articles], json_file, ensure_ascii=False, indent=4)
-    logger.info(f"生成new_articles.json成功,path={path}")
+    logger.info(f"生成new_articles.json{TIMES_TAG}成功,path={path}")
 
 
 def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):
