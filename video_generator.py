@@ -397,7 +397,6 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     for i in range(len(all_paths)):
         video_paths.append(all_paths[i])
     video_paths.append(generate_video_end())
-    logger.info(f"生成当前的JSON文件...")
     logger.info(f"根据子视频生成主视频并整合...")
     final_path = build_today_final_video_path(today)
     logger.info(f"视频保存在={final_path}")
@@ -405,6 +404,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
 
     end_time = time.time()  # 结束计时
     elapsed_time = end_time - start_time
+    logger.info(f"生成当前的JSON文件...")
     save_today_news_json(topics, today)
     logger.info(f"视频整合生成总耗时: {elapsed_time:.2f} 秒")
 
@@ -424,15 +424,15 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
     for i, news_item in enumerate(news_data, start=1):
         article = NewsArticle(**news_item)
         dir_path = os.path.join(CN_NEWS_FOLDER_NAME, today, article.source, article.folder)
-        logger.info(f"{article.source}{article.folder}{article.show}{article.title}   新闻正在处理...")
+        logger.info(f" {article.source} {article.folder} {article.show} {article.title}   新闻正在处理...")
         if not article.show:
-            logger.warning(f"{article.source}{article.folder}{article.title}新闻已隐藏，跳过生成")
+            logger.warning(f" {article.source} {article.folder} {article.title} 新闻已隐藏，跳过生成")
             continue
 
         # 新增逻辑：将摘要转换为音频并保存
         video_output_path = os.path.join(dir_path, VIDEO_FILE_NAME)
         if os.path.exists(video_output_path) and not REWRITE:
-            logger.warning(f"{article.source}{article.folder}  视频已存在，跳过生成,path={video_output_path}")
+            logger.warning(f" {article.source} {article.folder} {article.title}  视频已存在，跳过生成,path={video_output_path}")
             video_output_paths.append(video_output_path)
             continue
 
