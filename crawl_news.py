@@ -22,8 +22,7 @@ NEWS_JSON_FILE_NAME = "news_results.json"
 PROCESSED_NEWS_JSON_FILE_NAME = "news_results_processed.json"
 CN_NEWS_FOLDER_NAME = "news"
 FINAL_VIDEOS_FOLDER_NAME = "final_videos"
-EVENING_TAG = "_E"
-EVENING = False
+TIMES_TAG: int = 0
 CHINADAILY = 'chinadaily'
 CHINADAILY_EN = 'chinadaily_en'
 RT = 'rt'
@@ -115,7 +114,7 @@ class NewsScraper:
         if urls is None:
             logger.info(f" {self.source}无法获取初始页面内容，程序退出。")
             return results
-        logger.info(f"{self.source}  results sub array {SUB_COUNT}")
+        logger.info(f"{self.source} has  {len(urls)}  urls,now extract first {SUB_COUNT}")
         for idx, url in enumerate(urls[:SUB_COUNT]):
             if url in month_urls:
                 logger.info(f" {self.source} 跳过本月已访问过的新闻: {url}")
@@ -163,7 +162,7 @@ class NewsScraper:
 
     def is_sensitive_word_cn(self, word) -> bool:
         cnt = 0
-        sensitive_words = ["平", "%%", "习", "&&&&&#", "近", "县", "杀", "总书记"]  # 去除了重复项
+        sensitive_words = ["平", "%%%", "习", "县", "杀", "总书记", "近"]  # 去除了重复项
         for sensitive_word in sensitive_words:
             if sensitive_word in word:
                 cnt += 1
@@ -365,7 +364,6 @@ class BbcScraper(NewsScraper):
             'https://www.bbc.com/news',
             'https://www.bbc.com/business',
             'https://www.bbc.com/innovation',
-            'https://www.bbc.com/arts',
             'https://www.bbc.com/future-planet',
             'https://www.bbc.com'
         ]
@@ -405,7 +403,6 @@ class BbcScraper(NewsScraper):
                             max_width_entry = max(image_data, key=lambda x: x[1])
                             highest_res_url = max_width_entry[0]
                             image_urls.append(highest_res_url)
-                            logger.info(f"最高分辨率图片 URL: {highest_res_url}")
                         else:
                             logger.warning("未找到有效图片 URL")
 
@@ -421,6 +418,7 @@ class BbcScraper(NewsScraper):
             article.url = url
             article.image_urls = image_urls
             article.images = [os.path.basename(i).replace(".webp", "") for i in image_urls]
+            logger.info(f"{self.source} {title} 新闻内容提取找到了{len(article.images)}图片")
             return article
 
         except Exception as e:
@@ -762,13 +760,13 @@ import time
 def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     logger.info("开始爬取新闻")
     start = time.time()
-    rt = RTScraper(source_url='https://www.rt.com/', source=RT, news_type='国际新闻',
+    rt = RTScraper(source_url='https://www.rt.com/', source=RT, news_type='今日俄罗斯',
                    sleep_time=4)
-    en = ChinaDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='国外新闻',
+    en = ChinaDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='中国日报',
                              sleep_time=4)
-    al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='国际新闻',
+    al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='中东半岛',
                     sleep_time=20)
-    bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='国际新闻',
+    bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='英国广播电视台',
                      sleep_time=20)
 
     bbc.do_crawl_news(today)
@@ -796,11 +794,8 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     logger.info(f"生成音频耗时: {end - start:.2f} 秒")
 
 
-def build_new_articles_path(today=datetime.now().strftime("%Y%m%d"), is_evening=False):
-    if is_evening:
-        logger.info(f"build_new_articles_path,is_evening={is_evening}")
-        return os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles' + EVENING_TAG + '.json')
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles.json')
+def build_new_articles_path(today=datetime.now().strftime("%Y%m%d")):
+    return os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles' + str(TIMES_TAG) + '.json')
 
 
 def build_new_articles_json(today, articles, en_articles, al_articles, bbc_articles):
@@ -898,19 +893,16 @@ if __name__ == "__main__":
     start = time.time()
     parser = argparse.ArgumentParser(description="新闻爬取和处理工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
-    parser.add_argument("--evening", type=bool, default=False, help="是否执行晚间任务")
+    parser.add_argument("--times", type=int, default=0, help="执行次数")
     parser.add_argument("--rewrite", type=bool, default=False, help="是否重写")
     args = parser.parse_args()
     logger.info(f"新闻爬取和处理工具 args={args}")
 
-    if args.evening:
-        logger.info("执行晚间任务")
-        CHINADAILY_EN = CHINADAILY_EN + EVENING_TAG
-        CHINADAILY = CHINADAILY + EVENING_TAG
-        ALJ = ALJ + EVENING_TAG
-        BBC = BBC + EVENING_TAG
-        RT = RT + EVENING_TAG
-        EVENING = True
+    CHINADAILY_EN = CHINADAILY_EN + str(TIMES_TAG)
+    CHINADAILY = CHINADAILY + str(TIMES_TAG)
+    ALJ = ALJ + str(TIMES_TAG)
+    BBC = BBC + str(TIMES_TAG)
+    RT = RT + str(TIMES_TAG)
     try:
         auto_download_daily(today=args.today)
     except  Exception as e:

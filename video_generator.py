@@ -24,19 +24,17 @@ W_H_RADIO = GLOBAL_WIDTH / GLOBAL_HEIGHT
 W_H_RADIO = "{:.2f}".format(W_H_RADIO)
 FPS = 40
 MAIN_BG_COLOR = "#FF9900"
-VIDEO_FILE_NAME = "video.mp4"
+VIDEO_FILE_NAME = "final.mp4"
 
 import time
 
 REWRITE = False
-EVENING = False
+TIMES_TAG = 0
 
 hint_information = """信息来源: 1. chinadaily.com.cn [中国日报国际版] 2. https://www.aljazeera.com [中东半岛电视台] 3. https://www.bbc.com [英国广播公司] 4. https://www.rt.com/ [今日俄罗斯电视台]"""
 
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
-    if EVENING:
-        return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction_evening.mp4")
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp4")
 
 
@@ -49,8 +47,6 @@ def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):
 
 
 def build_today_introduction_audio_path(today=datetime.now().strftime("%Y%m%d")):
-    if EVENING:
-        return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction_evening.mp3")
     return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp3")
 
 
@@ -59,9 +55,7 @@ def build_today_end_audio_path():
 
 
 def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
-    if EVENING:
-        return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + EVENING_TAG + "_" + VIDEO_FILE_NAME)
-    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + VIDEO_FILE_NAME)
+    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(TIMES_TAG) + "_" + VIDEO_FILE_NAME)
 
 
 def build_today_bg_music_path():
@@ -142,8 +136,9 @@ def calculate_segment_times(duration, num_segments):
     return segment_times
 
 
-def generate_three_layout_video(audio_path, image_list, title, summary, output_path, index, is_preview=False):
-    title = "" + index + " " + title
+def generate_three_layout_video(audio_path, image_list, title, summary, output_path, index, is_preview=False,
+                                news_type=""):
+    title = "" + index + " " + news_type + " " + title
     # 加载背景和音频
     bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(252, 254, 254))  # 白色背景
     try:
@@ -238,8 +233,6 @@ def get_full_date(today=datetime.now()):
     # 获取星期几
     weekday_map = ["一", "二", "三", "四", "五", "六", "日"]
     weekday = f"星期{weekday_map[today.weekday()]}"
-    if EVENING:
-        return "今天是{}, \n农历{}, \n{},欢迎收看晚间【今日快电】".format(solar_date, lunar_date, weekday)
     return "今天是{}, \n农历{}, \n{},欢迎收看【今日快电】".format(solar_date, lunar_date, weekday)
 
 
@@ -248,7 +241,7 @@ def get_weekday_color():
     weekday_color_map = {
         0: 'Red',  # 周一 - 红色
         1: 'Orange',  # 周二 - 橙色
-        2: 'Yellow',  # 周三 - 黄色
+        2: 'Black',  # 周三 - 黑色
         3: 'Green',  # 周四 - 绿色
         4: 'Blue',  # 周五 - 蓝色
         5: 'Purple',  # 周六 - 紫色
@@ -417,7 +410,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
 
 
 def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
-    json_file_path = build_new_articles_path(today, EVENING)
+    json_file_path = build_new_articles_path(today)
 
     if not os.path.exists(json_file_path):
         logger.warning(f"新闻json文件不存在,path={json_file_path}")
@@ -454,7 +447,8 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
             summary=article.summary,
             title=article.title,
             index=str(idx),
-            is_preview=False
+            is_preview=False,
+            news_type=article.news_type
         )
         if generated_result:
             idx += 1
@@ -475,7 +469,7 @@ def load_json_by_source(source, today):
 
 
 def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
-    json_file_path = build_new_articles_path(today, EVENING)
+    json_file_path = build_new_articles_path(today)
 
     if not os.path.exists(json_file_path):
         logger.warning(f"新闻json文件不存在,path={json_file_path}")
@@ -484,7 +478,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     urls = []
-    titles = [hint_information]
+    titles = [str(TIMES_TAG) + hint_information]
     if news_data:
         for i in news_data:
             urls.append(i['url'])
@@ -495,14 +489,12 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
 
     if os.path.exists(json_file_path):
         json_data = json.load(open(json_file_path, 'r', encoding='utf-8'))
-        topic = "###" + today + " |" + topic.replace("\n", "|")
+        topic = '         ' + today + '_' + TIMES_TAG + " |" + topic.replace("\n", "|")
         json_data['topic'] += topic
-        [json_data['urls'].append(i) for i in urls]
         [json_data['titles'].append(i) for i in titles]
     else:
         json_data = {
             'topic': today + "|" + topic.replace("\n", "|"),
-            'urls': urls,
             'titles': titles
         }
     json.dump(json_data, open(json_file_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=4)
@@ -512,7 +504,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
     client = OllamaClient()
-    json_file_path = build_new_articles_path(today, EVENING)
+    json_file_path = build_new_articles_path(today)
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     txt = ";".join([news_item['title'] if news_item['show'] else '' for news_item in news_data])
@@ -580,20 +572,17 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="新闻视频生成工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
-    parser.add_argument("--evening", type=bool, default=False, help="是否执行晚间任务")
+    parser.add_argument("--times", type=int, default=0, help="执行次数")
     parser.add_argument("--rewrite", type=bool, default=False, help="是否重写")
     args = parser.parse_args()
     logger.info(f"新闻视频生成工具 参数args={args}")
+    TIMES_TAG = args.times
 
-    # 示例：处理参数
-    if args.evening:
-        logger.info("执行晚间任务")
-        EVENING = True
-        CHINADAILY = CHINADAILY + EVENING_TAG
-        CHINADAILY_EN = CHINADAILY_EN + EVENING_TAG
-        RT = RT + EVENING_TAG
-        ALJ = ALJ + EVENING_TAG
-        BBC = BBC + EVENING_TAG
+    CHINADAILY_EN = CHINADAILY_EN + str(TIMES_TAG)
+    CHINADAILY = CHINADAILY + str(TIMES_TAG)
+    ALJ = ALJ + str(TIMES_TAG)
+    BBC = BBC + str(TIMES_TAG)
+    RT = RT + str(TIMES_TAG)
 
     if args.rewrite:
         REWRITE = True
