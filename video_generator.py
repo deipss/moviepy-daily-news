@@ -35,7 +35,7 @@ hint_information = """信息来源: 1. https://www.aljazeera.com [中东半岛�
 
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp4")
+    return os.path.join(CN_NEWS_FOLDER_NAME, today, str(TIMES_TAG) + "introduction.mp4")
 
 
 def build_end_path():
