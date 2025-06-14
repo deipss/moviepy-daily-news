@@ -133,13 +133,13 @@ class NewsScraper:
                 logger.warning(f"{article.source} 标题包含敏感词: {url}")
                 continue
             if article.content_cn and self.is_sensitive_word_cn(article.content_cn):
-                logger.warning(f"{article.source} 内容包含敏感词: {url}")
+                logger.warning(f"{article.source} 中文内容包含敏感词: {url}")
                 continue
             if article.title_en and self.is_sensitive_word_en(article.title_en):
                 logger.warning(f"{article.title_en} 标题包含敏感词: {url}")
                 continue
             if article.content_en and self.is_sensitive_word_en(article.content_en):
-                logger.warning(f"{article.source} 内容包含敏感词: {url}")
+                logger.warning(f"{article.source} 英文内容包含敏感词: {url}")
                 continue
             if article.content_cn and len(article.content_cn) < 8:
                 logger.warning(f"{article.source} 内容过短: {url}")
