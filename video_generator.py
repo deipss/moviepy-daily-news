@@ -489,7 +489,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
 
     if os.path.exists(json_file_path):
         json_data = json.load(open(json_file_path, 'r', encoding='utf-8'))
-        topic = '         ' + today + '_' + TIMES_TAG + " |" + topic.replace("\n", "|")
+        topic = '         ' + today + '_' + str(TIMES_TAG) + " |" + topic.replace("\n", "|")
         json_data['topic'] += topic
         [json_data['titles'].append(i) for i in titles]
     else:
