@@ -577,7 +577,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logger.info(f"新闻视频生成工具 参数args={args}")
     TIMES_TAG = args.times
-
+    logger.info(f"新闻视频生成工具 运行第{TIMES_TAG}次")
     CHINADAILY_EN = CHINADAILY_EN + str(TIMES_TAG)
     CHINADAILY = CHINADAILY + str(TIMES_TAG)
     ALJ = ALJ + str(TIMES_TAG)
