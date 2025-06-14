@@ -651,6 +651,16 @@ class RTScraper(NewsScraper):
                 full_urls.append("https://www.rt.com" + url)
         logger.info(f" {self.source} 去重,拼接后共发现 {len(full_urls)} 个链接。")
         return full_urls
+def is_english_char(char):
+    # 判断字符是否为英文字母
+    return char.isalpha() and (char.lower() in 'abcdefghijklmnopqrstuvwxyz')
+
+def check_english_percentage(text):
+    total_chars = len(text)
+    if total_chars == 0:
+        return 0  # 避免除以零的情况
+    english_count = sum(1 for char in text if is_english_char(char))
+    return (english_count / total_chars)>0.4
 
 
 def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
@@ -682,6 +692,10 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
             article.summary = ollama_client.generate_summary(article.content_cn, max_tokens=150)
         if article.content_en:
             article.summary = ollama_client.generate_summary_cn(article.content_en, max_tokens=150)
+        if check_english_percentage(article.summary):
+            article.show=False
+            logger.warning(f"{article.url} - {article.title} - all is english")
+
         logger.info(f"{article.url} - {article.title} - 补充完成")
         processed_news.append(article)
     return processed_news
@@ -764,9 +778,9 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
                    sleep_time=4)
     en = ChinaDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='中国日报',
                              sleep_time=4)
-    al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='中东半岛',
+    al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='中东半岛新闻',
                     sleep_time=20)
-    bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='英国广播电视台',
+    bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='BBC',
                      sleep_time=20)
 
     bbc.do_crawl_news(today)
