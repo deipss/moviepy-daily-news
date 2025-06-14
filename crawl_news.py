@@ -803,7 +803,7 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     al_articles = process_news_results(source=ALJ, today=today)
     end = time.time()
     logger.info(f"AI生成摘要耗时: {end - start:.2f} 秒")
-    build_new_articles_json(today, rt_articles, en_articles, al_articles, bbc_articles)
+    build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles)
 
     logger.info("开始生成音频")
     start = time.time()
@@ -817,13 +817,18 @@ def build_new_articles_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles' + str(TIMES_TAG) + '.json')
 
 
-def build_new_articles_json(today, articles, en_articles, al_articles, bbc_articles):
+def build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles):
     def reset_article_attributes(article):
         article.content_en = ''
         article.content_cn = ''
 
     new_articles = []
     idx = 1
+    for article in rt_articles:
+        reset_article_attributes(article)
+        article.index_inner = idx
+        idx += 1
+        new_articles.append(article)
     for article in bbc_articles:
         reset_article_attributes(article)
         article.index_inner = idx
@@ -835,11 +840,6 @@ def build_new_articles_json(today, articles, en_articles, al_articles, bbc_artic
         idx += 1
         new_articles.append(article)
     for article in en_articles:
-        reset_article_attributes(article)
-        article.index_inner = idx
-        idx += 1
-        new_articles.append(article)
-    for article in articles:
         reset_article_attributes(article)
         article.index_inner = idx
         idx += 1
