@@ -31,7 +31,7 @@ import time
 REWRITE = False
 TIMES_TAG = 0
 
-hint_information = """信息来源: 1. chinadaily.com.cn [中国日报国际版] 2. https://www.aljazeera.com [中东半岛电视台] 3. https://www.bbc.com [英国广播公司] 4. https://www.rt.com/ [今日俄罗斯电视台]"""
+hint_information = """信息来源: 1. https://www.aljazeera.com [中东半岛电视台] 2. https://www.bbc.com [英国广播公司] 3. https://www.rt.com/ [今日俄罗斯电视台]"""
 
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
@@ -138,7 +138,7 @@ def calculate_segment_times(duration, num_segments):
 
 def generate_three_layout_video(audio_path, image_list, title, summary, output_path, index, is_preview=False,
                                 news_type=""):
-    title = "" + index + " " + news_type + " " + title
+    title = "" + index + " " + title
     # 加载背景和音频
     bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(252, 254, 254))  # 白色背景
     try:
