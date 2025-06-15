@@ -354,7 +354,7 @@ def generate_video_end(is_preview=False):
         stroke_width=2
     ).with_duration(duration).with_position(('center', GLOBAL_HEIGHT * 0.5))
 
-    lady = (VideoFileClip('videos/lady_announcer.mp4').with_duration(duration)
+    lady = (VideoFileClip('videos/man_announcer.mp4').with_duration(duration)
             .with_position(('center', GLOBAL_HEIGHT * 0.17)).resized(0.7))
 
     # 合成最终视频
