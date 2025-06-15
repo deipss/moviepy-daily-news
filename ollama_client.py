@@ -175,6 +175,15 @@ class OllamaClient:
         summary = summary.replace("**", "")
         return summary
 
+    def generate_top_news_summary(self, text: str, model: str = "deepseek-r1:8b",
+                                  max_tokens: int = 80, count: int = 15) -> str:
+        prompt = f"请从以下标题信息，生成一从在{max_tokens}左右的新闻稿：\n{text}"
+        response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
+        summary = response.get("response", "")
+        summary = self._extract_think(summary, is_replace_line=False)
+        summary = summary.replace("**", "")
+        return summary
+
     def translate_to_chinese(self, text: str, model: str = "deepseek-r1:8b") -> str:
 
         prompt = f"请将以下英文文本翻译成中文,只返回中文：\n{text}"

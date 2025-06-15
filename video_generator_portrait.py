@@ -15,7 +15,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-BACKGROUND_IMAGE_PATH = "videos/generated_background.png"
+BACKGROUND_IMAGE_PATH = "videos/p_generated_background.png"
 GLOBAL_WIDTH = 1080
 GLOBAL_HEIGHT = 1920
 GAP = int(GLOBAL_WIDTH * 0.04)
@@ -136,6 +136,7 @@ def calculate_segment_times(duration, num_segments):
         segment_times.append((start_time, end_time))
     return segment_times
 
+
 def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False) -> None:
     if os.path.exists(output_file) and not rewrite:
         logger.info(f"{output_file}已存在，跳过生成音频。")
@@ -144,6 +145,8 @@ def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False) -> 
     rate = 70
     sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
+
+
 def generate_three_layout_video(audio_path, video_path, title, summary, output_path, index, is_preview=False,
                                 news_type=""):
     title = "" + index + " " + title
@@ -178,12 +181,13 @@ def generate_three_layout_video(audio_path, video_path, title, summary, output_p
     bottom_right_img = bottom_right_img.with_position(('right', 'bottom')).with_duration(duration)
 
     # 左上图片处理
-    video_clip_list =[]
+    video_clip_list = []
     top_left_video = VideoFileClip(video_path)
     scale = min(bg_width / top_left_video.w, top_height / top_left_video.h)
     top_left_video = top_left_video.resized(scale)
     offset_w, offest_h = (bg_width - top_left_video.w) // 2, (top_height - top_left_video.h) // 2
-    top_left_video = top_left_video.with_position((offset_w, offest_h + title_height)).with_effects([Loop(duration=duration),afx.MultiplyVolume(0.2)])
+    top_left_video = top_left_video.with_position((offset_w, offest_h + title_height)).with_effects(
+        [Loop(duration=duration), afx.MultiplyVolume(0.2)])
     video_clip_list.append(top_left_video)
 
     # 左下文字处理
@@ -333,7 +337,7 @@ def generate_video_end(is_preview=False):
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
     audio_path = build_today_end_audio_path()
 
-    generate_audio("今天的信息，至此结束，下次见", audio_path, rewrite=True)
+    generate_audio("此次分享，至此结束，下次见", audio_path, rewrite=True)
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
 
@@ -395,10 +399,10 @@ def combine_videos_with_transitions(video_paths, output_path):
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     start_time = time.time()
     video_paths = []
-    intro_path = build_today_introduction_path(today)
-    video_paths.append(intro_path)
-    logger.info(f"正在生成视频片头{intro_path}...")
-    topics, duration = generate_video_introduction(intro_path, today)
+    # intro_path = build_today_introduction_path(today)
+    # video_paths.append(intro_path)
+    # logger.info(f"正在生成视频片头{intro_path}...")
+    # topics, duration = generate_video_introduction(intro_path, today)
     all_paths = generate_all_news_video(today=today)
     for i in range(len(all_paths)):
         video_paths.append(all_paths[i])
@@ -411,13 +415,13 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     end_time = time.time()  # 结束计时
     elapsed_time = end_time - start_time
     logger.info(f"生成新闻JSON文件...")
-    save_today_news_json(topics, today)
+    # save_today_news_json(topics, today)
     logger.info(f"视频整合生成总耗时: {elapsed_time:.2f} 秒")
 
 
 def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
     json_file_path = build_new_articles_path(today)
-
+    logger.info(f'load news jons file {json_file_path}')
     if not os.path.exists(json_file_path):
         logger.warning(f"新闻json文件不存在,path={json_file_path}")
         return []
@@ -435,7 +439,6 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
             logger.warning(f" {article.source} {article.folder} {article.title} 新闻已隐藏，跳过生成")
             continue
 
-        # 新增逻辑：将摘要转换为音频并保存
         video_output_path = os.path.join(dir_path, VIDEO_FILE_NAME)
         if os.path.exists(video_output_path) and not REWRITE:
             logger.warning(
@@ -444,13 +447,10 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
             continue
 
         audio_output_path = os.path.join(dir_path, AUDIO_FILE_NAME)
-        img_list = []
-        for image in article.images:
-            img_list.append(os.path.join(dir_path, image))
         generated_result = generate_three_layout_video(
             output_path=video_output_path,
             audio_path=audio_output_path,
-            video_path=img_list,
+            video_path=os.path.join(dir_path, article.video),
             summary=article.summary,
             title=article.title,
             index=str(idx),
@@ -528,8 +528,6 @@ def test_generate_video_introduction():
 
 
 def test_video_text_align():
-
-
     generate_three_layout_video(
         output_path="news/20250609/chinadaily/0000/video.mp4",
         audio_path="news/20250609/chinadaily/0000/summary_audio.mp3",
@@ -543,6 +541,11 @@ def test_video_text_align():
 
 def test_generate_video_end():
     generate_video_end(is_preview=True)
+
+
+def test_combine_video():
+    today = '20250609'
+    combine_videos(today)
 
 
 import argparse
@@ -571,11 +574,12 @@ if __name__ == "__main__":
     logger.info(f"新闻视频生成工具 参数args={args}")
     TIMES_TAG = args.times
     logger.info(f"新闻视频生成工具 运行第{TIMES_TAG}次")
-    CHINADAILY_EN = CHINADAILY_EN + str(TIMES_TAG)
-    CHINADAILY = CHINADAILY + str(TIMES_TAG)
-    ALJ = ALJ + str(TIMES_TAG)
-    BBC = BBC + str(TIMES_TAG)
-    RT = RT + str(TIMES_TAG)
+    P = 'p_'
+    CHINADAILY_EN = P + CHINADAILY_EN + str(TIMES_TAG)
+    CHINADAILY = P + CHINADAILY + str(TIMES_TAG)
+    ALJ = P + ALJ + str(TIMES_TAG)
+    BBC = P + BBC + str(TIMES_TAG)
+    RT = P + RT + str(TIMES_TAG)
 
     if args.rewrite:
         REWRITE = True
