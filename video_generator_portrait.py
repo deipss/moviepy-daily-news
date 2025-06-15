@@ -36,23 +36,23 @@ hint_information = """信息来源:[中国日报国际版] [中东半岛电视�
 
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, str(TIMES_TAG) + "p_introduction.mp4")
+    return os.path.join(CN_NEWS_FOLDER_NAME_P, today, str(TIMES_TAG) + "p_introduction.mp4")
 
 
 def build_end_path():
-    return os.path.join(CN_NEWS_FOLDER_NAME, "p_end.mp4")
+    return os.path.join(CN_NEWS_FOLDER_NAME_P, "p_end.mp4")
 
 
 def build_today_text_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, "all.text")
+    return os.path.join(CN_NEWS_FOLDER_NAME_P, today, "all.text")
 
 
 def build_today_introduction_audio_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, "p_introduction.mp3")
+    return os.path.join(CN_NEWS_FOLDER_NAME_P, today, "p_introduction.mp3")
 
 
 def build_today_end_audio_path():
-    return os.path.join(CN_NEWS_FOLDER_NAME, "p_end.mp3")
+    return os.path.join(CN_NEWS_FOLDER_NAME_P, "p_end.mp3")
 
 
 def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d"), times: int = 1):
@@ -60,7 +60,7 @@ def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d"), times:
 
 
 def build_today_bg_music_path():
-    return os.path.join(CN_NEWS_FOLDER_NAME, "p_bg_music.mp4")
+    return os.path.join(CN_NEWS_FOLDER_NAME_P, "p_bg_music.mp4")
 
 
 def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR):
@@ -433,7 +433,7 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"), time
     idx = 1
     for i, news_item in enumerate(news_data, start=1):
         article = NewsArticle(**news_item)
-        dir_path = os.path.join(CN_NEWS_FOLDER_NAME, today, article.source)
+        dir_path = os.path.join(CN_NEWS_FOLDER_NAME_P, today, article.source)
         logger.info(f" {article.source} {article.show} {article.title}   新闻正在处理...")
         processed_video = f"{str(times_tag)}_p_{article.title}.mp4"
         video_output_path = os.path.join(dir_path, processed_video)
@@ -462,7 +462,7 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"), time
 
 
 def load_json_by_source(source, today):
-    folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
+    folder_path = os.path.join(CN_NEWS_FOLDER_NAME_P, today, source)
     json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
     if not os.path.exists(json_file_path):
         logger.warning(f"{source}新闻json文件不存在,path={json_file_path}")
