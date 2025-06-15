@@ -22,10 +22,10 @@ def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False) -> 
     os.system(sh)
 
 
-
 def save_videos(*args):
     try:
         video_info = []
+        today = datetime.now().strftime('%Y%m%d')
         times = int(args[-2])
         for i in range(ROW):
             video_file = args[i * 3]
@@ -39,7 +39,6 @@ def save_videos(*args):
                 return f" 第{i + 1}组信息不完整，请检查。"
 
             # 保存视频文件
-            today = datetime.now().strftime('%Y%m%d')
             filename = f"{times}_{title}.mp4"
             uploaded_video_path = os.path.join(VIDEO_DIR, today, ALJ_UP, filename)
             os.makedirs(os.path.dirname(uploaded_video_path), exist_ok=True)
@@ -60,7 +59,11 @@ def save_videos(*args):
                 "source": ALJ_UP,
                 "show": True
             })
-        combine_videos(times_tag = times)
+            # 保存为 JSON
+        with open(build_new_articles_uploaded_path(times_tag=times), "w", encoding="utf-8") as f:
+            json.dump(video_info, f, ensure_ascii=False, indent=2)
+
+        combine_videos(today, times_tag=times)
 
         return f"视频生成  {datetime.now().strftime('%Y%m%d_%H%M%S')}"
     except Exception as e:

@@ -187,7 +187,7 @@ def generate_three_layout_video(audio_path, video_path, title, summary, output_p
     top_left_video = top_left_video.resized(scale)
     offset_w, offest_h = (bg_width - top_left_video.w) // 2, (top_height - top_left_video.h) // 2
     top_left_video = top_left_video.with_position((offset_w, offest_h + title_height)).with_effects(
-        [Loop(duration=duration), afx.MultiplyVolume(0.2)])
+        [Loop(duration=duration), afx.MultiplyVolume(0.5)])
     video_clip_list.append(top_left_video)
 
     # 左下文字处理

@@ -410,7 +410,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
 
 
 def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
-    json_file_path = build_new_articles_path(today,TIMES_TAG)
+    json_file_path = build_new_articles_path(today, TIMES_TAG)
     logger.info(f"新闻json文件path={json_file_path}")
     if not os.path.exists(json_file_path):
         logger.warning(f"新闻json文件不存在,path={json_file_path}")
@@ -470,7 +470,7 @@ def load_json_by_source(source, today):
 
 
 def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
-    text_path = build_new_articles_path(today,TIMES_TAG)
+    text_path = build_new_articles_path(today, TIMES_TAG)
 
     if not os.path.exists(text_path):
         logger.warning(f"新闻json文件不存在,path={text_path}")
@@ -487,8 +487,8 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
                 titles.append(i['title'])
     append_and_save_month_urls(today[:6], set(urls))
     text_path = build_today_text_path(today)
-    rows = [today + " | " + topic.replace("\n", "|")]
-    [rows.append(i) for i in titles]
+    rows = ['\n', today + " | " + topic.replace("\n", "|")]
+    rows.extend(titles)
     with open(text_path, "a", encoding="utf-8") as file:
         file.write("\n".join(rows))
     logger.info(f"今日新闻text文件  {text_path}")
@@ -496,7 +496,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
     client = OllamaClient()
-    json_file_path = build_new_articles_path(today,TIMES_TAG)
+    json_file_path = build_new_articles_path(today, TIMES_TAG)
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     txt = ";".join([news_item['title'] if news_item['show'] else '' for news_item in news_data])
