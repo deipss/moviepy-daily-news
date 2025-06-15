@@ -406,7 +406,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     elapsed_time = end_time - start_time
     logger.info(f"生成新闻JSON文件...")
     save_today_news_json(topics, today)
-    logger.info(f"视频整合生成总耗时: {elapsed_time:.2f} 秒")
+    logger.info(f"结束，视频整合生成总耗时: {elapsed_time:.2f} 秒")
 
 
 def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
@@ -489,8 +489,10 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     text_path = build_today_text_path(today)
     rows = ['\n', today + " | " + topic.replace("\n", "|")]
     rows.extend(titles)
+    txt = "\n".join(titles)
     with open(text_path, "a", encoding="utf-8") as file:
-        file.write("\n".join(rows))
+        file.write(txt)
+    logger.info(f'今日新闻简介信息 {txt}')
     logger.info(f"今日新闻text文件  {text_path}")
 
 
