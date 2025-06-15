@@ -45,7 +45,9 @@ class NewsArticle:
                  title: str = None,
                  title_en: str = None,
                  images: List[str] = None,
+                 video: str = None,
                  image_urls: List[str] = None,
+                 video_url: str = None,
                  content_cn: str = None,
                  content_en: str = None,
                  folder: str = None,
@@ -62,7 +64,9 @@ class NewsArticle:
         self.title = title
         self.title_en = title_en
         self.images = images or []
+        self.video = video
         self.image_urls = image_urls or []
+        self.video_url = video_url
         self.content_cn = content_cn
         self.content_en = content_en
         self.folder = folder

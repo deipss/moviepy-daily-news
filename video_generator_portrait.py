@@ -7,6 +7,7 @@ import os
 import math
 from PIL import Image
 from moviepy.video.fx import Loop
+from moviepy import afx
 from crawl_news import *
 from ollama_client import OllamaClient
 from logging_config import logger
@@ -15,16 +16,16 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 BACKGROUND_IMAGE_PATH = "videos/generated_background.png"
-GLOBAL_WIDTH = 1920
-GLOBAL_HEIGHT = 1080
-GAP = int(GLOBAL_WIDTH * 0.02)
-INNER_WIDTH = GLOBAL_WIDTH - GAP
+GLOBAL_WIDTH = 1080
+GLOBAL_HEIGHT = 1920
+GAP = int(GLOBAL_WIDTH * 0.04)
 INNER_HEIGHT = GLOBAL_HEIGHT - GAP
+INNER_WIDTH = GLOBAL_WIDTH
 W_H_RADIO = GLOBAL_WIDTH / GLOBAL_HEIGHT
 W_H_RADIO = "{:.2f}".format(W_H_RADIO)
 FPS = 40
 MAIN_BG_COLOR = "#FF9900"
-VIDEO_FILE_NAME = "final.mp4"
+VIDEO_FILE_NAME = "p_final.mp4"
 
 import time
 
@@ -35,11 +36,11 @@ hint_information = """信息来源:[中国日报国际版] [中东半岛电视�
 
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, str(TIMES_TAG) + "introduction.mp4")
+    return os.path.join(CN_NEWS_FOLDER_NAME, today, str(TIMES_TAG) + "p_introduction.mp4")
 
 
 def build_end_path():
-    return os.path.join(CN_NEWS_FOLDER_NAME, "end.mp4")
+    return os.path.join(CN_NEWS_FOLDER_NAME, "p_end.mp4")
 
 
 def build_today_text_path(today=datetime.now().strftime("%Y%m%d")):
@@ -47,11 +48,11 @@ def build_today_text_path(today=datetime.now().strftime("%Y%m%d")):
 
 
 def build_today_introduction_audio_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp3")
+    return os.path.join(CN_NEWS_FOLDER_NAME, today, "p_introduction.mp3")
 
 
 def build_today_end_audio_path():
-    return os.path.join(CN_NEWS_FOLDER_NAME, "end.mp3")
+    return os.path.join(CN_NEWS_FOLDER_NAME, "p_end.mp3")
 
 
 def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
@@ -59,7 +60,7 @@ def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
 
 
 def build_today_bg_music_path():
-    return os.path.join(CN_NEWS_FOLDER_NAME, "bg_music.mp4")
+    return os.path.join(CN_NEWS_FOLDER_NAME, "p_bg_music.mp4")
 
 
 def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR):
@@ -89,7 +90,7 @@ def add_newline_every_n_chars(text, n):
 
 
 def calculate_font_size_and_line_length(text, box_width, box_height, font_ratio=1.0, line_height_ratio=1.5,
-                                        start_size=72):
+                                        start_size=32):
     # 从最大字体开始尝试，逐步减小直到文本适应文本框
     for font_size in range(start_size, 0, -1):
         # 计算每个字符的平均宽度和行高
@@ -109,7 +110,7 @@ def calculate_font_size_and_line_length(text, box_width, box_height, font_ratio=
         if total_height <= box_height:
             return font_size, chars_per_line
 
-    return 40, len(text)
+    return 32, len(text)
 
 
 def truncate_after_find_period(text: str, end_pos: int = 400) -> str:
@@ -135,13 +136,21 @@ def calculate_segment_times(duration, num_segments):
         segment_times.append((start_time, end_time))
     return segment_times
 
-
-def generate_three_layout_video(audio_path, image_list, title, summary, output_path, index, is_preview=False,
+def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False) -> None:
+    if os.path.exists(output_file) and not rewrite:
+        logger.info(f"{output_file}已存在，跳过生成音频。")
+        return
+    logger.info(f"{output_file}开始生成音频: {text}")
+    rate = 70
+    sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
+    os.system(sh)
+def generate_three_layout_video(audio_path, video_path, title, summary, output_path, index, is_preview=False,
                                 news_type=""):
     title = "" + index + " " + title
     # 加载背景和音频
     bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(252, 254, 254))  # 白色背景
     try:
+        generate_audio(text=summary, output_file=audio_path, rewrite=REWRITE)
         audio_clip = AudioFileClip(audio_path)
     except IOError as e:
         logger.error(f"音频文件加载失败，{audio_path}", e)
@@ -155,7 +164,7 @@ def generate_three_layout_video(audio_path, image_list, title, summary, output_p
 
     # 计算各区域尺寸
     title_height = 40
-    HEIGHT_RATIO = 0.75
+    HEIGHT_RATIO = 0.85
     top_height = int((bg_height - title_height) * HEIGHT_RATIO)
     bottom_height = bg_height - top_height - title_height
 
@@ -169,16 +178,13 @@ def generate_three_layout_video(audio_path, image_list, title, summary, output_p
     bottom_right_img = bottom_right_img.with_position(('right', 'bottom')).with_duration(duration)
 
     # 左上图片处理
-    segment_times = calculate_segment_times(duration, len(image_list))
-    image_clip_list = []
-    for image_path_top, (s, e) in zip(image_list, segment_times):
-        top_left_img = ImageClip(image_path_top)
-        scale = min(bg_width / top_left_img.w, top_height / top_left_img.h)
-        top_left_img = top_left_img.resized(scale)
-        offset_w, offest_h = (bg_width - top_left_img.w) // 2, (top_height - top_left_img.h) // 2
-        top_left_img = top_left_img.with_position((offset_w, offest_h + title_height)).with_start(s).with_duration(
-            e - s)
-        image_clip_list.append(top_left_img)
+    video_clip_list =[]
+    top_left_video = VideoFileClip(video_path)
+    scale = min(bg_width / top_left_video.w, top_height / top_left_video.h)
+    top_left_video = top_left_video.resized(scale)
+    offset_w, offest_h = (bg_width - top_left_video.w) // 2, (top_height - top_left_video.h) // 2
+    top_left_video = top_left_video.with_position((offset_w, offest_h + title_height)).with_effects([Loop(duration=duration),afx.MultiplyVolume(0.2)])
+    video_clip_list.append(top_left_video)
 
     # 左下文字处理
     font_size, chars_per_line = calculate_font_size_and_line_length(summary, bottom_left_width * 95 / 100,
@@ -209,11 +215,11 @@ def generate_three_layout_video(audio_path, image_list, title, summary, output_p
     # 创建各区域背景框
 
     # 合成最终视频
-    image_clip_list.insert(0, bg_clip)
-    image_clip_list.insert(1, bottom_left_txt)
-    image_clip_list.insert(2, bottom_right_img)
-    image_clip_list.insert(3, top_title)
-    final_video = CompositeVideoClip(clips=image_clip_list, size=(bg_width, bg_height))
+    video_clip_list.insert(0, bg_clip)
+    video_clip_list.insert(1, bottom_left_txt)
+    video_clip_list.insert(2, bottom_right_img)
+    video_clip_list.insert(3, top_title)
+    final_video = CompositeVideoClip(clips=video_clip_list, size=(bg_width, bg_height))
     if is_preview:
         final_video.preview()
     else:
@@ -321,7 +327,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
 
 def generate_video_end(is_preview=False):
     output_path = build_end_path()
-    if os.path.exists(output_path) and not REWRITE:
+    if os.path.exists(output_path) and not REWRITE and not is_preview:
         logger.info(f"片尾{output_path}已存在,直接返回")
     generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
@@ -337,15 +343,15 @@ def generate_video_end(is_preview=False):
     # 创建日期文字
     txt_clip = TextClip(
         text="谢谢收看",
-        font_size=int(GLOBAL_HEIGHT * 0.15),
+        font_size=int(GLOBAL_HEIGHT * 0.07),
         color=MAIN_BG_COLOR,
         font='./font/simhei.ttf',
         stroke_color='black',
         stroke_width=2
-    ).with_duration(duration).with_position(('center', GLOBAL_HEIGHT * 0.7))
+    ).with_duration(duration).with_position(('center', GLOBAL_HEIGHT * 0.5))
 
     lady = (VideoFileClip('videos/lady_announcer.mp4').with_duration(duration)
-            .with_position((GLOBAL_WIDTH * 0.38, GLOBAL_HEIGHT * 0.17)).resized(0.7))
+            .with_position(('center', GLOBAL_HEIGHT * 0.17)).resized(0.7))
 
     # 合成最终视频
     final_clip = CompositeVideoClip([bg_clip, txt_clip, lady], size=bg_clip.size)
@@ -444,7 +450,7 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
         generated_result = generate_three_layout_video(
             output_path=video_output_path,
             audio_path=audio_output_path,
-            image_list=img_list,
+            video_path=img_list,
             summary=article.summary,
             title=article.title,
             index=str(idx),
@@ -506,7 +512,7 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"))
 
 
 def test_generate_all():
-    today = '20250604'
+    today = '20250609'
     generate_all_news_video(today=today)
     generate_all_news_video(today=today)
     generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
@@ -522,20 +528,15 @@ def test_generate_video_introduction():
 
 
 def test_video_text_align():
-    list = [
-        'news/20250604/chinadaily/0000/683fd3d86b8efd9fa6284ef8_m.png',
-        'news/20250604/chinadaily/0000/683fd3d96b8efd9fa6284efa_m.jpg',
-        'news/20250604/chinadaily/0000/683fd3d96b8efd9fa6284efc_m.jpg',
-        'news/20250604/chinadaily/0000/683fd3da6b8efd9fa6284efe_m.jpg'
-    ]
+
 
     generate_three_layout_video(
-        output_path="news/20250604/chinadaily/0000/video.mp4",
-        audio_path="news/20250604/chinadaily/0000/summary_audio.aiff",
-        image_list=list,
+        output_path="news/20250609/chinadaily/0000/video.mp4",
+        audio_path="news/20250609/chinadaily/0000/summary_audio.mp3",
+        video_path='news/20250609/chinadaily/0000/rendition.mp4',
         summary="""韩国新总统李在镕以近50%的选票胜出，但其蜜月期仅一天即上任，需应对弹劾前总统尹锡烈留下的政治和安全漏洞。首轮挑战是处理唐纳德·特朗普可能破坏的经济、安全和与朝鲜关系。一季度韩国经济收缩，已因特朗普征收25%关税陷入困境。美国驻首尔军事存在可能转向遏制中国，增加韩国的外交和军事压力。李明博希望改善与中国的关系，但面临美国对朝鲜半岛战略布局的不确定性，同时需解决国内民主恢复问题。""",
-        title="""[英国广播公司]韩国新总统需要避免特朗普式的危机""",
-        index="0000",
+        title="""[中东半岛新闻]韩国新总统需要避免特朗普式的危机""",
+        index="1",
         is_preview=False
     )
 
