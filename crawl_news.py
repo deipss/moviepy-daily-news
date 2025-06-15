@@ -27,6 +27,7 @@ CHINADAILY = 'chinadaily'
 CHINADAILY_EN = 'chinadaily_en'
 RT = 'rt'
 ALJ = 'alj'
+ALJ_UP = 'alj_up'
 BBC = 'bbc'
 
 AUDIO_FILE_NAME = "summary_audio.mp3"
@@ -46,6 +47,7 @@ class NewsArticle:
                  title_en: str = None,
                  images: List[str] = None,
                  video: str = None,
+                 audio: str = None,
                  image_urls: List[str] = None,
                  video_url: str = None,
                  content_cn: str = None,
@@ -65,6 +67,7 @@ class NewsArticle:
         self.title_en = title_en
         self.images = images or []
         self.video = video
+        self.audio = audio
         self.image_urls = image_urls or []
         self.video_url = video_url
         self.content_cn = content_cn
@@ -817,9 +820,15 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     logger.info(f"生成音频耗时: {end - start:.2f} 秒")
 
 
-def build_new_articles_path(today=datetime.now().strftime("%Y%m%d"),times_tag=0):
-    path = os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles' + str(times_tag)+ '.json')
+def build_new_articles_path(today=datetime.now().strftime("%Y%m%d"), times_tag=0):
+    path = os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles' + str(times_tag) + '.json')
     logger.info(f" new_articles_path = {path}")
+    return path
+
+
+def build_new_articles_uploaded_path(today=datetime.now().strftime("%Y%m%d"), times_tag=1):
+    path = os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles_uploaded' + str(times_tag) + '.json')
+    logger.info(f" new_articles_path_uploaded = {path}")
     return path
 
 
@@ -909,6 +918,8 @@ def test_alj():
     cs.do_crawl_news(today="20250601")
 
     logger.info("============")
+
+
 
 
 import argparse

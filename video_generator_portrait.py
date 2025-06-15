@@ -396,14 +396,16 @@ def combine_videos_with_transitions(video_paths, output_path):
     # final_clip.preview()
 
 
-def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
+
+
+def combine_videos(today: str = datetime.now().strftime("%Y%m%d"),times_tag=1):
     start_time = time.time()
     video_paths = []
     # intro_path = build_today_introduction_path(today)
     # video_paths.append(intro_path)
     # logger.info(f"正在生成视频片头{intro_path}...")
     # topics, duration = generate_video_introduction(intro_path, today)
-    all_paths = generate_all_news_video(today=today)
+    all_paths = generate_all_news_video(today=today,times_tag=times_tag)
     for i in range(len(all_paths)):
         video_paths.append(all_paths[i])
     video_paths.append(generate_video_end())
@@ -419,8 +421,9 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     logger.info(f"视频整合生成总耗时: {elapsed_time:.2f} 秒")
 
 
-def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
-    json_file_path = build_new_articles_path(today)
+
+def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"),times_tag=1) -> list[str]:
+    json_file_path = build_new_articles_uploaded_path(today,times_tag)
     logger.info(f'load news jons file {json_file_path}')
     if not os.path.exists(json_file_path):
         logger.warning(f"新闻json文件不存在,path={json_file_path}")
@@ -433,12 +436,8 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
     idx = 1
     for i, news_item in enumerate(news_data, start=1):
         article = NewsArticle(**news_item)
-        dir_path = os.path.join(CN_NEWS_FOLDER_NAME, today, article.source, article.folder)
-        logger.info(f" {article.source} {article.folder} {article.show} {article.title}   新闻正在处理...")
-        if not article.show:
-            logger.warning(f" {article.source} {article.folder} {article.title} 新闻已隐藏，跳过生成")
-            continue
-
+        dir_path = os.path.join(CN_NEWS_FOLDER_NAME, today, article.source,str(times_tag))
+        logger.info(f" {article.source} {article.show} {article.title}   新闻正在处理...")
         video_output_path = os.path.join(dir_path, VIDEO_FILE_NAME)
         if os.path.exists(video_output_path) and not REWRITE:
             logger.warning(
@@ -446,7 +445,7 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
             video_output_paths.append(video_output_path)
             continue
 
-        audio_output_path = os.path.join(dir_path, AUDIO_FILE_NAME)
+        audio_output_path = article.audio
         generated_result = generate_three_layout_video(
             output_path=video_output_path,
             audio_path=audio_output_path,
