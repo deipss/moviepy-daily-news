@@ -31,7 +31,7 @@ import time
 REWRITE = False
 TIMES_TAG = 0
 
-hint_information = """信息来源: 1. https://www.aljazeera.com [中东半岛电视台] 2. https://www.bbc.com [英国广播公司] 3. https://www.rt.com/ [今日俄罗斯电视台]"""
+hint_information = """信息来源:[中国日报国际版] [中东半岛电视台] [英国广播公司] [今日俄罗斯电视台]"""
 
 
 def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
@@ -42,8 +42,8 @@ def build_end_path():
     return os.path.join(CN_NEWS_FOLDER_NAME, "end.mp4")
 
 
-def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, "all.json")
+def build_today_text_path(today=datetime.now().strftime("%Y%m%d")):
+    return os.path.join(CN_NEWS_FOLDER_NAME, today, "all.text")
 
 
 def build_today_introduction_audio_path(today=datetime.now().strftime("%Y%m%d")):
@@ -397,14 +397,14 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     for i in range(len(all_paths)):
         video_paths.append(all_paths[i])
     video_paths.append(generate_video_end())
-    logger.info(f"根据子视频生成主视频并整合...")
+    logger.info(f"生成主视频并整合...")
     final_path = build_today_final_video_path(today)
-    logger.info(f"视频保存在={final_path}")
+    logger.info(f"主视频保存在={final_path}")
     combine_videos_with_transitions(video_paths, final_path)
 
     end_time = time.time()  # 结束计时
     elapsed_time = end_time - start_time
-    logger.info(f"生成当前的JSON文件...")
+    logger.info(f"生成新闻JSON文件...")
     save_today_news_json(topics, today)
     logger.info(f"视频整合生成总耗时: {elapsed_time:.2f} 秒")
 
@@ -432,7 +432,8 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
         # 新增逻辑：将摘要转换为音频并保存
         video_output_path = os.path.join(dir_path, VIDEO_FILE_NAME)
         if os.path.exists(video_output_path) and not REWRITE:
-            logger.warning(f" {article.source} {article.folder} {article.title}  视频已存在，跳过生成,path={video_output_path}")
+            logger.warning(
+                f" {article.source} {article.folder} {article.title}  视频已存在，跳过生成,path={video_output_path}")
             video_output_paths.append(video_output_path)
             continue
 
@@ -469,13 +470,13 @@ def load_json_by_source(source, today):
 
 
 def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
-    json_file_path = build_new_articles_path(today)
+    text_path = build_new_articles_path(today)
 
-    if not os.path.exists(json_file_path):
-        logger.warning(f"新闻json文件不存在,path={json_file_path}")
+    if not os.path.exists(text_path):
+        logger.warning(f"新闻json文件不存在,path={text_path}")
         return []
 
-    with open(json_file_path, 'r', encoding='utf-8') as json_file:
+    with open(text_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     urls = []
     titles = [str(TIMES_TAG) + hint_information]
@@ -485,21 +486,12 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
             if i['show']:
                 titles.append(i['title'])
     append_and_save_month_urls(today[:6], set(urls))
-    json_file_path = build_today_json_path(today)
-
-    if os.path.exists(json_file_path):
-        json_data = json.load(open(json_file_path, 'r', encoding='utf-8'))
-        topic = '         ' + today + '_' + str(TIMES_TAG) + " |" + topic.replace("\n", "|")
-        json_data['topic'] += topic
-        [json_data['titles'].append(i) for i in titles]
-    else:
-        json_data = {
-            'topic': today + "|" + topic.replace("\n", "|"),
-            'titles': titles
-        }
-    json.dump(json_data, open(json_file_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=4)
-    logger.info(f"保存今日新闻json文件到 {json_file_path}")
-    logger.info(f"今日新闻json文件\n {json_data}")
+    text_path = build_today_text_path(today)
+    rows = [today + " | " + topic.replace("\n", "|")]
+    [rows.append(i) for i in titles]
+    with open(text_path, "a", encoding="utf-8") as file:
+        file.write("\n".json(rows))
+    logger.info(f"今日新闻text文件  {text_path}")
 
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
