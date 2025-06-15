@@ -859,7 +859,7 @@ def build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_ar
         article.index_inner = idx
         idx += 1
         new_articles.append(article)
-    path = build_new_articles_path(today)
+    path = build_new_articles_path(today,TIMES_TAG)
     with open(path, 'w', encoding='utf-8') as json_file:
         json.dump([article.to_dict() for article in new_articles], json_file, ensure_ascii=False, indent=4)
     logger.info(f"生成new_articles.json{TIMES_TAG}成功,path={path}")
