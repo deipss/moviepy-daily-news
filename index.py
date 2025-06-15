@@ -18,8 +18,9 @@ ROW = 4
 def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False) -> None:
     logger.info(f"{output_file}开始生成音频: {text}")
     rate = 70
-    sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
+    sh = f'edge-tts --voice zh-CN-YunjianNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
+
 
 
 def save_videos(*args):
@@ -59,14 +60,9 @@ def save_videos(*args):
                 "source": ALJ_UP,
                 "show": True
             })
+        combine_videos(times_tag = times)
 
-        # 保存为 JSON
-        with open(build_new_articles_uploaded_path(times_tag=times), "w", encoding="utf-8") as f:
-            json.dump(video_info, f, ensure_ascii=False, indent=2)
-
-        combine_videos(times_tag=times)
-
-        return f"视频生成"
+        return f"视频生成  {datetime.now().strftime('%Y%m%d_%H%M%S')}"
     except Exception as e:
         logger.error(f"上传失败: {e}", exc_info=True)
         return f"上传失败: {str(e)}"

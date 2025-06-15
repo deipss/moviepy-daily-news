@@ -87,7 +87,7 @@ class OllamaClient:
         :param max_tokens: 摘要的最大token数，默认为50
         :return: 生成的摘要文本
         """
-        prompt = f"请为以下文本生成一个简洁的中文摘要（不超过{max_tokens}个字）：\n{text}"
+        prompt = f"请为以下文本生成一个简洁的中文新闻摘要（不超过{max_tokens}个字）：\n{text}"
         cnt = 3
         response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
         while cnt > 0:
@@ -101,7 +101,7 @@ class OllamaClient:
         if len(summary) > max_tokens:
             logger.info(f"当前摘要={summary}")
             logger.info(f"当前摘要={len(summary)},摘要超过{max_tokens}个字，再次生成摘要")
-            prompt = f"请为以下文本生成一个简洁的中文摘要（不超过{max_tokens}个字）：\n{summary}"
+            prompt = f"请为以下文本生成一个简洁的中文新闻摘要（不超过{max_tokens}个字）：\n{summary}"
             response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
             summary = response.get("response", "")
             summary = self._extract_think(summary)
@@ -129,7 +129,7 @@ class OllamaClient:
             else:
                 text = text[:max_length]
 
-        prompt = f"请为以下文本生成一个简洁的中文摘要（不超过{max_tokens}个字）：\n{text}"
+        prompt = f"请为以下文本生成一个简洁的中文新闻摘要（不超过{max_tokens}个字）：\n{text}"
         cnt = 3
         response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
         while cnt > 0:
@@ -143,7 +143,7 @@ class OllamaClient:
         if len(summary) > max_tokens:
             logger.info(f"当前摘要={summary}")
             logger.info(f"当前摘要={len(summary)},摘要超过{max_tokens}个字，再次生成摘要")
-            prompt = f"请为以下文本生成一个简洁的中文摘要（不超过{max_tokens}个字）：\n{summary}"
+            prompt = f"请为以下文本生成一个简洁的中文新闻摘要（不超过{max_tokens}个字）：\n{summary}"
             response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
             summary = response.get("response", "")
             summary = self._extract_think(summary)

@@ -174,7 +174,7 @@ def generate_three_layout_video(audio_path, video_path, title, summary, output_p
     bottom_right_width = int(bg_width * 0.2)
     bottom_left_width = bg_width - bottom_right_width
 
-    bottom_right_img = VideoFileClip('videos/lady_announcer.mp4').with_effects([Loop(duration=duration)])
+    bottom_right_img = VideoFileClip('videos/man_announcer.mp4').with_effects([Loop(duration=duration)])
     if bottom_right_img.w > bottom_right_width or bottom_right_img.h > bottom_height:
         scale = min(bottom_right_width / bottom_right_img.w, bottom_height / bottom_right_img.h)
         bottom_right_img = bottom_right_img.resized(scale)
@@ -317,7 +317,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
         stroke_width=3
     ).with_duration(duration).with_position((GAP * 1.75, GLOBAL_HEIGHT * 0.1))
 
-    lady = (VideoFileClip('videos/lady_announcer.mp4').with_effects([Loop(duration=duration)])
+    lady = (VideoFileClip('videos/man_announcer.mp4').with_effects([Loop(duration=duration)])
             .with_position((GLOBAL_WIDTH * 0.68, GLOBAL_HEIGHT * 0.47)).resized(0.7))
 
     # 合成最终视频
