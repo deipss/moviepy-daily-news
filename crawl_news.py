@@ -817,8 +817,10 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     logger.info(f"生成音频耗时: {end - start:.2f} 秒")
 
 
-def build_new_articles_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles' + str(TIMES_TAG) + '.json')
+def build_new_articles_path(today=datetime.now().strftime("%Y%m%d"),times_tag=0):
+    path = os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles' + str(times_tag)+ '.json')
+    logger.info(f" new_articles_path = {path}")
+    return path
 
 
 def build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles):
