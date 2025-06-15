@@ -55,8 +55,8 @@ def build_today_end_audio_path():
     return os.path.join(CN_NEWS_FOLDER_NAME, "p_end.mp3")
 
 
-def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(TIMES_TAG) + "_" + VIDEO_FILE_NAME)
+def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d"), times: int = 1):
+    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(times) + "_" + VIDEO_FILE_NAME)
 
 
 def build_today_bg_music_path():
@@ -143,7 +143,7 @@ def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False) -> 
         return
     logger.info(f"{output_file}开始生成音频: {text}")
     rate = 70
-    sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
+    sh = f'edge-tts --voice zh-CN-YunjianNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
 
 
@@ -396,21 +396,19 @@ def combine_videos_with_transitions(video_paths, output_path):
     # final_clip.preview()
 
 
-
-
-def combine_videos(today: str = datetime.now().strftime("%Y%m%d"),times_tag=1):
+def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), times_tag=1):
     start_time = time.time()
     video_paths = []
     # intro_path = build_today_introduction_path(today)
     # video_paths.append(intro_path)
     # logger.info(f"正在生成视频片头{intro_path}...")
     # topics, duration = generate_video_introduction(intro_path, today)
-    all_paths = generate_all_news_video(today=today,times_tag=times_tag)
+    all_paths = generate_all_news_video(today=today, times_tag=times_tag)
     for i in range(len(all_paths)):
         video_paths.append(all_paths[i])
     video_paths.append(generate_video_end())
     logger.info(f"生成主视频并整合...")
-    final_path = build_today_final_video_path(today)
+    final_path = build_today_final_video_path(today, times_tag)
     logger.info(f"主视频保存在={final_path}")
     combine_videos_with_transitions(video_paths, final_path)
 
@@ -421,9 +419,8 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d"),times_tag=1):
     logger.info(f"视频整合生成总耗时: {elapsed_time:.2f} 秒")
 
 
-
-def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"),times_tag=1) -> list[str]:
-    json_file_path = build_new_articles_uploaded_path(today,times_tag)
+def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"), times_tag=1) -> list[str]:
+    json_file_path = build_new_articles_uploaded_path(today, times_tag)
     logger.info(f'load news jons file {json_file_path}')
     if not os.path.exists(json_file_path):
         logger.warning(f"新闻json文件不存在,path={json_file_path}")
@@ -436,9 +433,11 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"),times
     idx = 1
     for i, news_item in enumerate(news_data, start=1):
         article = NewsArticle(**news_item)
-        dir_path = os.path.join(CN_NEWS_FOLDER_NAME, today, article.source,str(times_tag))
+        dir_path = os.path.join(CN_NEWS_FOLDER_NAME, today, article.source)
         logger.info(f" {article.source} {article.show} {article.title}   新闻正在处理...")
-        video_output_path = os.path.join(dir_path, VIDEO_FILE_NAME)
+        processed_video = f"{str(times_tag)}_p_{article.title}.mp4"
+        video_output_path = os.path.join(dir_path, processed_video)
+        logger.info(f" {article.title} 保存在{video_output_path}")
         if os.path.exists(video_output_path) and not REWRITE:
             logger.warning(
                 f" {article.source} {article.folder} {article.title}  视频已存在，跳过生成,path={video_output_path}")
@@ -449,7 +448,7 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"),times
         generated_result = generate_three_layout_video(
             output_path=video_output_path,
             audio_path=audio_output_path,
-            video_path=os.path.join(dir_path, article.video),
+            video_path=article.video,
             summary=article.summary,
             title=article.title,
             index=str(idx),

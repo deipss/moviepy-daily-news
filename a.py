@@ -39,7 +39,20 @@ proxies = {
     'http': 'http://127.0.0.1:10809',
     'https': 'http://127.0.0.1:10809',
 }
-if __name__ == '__main__':
+
+
+def generate_audio(text: str, output_file: str = "audio.wav", name='zh-CN-XiaoxiaoNeural',rewrite=False) -> None:
+    logger.info(f"{output_file}开始生成音频: {text}")
+    rate = 70
+    sh = f'edge-tts --voice {name} --text "{text}" --write-media {output_file} --rate="+{rate}%"'
+    os.system(sh)
+
+def voice_verify():
+    for i in  ['zh-CN-XiaoxiaoNeural','zh-CN-XiaoyiNeural','zh-TW-HsiaoChenNeural','zh-TW-HsiaoYuNeural','zh-CN-liaoning-XiaobeiNeural','zh-CN-shaanxi-XiaoniNeural']:
+        generate_audio("你好，这一个清澈见底工的测试", output_file=f"temp/{i}audio.wav", name = i)
+
+
+def proxy_verify():
     # url = 'https://www.aljazeera.com/'
     url = 'https://www.bbc.com'
     try:
@@ -57,4 +70,8 @@ if __name__ == '__main__':
         response.raise_for_status()
         print(response.text)
     except requests.RequestException as e:
-        print (f"fetch_page请求失败: {url} 错误信息： {e}")
+        print(f"fetch_page请求失败: {url} 错误信息： {e}")
+
+
+if __name__ == '__main__':
+    voice_verify()

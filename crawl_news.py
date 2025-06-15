@@ -20,7 +20,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 NEWS_JSON_FILE_NAME = "news_results.json"
 PROCESSED_NEWS_JSON_FILE_NAME = "news_results_processed.json"
-CN_NEWS_FOLDER_NAME = "news"
+CN_NEWS_FOLDER_NAME = "news_p"
 FINAL_VIDEOS_FOLDER_NAME = "final_videos"
 TIMES_TAG: int = 0
 CHINADAILY = 'chinadaily'
