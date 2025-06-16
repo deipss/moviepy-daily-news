@@ -3,7 +3,7 @@ import json
 import gradio as gr
 from pathlib import Path
 from datetime import datetime
-from logging_config import logger
+from logging_config_p import logger
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from crawl_news import build_new_articles_uploaded_path, ALJ_UP
@@ -50,7 +50,7 @@ def save_videos(*args):
             mp3_path = f"{times}_{title}.mp3"
             mp3_path = os.path.join(VIDEO_DIR, today, ALJ_UP, mp3_path)
 
-            generate_audio(description, mp3_path)
+            generate_audio(title+'。'+description, mp3_path)
 
             video_info.append({
                 "video": uploaded_video_path,
