@@ -487,13 +487,13 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
                 titles.append(i['title'])
     append_and_save_month_urls(today[:6], set(urls))
     text_path = build_today_text_path(today)
-    rows = ['\n', today + " | " + topic.replace("\n", "|")]
+    rows = ['\n', today + "_" + str(TIMES_TAG) + " |" + topic.replace("\n", "|")]
     rows.extend(titles)
     txt = "\n".join(rows)
     with open(text_path, "a", encoding="utf-8") as file:
         file.write(txt)
     logger.info(f'今日新闻简介信息 {txt}')
-    logger.info(f"今日新闻text文件  {text_path}")
+    logger.info(f"今日新闻text文件 {text_path}")
 
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
