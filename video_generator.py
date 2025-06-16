@@ -489,7 +489,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     text_path = build_today_text_path(today)
     rows = ['\n', today + " | " + topic.replace("\n", "|")]
     rows.extend(titles)
-    txt = "\n".join(titles)
+    txt = "\n".join(rows)
     with open(text_path, "a", encoding="utf-8") as file:
         file.write(txt)
     logger.info(f'今日新闻简介信息 {txt}')
