@@ -17,9 +17,9 @@
 - [x] 中国日报（chinadaily）
 - [x] 英国广播公司（BBC）
 - [ ] 英国卫报（The Guardian）https://www.theguardian.com/us
-- [ ] 泰晤士报（The Times） https://www.thetimes.com/
-- [ ] 今日俄罗斯 https://www.rt.com/
-- [ ] 中东半岛新闻 https://www.aljazeera.com/
+- [x] 泰晤士报（The Times） https://www.thetimes.com/
+- [x] 今日俄罗斯 https://www.rt.com/
+- [x] 中东半岛新闻 https://www.aljazeera.com/
 
 英国卫报、泰晤士报、彭博社报和BBC的内容差不多，不再重复爬取。
 
