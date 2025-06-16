@@ -706,7 +706,7 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
         if check_english_percentage(article.summary):
             article.show = False
             logger.warning(f"{article.url} - {article.title} - all is english")
-        if '版权声明' in article.summary and '授权' in article.summary:
+        if '版权声明' in article.summary or '书面授权' in article.summary:
             article.show = False
             logger.warning(f"{article.url} - {article.title} - not crawl full content")
         logger.info(f"{article.url} - {article.title} - 补充完成")
