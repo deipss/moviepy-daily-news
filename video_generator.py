@@ -408,6 +408,7 @@ def add_walking_man(path, walk_video_path):
         origin_v,
         walk
     ], use_bgclip=True)
+    video_with_bg = video_with_bg.with_audio(origin_v.audio)
     video_with_bg.write_videofile(walk_video_path, codec="libx264", audio_codec="aac", fps=FPS)
 
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
