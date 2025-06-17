@@ -65,6 +65,10 @@ def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(TIMES_TAG) + "_" + VIDEO_FILE_NAME)
 
 
+def build_today_final_video_walk_path(today=datetime.now().strftime("%Y%m%d")):
+    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(TIMES_TAG) + "_walk_" + VIDEO_FILE_NAME)
+
+
 def build_today_bg_music_path():
     return os.path.join(CN_NEWS_FOLDER_NAME, "bg_music.mp4")
 
@@ -393,6 +397,19 @@ def combine_videos_with_transitions(video_paths, output_path):
     # final_clip.preview()
 
 
+def add_walking_man(path, walk_video_path):
+    origin_v = VideoFileClip(path)
+    width = origin_v.w
+    walk = ImageClip('videos/process_panda.png')
+    walk = walk.resized(GAP / 2 / walk.h)
+    walk = walk.with_position(lambda t: (t / origin_v.duration * width, 'bottom')).with_duration(
+        origin_v.duration).with_start(0)
+    video_with_bg = CompositeVideoClip([
+        origin_v,
+        walk
+    ], use_bgclip=True)
+    video_with_bg.write_videofile(walk_video_path, codec="libx264", audio_codec="aac", fps=FPS)
+
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     start_time = time.time()
     video_paths = []
@@ -406,9 +423,10 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     video_paths.append(generate_video_end())
     logger.info(f"生成主视频并整合...")
     final_path = build_today_final_video_path(today)
-    logger.info(f"主视频保存在={final_path}")
+    final_path_walk = build_today_final_video_walk_path(today)
+    logger.info(f"主视频保存在:{final_path} and {final_path_walk}")
     combine_videos_with_transitions(video_paths, final_path)
-
+    add_walking_man(final_path, final_path_walk)
     end_time = time.time()  # 结束计时
     elapsed_time = end_time - start_time
     logger.info(f"生成新闻JSON文件...")
