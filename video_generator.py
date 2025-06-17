@@ -31,11 +31,11 @@ import time
 REWRITE = False
 TIMES_TAG = 0
 
-TIMES_TYPE={
-    0:'早上',
-    1:'中午',
-    2:'傍晚',
-    3:'夜间'
+TIMES_TYPE = {
+    0: '早上',
+    1: '中午',
+    2: '傍晚',
+    3: '夜间'
 }
 
 hint_information = """信息来源:[中国日报国际版] [中东半岛电视台] [英国广播公司] [今日俄罗斯电视台]"""
@@ -487,14 +487,16 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
         news_data = json.load(json_file)
     urls = []
     titles = [str(TIMES_TAG) + hint_information]
+    show_idx = 1
     if news_data:
         for i in news_data:
             urls.append(i['url'])
             if i['show']:
-                titles.append(i['title'])
+                titles.append(str(show_idx) + ' ' + i['title'])
+                show_idx += 1
     append_and_save_month_urls(today[:6], set(urls))
     text_path = build_today_text_path(today)
-    rows = ['\n', today  + TIMES_TYPE[TIMES_TAG] + " |" + topic.replace("\n", "|")]
+    rows = ['\n', today + TIMES_TYPE[TIMES_TAG] + " |" + topic.replace("\n", "|")]
     rows.extend(titles)
     txt = "\n".join(rows)
     with open(text_path, "a", encoding="utf-8") as file:
