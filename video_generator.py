@@ -411,6 +411,7 @@ def add_walking_man(path, walk_video_path):
     video_with_bg = video_with_bg.with_audio(origin_v.audio)
     video_with_bg.write_videofile(walk_video_path, codec="libx264", audio_codec="aac", fps=FPS)
 
+
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     start_time = time.time()
     video_paths = []
@@ -505,7 +506,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     with open(text_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     urls = []
-    titles = [str(TIMES_TAG) + hint_information]
+    titles = [hint_information]
     show_idx = 1
     if news_data:
         for i in news_data:
