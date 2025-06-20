@@ -375,6 +375,7 @@ def combine_videos_with_transitions(video_paths, output_path):
 
     # 加载视频和音频
     clips = []
+    duration_list = []
     for i, video_path in enumerate(video_paths):
         # 加载视频
         video = VideoFileClip(video_path)
@@ -389,25 +390,33 @@ def combine_videos_with_transitions(video_paths, output_path):
         ], use_bgclip=True)
         # 将视频放置在背景上
         clips.append(video_with_bg)
-
+        duration_list.append(video.duration)
     final_clip = concatenate_videoclips(clips, method="compose")
     # 导出最终视频
     final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
     logger.info(f"视频整合生成完成,path={output_path}")
     # final_clip.preview()
+    return duration_list
 
-
-def add_walking_man(path, walk_video_path):
+def add_walking_man(path, walk_video_path, duration_list):
     origin_v = VideoFileClip(path)
+    all_duration = origin_v.duration
+    duration_width_list = [duration / all_duration * GLOBAL_WIDTH for duration in duration_list]
+    duration_width_int_list = [int(sum(duration_width_list[:i])) for i in range(1, len(duration_width_list))]
+    seg_clips = []
+    for seg in duration_width_int_list:
+        tag = ImageClip('videos/seg.png')
+        tag = tag.resized(GAP / 2 / tag.h)
+        tag = tag.with_position((seg, 'bottom')).with_duration(origin_v.duration).with_start(0)
+        seg_clips.append(tag)
     width = origin_v.w
     walk = ImageClip('videos/process_panda.png')
     walk = walk.resized(GAP / 2 / walk.h)
     walk = walk.with_position(lambda t: (t / origin_v.duration * width, 'bottom')).with_duration(
         origin_v.duration).with_start(0)
-    video_with_bg = CompositeVideoClip([
-        origin_v,
-        walk
-    ], use_bgclip=True)
+    seg_clips.insert(0, origin_v)
+    seg_clips.append(walk)
+    video_with_bg = CompositeVideoClip(seg_clips, use_bgclip=True)
     video_with_bg = video_with_bg.with_audio(origin_v.audio)
     video_with_bg.write_videofile(walk_video_path, codec="libx264", audio_codec="aac", fps=FPS)
 
@@ -427,8 +436,8 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     final_path = build_today_final_video_path(today)
     final_path_walk = build_today_final_video_walk_path(today)
     logger.info(f"主视频保存在:{final_path} and {final_path_walk}")
-    combine_videos_with_transitions(video_paths, final_path)
-    add_walking_man(final_path, final_path_walk)
+    duration_list = combine_videos_with_transitions(video_paths, final_path)
+    add_walking_man(final_path, final_path_walk,duration_list)
     end_time = time.time()  # 结束计时
     elapsed_time = end_time - start_time
     logger.info(f"生成新闻JSON文件...")
