@@ -32,10 +32,10 @@ REWRITE = False
 TIMES_TAG = 0
 
 TIMES_TYPE = {
-    0: '早上',
-    1: '中午',
-    2: '傍晚',
-    3: '夜间'
+    1: '晨间全球快讯',
+    2: '午间全球快讯',
+    3: '夜间全球快讯',
+    0: '凌晨全球快讯'
 }
 
 hint_information = """信息来源:[中国日报国际版] [中东半岛电视台] [英国广播公司] [今日俄罗斯电视台]"""
@@ -414,7 +414,7 @@ def add_walking_man(path, walk_video_path, duration_list):
         seg_clips.append(tag)
 
         txt_clip = TextClip(
-            text=str(idx+1),
+            text=str(idx),
             font_size=int(tag.h * 0.95),
             color='white',
             font='./font/simhei.ttf',
