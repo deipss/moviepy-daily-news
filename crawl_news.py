@@ -779,7 +779,7 @@ def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False) -> 
         logger.info(f"{output_file}已存在，跳过生成音频。")
         return
     logger.info(f"{output_file}开始生成音频: {text}")
-    rate = 70
+    rate = 80
     sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
 
