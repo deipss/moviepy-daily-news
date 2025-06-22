@@ -4,11 +4,10 @@
 主要用的技术：
 
 - 爬虫：BeautifulSoup
-- 机器翻译：~~字节旗下的[火山翻译](https://www.volcengine.com/docs/4640/65067)~~（每月有免费额度，不够用，已移除，使用deepseek翻译） 
+- 机器翻译：~~字节旗下的[火山翻译](https://www.volcengine.com/docs/4640/65067)~~（每月有免费额度，不够用，已移除，使用deepseek翻译）
 - 摘要提取：ollama 部署了  [deepseek-r1:8b](https://ollama.com/library/deepseek-r1 "点击打开ollama")
 - 文字转语音:刚开始打算使用[字节的megaTTS](https://github.com/bytedance/MegaTTS3)，8G的显示不够，使用微软的edge-tts，效果还可以。
 - 视频生成：moviepy
-
 
 > 硬件最好是有GPU，用来运行ollama，当然可以用云服务器代替，取决于个人的资源。
 
@@ -68,6 +67,58 @@ python vedio_generator.py 20250605
 - [x] china daily 英文版
 - [x] bbc 下线，因为爬虫被检测到，封禁了
 - [x] ~~china daily asis 版~~
+- [ ] multiple threading : is edge-tts thread safety?
+
+
+
+# B上传报文
+
+- https://member.bilibili.com/x/vu/web/add/v3?t=1750571930422&csrf=d9c39ced616400e34af24d702ff88ea8
+
+```json
+{
+  "videos": [
+    {
+      "filename": "n250622sak794rechmqdc5czovuplhid",
+      "title": "20250622午间全球快讯 |1. 美国参战德黑兰  |2. 欧盟禁俄入境  |3. DNA检测婴儿计划  |4. 伦敦环保示范",
+      "desc": "",
+      "cid": 30633887283
+    }
+  ],
+  "cover": "https://archive.biliimg.com/bfs/archive/fa28be5cc46824b4161ff11e11ff989639228064.jpg",
+  "cover43": "https://archive.biliimg.com/bfs/archive/6ef4dbdc4e55c0145bcde8c337a8025fac854665.jpg",
+  "ai_cover": 0,
+  "title": "20250622午间全球快讯 |1. 美国参战德黑兰  |2. 欧盟禁俄入境  |3. DNA检测婴儿计划  |4. 伦敦环保示范",
+  "copyright": 1,
+  "human_type2": 1010,
+  "tid": 228,
+  "tag": "记录,生活记录,原创",
+  "desc": "\n信息来源:[中国日报国际版] [中东半岛电视台] [英国广播公司] [今日俄罗斯电视台]\n1 美国加入以色列对德黑兰的轰炸行动：实时更新。\n2 欧盟部长级官员们列出了一些他们想要禁止从欧盟入境的俄罗斯人。\n3 Y2K核心：逃避主义与对你出生前时期的怀旧感\n4 NHS计划对所有婴儿进行DNA检测，以评估疾病风险\n5 巴拿马宣布进入紧急状态，因香蕉地区出现骚乱\n6 别告诉我不要降低我的皮质醇 —— 这样反而让人更压力大！\n7 英格兰U21队的斗志大增，他们正朝着新的辉煌迈进\n8 以色列表示，已经击毙了伊朗在哈马斯的军事协调员。\n9 伦敦市政当局在环保努力方面名列前茅。\n10 国王致给南极研究人员的中冬致信\n11 中国公民从伊朗撤离后抵达北京。",
+  "dynamic": "",
+  "recreate": -1,
+  "interactive": 0,
+  "act_reserve_create": 0,
+  "no_disturbance": 0,
+  "is_only_self": 0,
+  "watermark": {
+    "state": 1
+  },
+  "no_reprint": 1,
+  "subtitle": {
+    "open": 0,
+    "lan": ""
+  },
+  "up_selection_reply": false,
+  "up_close_reply": false,
+  "up_close_danmu": false,
+  "neutral_mark": "",
+  "dolby": 0,
+  "lossless_music": 0,
+  "web_os": 2,
+  "csrf": "d9c39ced616400e34af24d702ff88ea8"
+}
+```
+
 # 7. 附件
 
 爬取的数据样例：
