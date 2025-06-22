@@ -1,7 +1,7 @@
 # 1. 技术方案
 
-大概的方向就是先使用爬虫技术，爬取网站的新闻文本、图片，英文新闻使用机器翻译进行翻译，使用ollama中deepseek进行摘要提取，上述的素材准备好，使用moviepy生成视频。
-主要用的技术：
+大概的方向就是先使用爬虫技术，爬取网站的新闻文本、图片，英文新闻使用机器翻译进行翻译，使用ollama中deepseek进行摘要提取，
+上述的素材准备好，使用moviepy生成视频。主要用的技术：
 
 - 爬虫：BeautifulSoup
 - 机器翻译：~~字节旗下的[火山翻译](https://www.volcengine.com/docs/4640/65067)~~（每月有免费额度，不够用，已移除，使用deepseek翻译）
@@ -58,15 +58,15 @@ python vedio_generator.py 20250605
 - [ ] ~~照片去重~~
 - [x] 晚间新闻
 - [x] 重试入口
-- [ ] 背景音乐
-- [ ] 视频爬取
 - [x] 内容过滤
 - [x] 时长过多，要精简
 - [x] 片头优化
-- [ ] 自动上传B站
 - [x] china daily 英文版
 - [x] bbc 下线，因为爬虫被检测到，封禁了
 - [x] ~~china daily asis 版~~
+- [ ] 背景音乐
+- [ ] 视频爬取
+- [ ] 自动上传B站:制定一个APP，可以上传多平台
 - [ ] multiple threading : is edge-tts thread safety?
 
 
