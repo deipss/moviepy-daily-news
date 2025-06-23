@@ -173,14 +173,15 @@ class NewsScraper:
 
     def is_sensitive_word_cn(self, word) -> bool:
         cnt = 0
-        sensitive_words = ["平", "%%%", "习", "县", "杀", "总书记", "近"]  # 去除了重复项
+        sensitive_words = ["平"]  # 去除了重复项
         for sensitive_word in sensitive_words:
             if sensitive_word in word:
                 cnt += 1
         return cnt > 1
 
     def is_sensitive_word_en(self, word) -> bool:
-        return "Jinping" in word
+        # b = "Jinping" in word
+        return true
 
     def create_folder(self, today=datetime.now().strftime("%Y%m%d")) -> str:
         folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, self.source)
