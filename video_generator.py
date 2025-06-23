@@ -541,7 +541,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
                 show_idx += 1
     append_and_save_month_urls(today[:6], set(urls))
     text_path = build_today_text_path(today)
-    rows = ['\n', today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " "),'\n']
+    rows = ['\n', today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " "), '\n']
     rows.extend(titles)
     txt = "\n".join(rows)
     with open(text_path, "a", encoding="utf-8") as file:
@@ -557,6 +557,7 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"))
         news_data = json.load(json_file)
     txt = ";".join([news_item['title'] if news_item['show'] else '' for news_item in news_data])
     data = client.generate_top_topic(txt)
+    data = data.replace(' ', '')
     logger.info(f'topic is \n{data}')
     return data
 
