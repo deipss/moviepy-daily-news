@@ -315,8 +315,8 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
         interline=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.6) // 4,
         font='./font/simhei.ttf',
         stroke_color=MAIN_BG_COLOR,
-        stroke_width=3
-    ).with_duration(duration).with_position((GAP * 1.75, GLOBAL_HEIGHT * 0.1))
+        stroke_width=2
+    ).with_duration(duration).with_position((GAP * 1.85, GLOBAL_HEIGHT * 0.1))
 
     lady = (VideoFileClip('videos/lady_announcer.mp4').with_effects([Loop(duration=duration)])
             .with_position((GLOBAL_WIDTH * 0.68, GLOBAL_HEIGHT * 0.47)).resized(0.7))
