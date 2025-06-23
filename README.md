@@ -67,7 +67,7 @@ python vedio_generator.py 20250605
 - [ ] 背景音乐
 - [ ] 视频爬取
 - [ ] 自动上传B站:制定一个APP，可以上传多平台
-- [ ] multiple threading : is edge-tts thread safety?
+- [x] multiple threading : is edge-tts thread safety? No, It is not safety, meanwhile it is would be limited traffic.
 
 
 

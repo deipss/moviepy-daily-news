@@ -140,7 +140,7 @@ class NewsScraper:
             if article.title and self.is_sensitive_word_cn(article.title):
                 logger.warning(f"{article.source} 标题包含敏感词: {url}")
                 continue
-            if article.title and len(article.title)<5:
+            if article.title and len(article.title) < 5:
                 logger.warning(f"{article.source} 标题过短: {url}")
                 continue
             if article.content_cn and self.is_sensitive_word_cn(article.content_cn):
@@ -732,7 +732,6 @@ def load_json_by_source(source, today):
 def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m%d")) -> List[NewsArticle]:
     """
     处理指定日期的新闻结果文件，提取摘要并翻译内容。
-
     :param today: 日期字符串，格式为 YYYYMMDD
     """
     logger.info(f"开始处理 {source} 的新闻结果文件...")
@@ -789,7 +788,7 @@ import time
 
 def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     logger.info("开始爬取新闻")
-    start = time.time()
+    _start = time.time()
     rt = RTScraper(source_url='https://www.rt.com/', source=RT, news_type='今日俄罗斯',
                    sleep_time=4)
     en = ChinaDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='中国日报',
@@ -799,29 +798,34 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='BBC',
                      sleep_time=20)
 
-    bbc.do_crawl_news(today)
-    al.do_crawl_news(today)
-    rt.do_crawl_news(today)
-    en.do_crawl_news(today)
-    end = time.time()
-    logger.info(f"爬取新闻耗时: {end - start:.2f} 秒")
+    from threading import Thread
+
+    threads = []
+    for scraper in [bbc, al, rt, en]:
+        thread = Thread(target=scraper.do_crawl_news, args=(today,))
+        threads.append(thread)
+        thread.start()
+    for thread in threads:
+        thread.join()
+    _end = time.time()
+    logger.info(f"爬取新闻耗时: {_end - _start:.2f} 秒")
 
     logger.info("开始AI生成摘要")
-    start = time.time()
+    _start = time.time()
     bbc_articles = process_news_results(source=BBC, today=today)
     rt_articles = process_news_results(source=RT, today=today)
     en_articles = process_news_results(source=CHINADAILY_EN, today=today)
     al_articles = process_news_results(source=ALJ, today=today)
-    end = time.time()
-    logger.info(f"AI生成摘要耗时: {end - start:.2f} 秒")
+    _end = time.time()
+    logger.info(f"AI生成摘要耗时: {_end - _start:.2f} 秒")
     build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles)
 
     logger.info("开始生成音频")
-    start = time.time()
+    _start = time.time()
     for i in [BBC, ALJ, RT, CHINADAILY_EN]:
         generate_all_news_audio(source=i, today=today)
-    end = time.time()
-    logger.info(f"生成音频耗时: {end - start:.2f} 秒")
+    _end = time.time()
+    logger.info(f"生成音频耗时: {_end - _start:.2f} 秒")
 
 
 def build_new_articles_path(today=datetime.now().strftime("%Y%m%d"), times_tag=0):
@@ -863,7 +867,7 @@ def build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_ar
         article.index_inner = idx
         idx += 1
         new_articles.append(article)
-    path = build_new_articles_path(today,TIMES_TAG)
+    path = build_new_articles_path(today, TIMES_TAG)
     with open(path, 'w', encoding='utf-8') as json_file:
         json.dump([article.to_dict() for article in new_articles], json_file, ensure_ascii=False, indent=4)
     logger.info(f"生成new_articles.json{TIMES_TAG}成功,path={path}")
@@ -916,14 +920,12 @@ def append_and_save_month_urls(year_month: str, new_urls: set) -> None:
     logger.info(f"已保存 {year_month} 的已访问URL {len(new_urls)} 个到 {json_file_path}")
 
 
-def test_alj():
+def _test_alj():
     cs = RTScraper(source_url='https://www.rt.com/', source=RT, news_type='国际新闻',
                    sleep_time=0)
     cs.do_crawl_news(today="20250601")
 
     logger.info("============")
-
-
 
 
 import argparse
