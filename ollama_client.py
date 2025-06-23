@@ -11,9 +11,8 @@ def timeit(func):
         start_time = time.time()
         result = func(*args, **kwargs)
         elapsed_time = time.time() - start_time
-        logger.info(f" 函数 {func.__name__} 耗时 {elapsed_time:.4f} 秒")
+        logger.info(f" Ollama函数 {func.__name__} 耗时 {elapsed_time:.4f} 秒")
         return result
-
     return wrapper
 
 
