@@ -244,7 +244,8 @@ def get_full_date(today=datetime.now()):
     # 获取星期几
     weekday_map = ["一", "二", "三", "四", "五", "六", "日"]
     weekday = f"星期{weekday_map[today.weekday()]}"
-    return "今天是{}, \n农历{}, \n{},欢迎收看【今日快电】".format(solar_date, lunar_date, weekday)
+    time_tag = TIMES_TYPE[TIMES_TAG]
+    return "今天是{}, \n农历{}, \n{},欢迎收看【今日快电{}】".format(solar_date, lunar_date, weekday, time_tag)
 
 
 def get_weekday_color():
@@ -405,7 +406,7 @@ def add_walking_man(path, walk_video_path, duration_list):
     all_duration = origin_v.duration
     duration_width_list = [duration / all_duration * GLOBAL_WIDTH for duration in duration_list]
     duration_width_int_list = [int(sum(duration_width_list[:i])) for i in range(1, len(duration_width_list))]
-    duration_width_number_list = [int(sum(duration_width_list[:i]) - duration_width_list[i-1] / 2) for i in
+    duration_width_number_list = [int(sum(duration_width_list[:i]) - duration_width_list[i - 1] / 2) for i in
                                   range(1, len(duration_width_list))]
     seg_clips = []
     for idx, (seg, num) in enumerate(zip(duration_width_int_list, duration_width_number_list)):
@@ -540,7 +541,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
                 show_idx += 1
     append_and_save_month_urls(today[:6], set(urls))
     text_path = build_today_text_path(today)
-    rows = ['\n', today + TIMES_TYPE[TIMES_TAG] + " |" + topic.replace("\n", "|")]
+    rows = ['\n', today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " "),'\n']
     rows.extend(titles)
     txt = "\n".join(rows)
     with open(text_path, "a", encoding="utf-8") as file:
