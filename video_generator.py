@@ -325,7 +325,7 @@ def combine_videos_all(videos, output_path):
     # 导出最终视频
     # final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
     # final_clip.preview()
-    return duration_list,final_clip
+    return duration_list, final_clip
 
 
 def add_walking_man(final_clip, walk_video_path, duration_list):
@@ -359,8 +359,8 @@ def add_walking_man(final_clip, walk_video_path, duration_list):
     seg_clips.append(walk)
     video_with_bg = CompositeVideoClip(seg_clips, use_bgclip=True)
     video_with_bg = video_with_bg.with_audio(final_clip.audio)
-    video_with_bg.preview()
-    # video_with_bg.write_videofile(walk_video_path, codec="libx264", audio_codec="aac", fps=FPS)
+    # video_with_bg.preview()
+    video_with_bg.write_videofile(walk_video_path, codec="libx264", audio_codec="aac", fps=FPS)
 
 
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
@@ -374,14 +374,14 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     logger.info(f"生成子视频")
     all_paths, news_video_list = generate_all_news_video(today=today)
     videos.extend(news_video_list)
-
+    logger.info(f"生成片尾视频")
     end_path, end_flip = generate_video_end()
     videos.append(end_flip)
 
     final_path = build_final_video_path(today)
     final_path_walk = build_final_video_walk_path(today)
     logger.info(f"主视频保存在:{final_path} and {final_path_walk}")
-    duration_list,final_clip = combine_videos_all(videos, final_path)
+    duration_list, final_clip = combine_videos_all(videos, final_path)
     add_walking_man(final_clip, final_path_walk, duration_list)
 
     logger.info(f"生成此次新闻JSON文件")
