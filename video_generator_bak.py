@@ -183,7 +183,7 @@ def build_introduction_txt(today=datetime.now()):
     weekday_map = ["一", "二", "三", "四", "五", "六", "日"]
     weekday = f"星期{weekday_map[today.weekday()]}"
     time_tag = TIMES_TYPE[TIMES_TAG]
-    return "今天是{}, \n农历{}, \n{},欢迎收看【今日快电{}】".format(solar_date, lunar_date, weekday, time_tag)
+    return "今天是{}, \n农历{}, \n{},欢迎收看【今日快电的{}】".format(solar_date, lunar_date, weekday, time_tag)
 
 
 def get_weekday_color():
@@ -354,7 +354,7 @@ def add_walking_man(path, walk_video_path, duration_list):
 
         txt_clip = TextClip(
             text=str(idx),
-            font_size=int(tag.h * 0.95),
+            font_size=int(tag.h * 0.9),
             color='white',
             font='./font/simhei.ttf',
             stroke_color='white',

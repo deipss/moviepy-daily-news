@@ -181,7 +181,7 @@ def build_introduction_txt(today=datetime.now()):
     weekday_map = ["一", "二", "三", "四", "五", "六", "日"]
     weekday = f"星期{weekday_map[today.weekday()]}"
     time_tag = TIMES_TYPE[TIMES_TAG]
-    return "今天是{}, \n农历{}, \n{},欢迎收看【今日快电{}】".format(solar_date, lunar_date, weekday, time_tag)
+    return "今天是{},\n农历{},\n{},欢迎收看[今日快电]{}".format(solar_date, lunar_date, weekday, time_tag)
 
 
 def get_weekday_color():
@@ -343,7 +343,7 @@ def add_walking_man(final_clip, walk_video_path, duration_list):
 
         txt_clip = TextClip(
             text=str(idx),
-            font_size=int(tag.h * 0.95),
+            font_size=int(tag.h * 0.9),
             color='white',
             font='./font/simhei.ttf',
             stroke_color='white',
@@ -454,7 +454,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     with open(text_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     urls = []
-    titles = [HINT_INFORMATION]
+    titles = []
     show_idx = 1
     if news_data:
         for i in news_data:
@@ -464,8 +464,9 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
                 show_idx += 1
     append_and_save_month_urls(today[:6], set(urls))
     text_path = build_month_text_path(today)
-    rows = ['\n', today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " "), '\n']
+    rows = [today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " ")]
     rows.extend(titles)
+    rows.append(HINT_INFORMATION)
     txt = "\n".join(rows)
     with open(text_path, "a", encoding="utf-8") as file:
         file.write(txt)
