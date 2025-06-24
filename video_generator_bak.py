@@ -85,8 +85,8 @@ def calculate_segment_times(duration, num_segments):
     return segment_times
 
 
-def generate_single_news_video(audio_path, image_list, title, summary, output_path, index, is_preview=False,
-                               news_type=""):
+def generate_three_layout_video(audio_path, image_list, title, summary, output_path, index, is_preview=False,
+                                news_type=""):
     title = "" + index + " " + title
     # 加载背景和音频
     bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(252, 254, 254))  # 白色背景
@@ -94,11 +94,11 @@ def generate_single_news_video(audio_path, image_list, title, summary, output_pa
         audio_clip = AudioFileClip(audio_path)
     except IOError as e:
         logger.error(f"音频文件加载失败，{audio_path}", e)
-        return False, None
+        return False
     duration = audio_clip.duration
     if duration < 2:
         logger.warning(f"{title} 音频文件时长过短，请检查音频文件{audio_path}")
-        return False, None
+        return False
     bg_clip = bg_clip.with_duration(duration).with_audio(audio_clip)
     bg_width, bg_height = bg_clip.size
 
@@ -162,10 +162,12 @@ def generate_single_news_video(audio_path, image_list, title, summary, output_pa
     image_clip_list.insert(1, bottom_left_txt)
     image_clip_list.insert(2, bottom_right_img)
     image_clip_list.insert(3, top_title)
-    video = CompositeVideoClip(clips=image_clip_list, size=(bg_width, bg_height))
+    final_video = CompositeVideoClip(clips=image_clip_list, size=(bg_width, bg_height))
     if is_preview:
-        video.preview()
-    return True, video
+        final_video.preview()
+    else:
+        final_video.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
+    return True
 
 
 def build_introduction_txt(today=datetime.now()):
@@ -215,7 +217,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     if os.path.exists(output_path) and not REWRITE:
         logger.info(f"片头{output_path}已存在,直接返回")
         return generate_top_topic_by_ollama(today), 0
-    # 加载背景图片
+        # 加载背景图片
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
 
     # 片头音频生成
@@ -259,19 +261,23 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
             .with_position((GLOBAL_WIDTH * 0.68, GLOBAL_HEIGHT * 0.47)).resized(0.7))
 
     # 合成最终视频
-    clip = CompositeVideoClip([bg_clip, txt_clip, lady, topic_txt_clip], size=bg_clip.size)
+    final_clip = CompositeVideoClip([bg_clip, txt_clip, lady, topic_txt_clip], size=bg_clip.size)
     if is_preview:
-        clip.preview()
-    return topics, clip
+        final_clip.preview()
+    else:
+        final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
+    return topics, duration
 
 
 def generate_video_end(is_preview=False):
     output_path = build_end_path()
+    if os.path.exists(output_path) and not REWRITE:
+        logger.info(f"片尾{output_path}已存在,直接返回")
     generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
     audio_path = build_end_audio_path()
 
-    generate_audio("本次的信息，至此结束，下次见", audio_path, rewrite=True)
+    generate_audio("今天的信息，至此结束，下次见", audio_path, rewrite=True)
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
 
@@ -295,10 +301,12 @@ def generate_video_end(is_preview=False):
     final_clip = CompositeVideoClip([bg_clip, txt_clip, lady], size=bg_clip.size)
     if is_preview:
         final_clip.preview()
-    return output_path, final_clip
+    else:
+        final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
+    return output_path
 
 
-def combine_videos_all(videos, output_path):
+def combine_videos_with_transitions(video_paths, output_path):
     if os.path.exists(output_path) and not REWRITE:
         logger.info(f"视频整合生成{output_path}已存在,直接返回")
         return
@@ -307,10 +315,11 @@ def combine_videos_all(videos, output_path):
     # 加载视频和音频
     clips = []
     duration_list = []
-    for i, video in enumerate(videos):
+    for i, video_path in enumerate(video_paths):
         # 加载视频
+        video = VideoFileClip(video_path)
         if (video.duration < 2):
-            logger.warning(f"视频{i}时长不足2秒,跳过")
+            logger.warning(f"视频{video_path}时长不足2秒,跳过")
             continue
         video = video.with_position(('center', 'center'), relative=True)
         # 将视频放置在背景上
@@ -323,13 +332,15 @@ def combine_videos_all(videos, output_path):
         duration_list.append(video.duration)
     final_clip = concatenate_videoclips(clips, method="compose")
     # 导出最终视频
-    # final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
+    final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=FPS)
+    logger.info(f"视频整合生成完成,path={output_path}")
     # final_clip.preview()
-    return duration_list, final_clip
+    return duration_list
 
 
-def add_walking_man(final_clip, walk_video_path, duration_list):
-    all_duration = final_clip.duration
+def add_walking_man(path, walk_video_path, duration_list):
+    origin_v = VideoFileClip(path)
+    all_duration = origin_v.duration
     duration_width_list = [duration / all_duration * GLOBAL_WIDTH for duration in duration_list]
     duration_width_int_list = [int(sum(duration_width_list[:i])) for i in range(1, len(duration_width_list))]
     duration_width_number_list = [int(sum(duration_width_list[:i]) - duration_width_list[i - 1] / 2) for i in
@@ -338,7 +349,7 @@ def add_walking_man(final_clip, walk_video_path, duration_list):
     for idx, (seg, num) in enumerate(zip(duration_width_int_list, duration_width_number_list)):
         tag = ImageClip('videos/seg.png')
         tag = tag.resized(GAP / 2 / tag.h)
-        tag = tag.with_position((seg, 'bottom')).with_duration(final_clip.duration).with_start(0)
+        tag = tag.with_position((seg, 'bottom')).with_duration(origin_v.duration).with_start(0)
         seg_clips.append(tag)
 
         txt_clip = TextClip(
@@ -348,47 +359,47 @@ def add_walking_man(final_clip, walk_video_path, duration_list):
             font='./font/simhei.ttf',
             stroke_color='white',
             stroke_width=1
-        ).with_duration(final_clip.duration).with_position((num, 'bottom')).with_start(0)
+        ).with_duration(origin_v.duration).with_position((num, 'bottom')).with_start(0)
         seg_clips.append(txt_clip)
-    width = final_clip.w
+    width = origin_v.w
     walk = ImageClip('videos/arrowhead.png')
     walk = walk.resized(GAP / 2 / walk.h)
-    walk = walk.with_position(lambda t: (t / final_clip.duration * width, 'bottom')).with_duration(
-        final_clip.duration).with_start(0)
-    seg_clips.insert(0, final_clip)
+    walk = walk.with_position(lambda t: (t / origin_v.duration * width, 'bottom')).with_duration(
+        origin_v.duration).with_start(0)
+    seg_clips.insert(0, origin_v)
     seg_clips.append(walk)
     video_with_bg = CompositeVideoClip(seg_clips, use_bgclip=True)
-    video_with_bg = video_with_bg.with_audio(final_clip.audio)
+    video_with_bg = video_with_bg.with_audio(origin_v.audio)
     # video_with_bg.preview()
     video_with_bg.write_videofile(walk_video_path, codec="libx264", audio_codec="aac", fps=FPS)
 
 
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
-    videos = []
-
+    start_time = time.time()
+    video_paths = []
     intro_path = build_introduction_path(today)
+    video_paths.append(intro_path)
     logger.info(f"正在生成视频片头 {intro_path}...")
-    topics, introduction_clip = generate_video_introduction(intro_path, today)
-    videos.append(introduction_clip)
+    topics, duration = generate_video_introduction(intro_path, today)
 
-    logger.info(f"生成子视频")
-    all_paths, news_video_list = generate_all_news_video(today=today)
-    videos.extend(news_video_list)
-    logger.info(f"生成片尾视频")
-    end_path, end_flip = generate_video_end()
-    videos.append(end_flip)
-
+    all_paths = generate_all_news_video(today=today)
+    for i in range(len(all_paths)):
+        video_paths.append(all_paths[i])
+    video_paths.append(generate_video_end())
+    logger.info(f"生成主视频并整合...")
     final_path = build_final_video_path(today)
     final_path_walk = build_final_video_walk_path(today)
     logger.info(f"主视频保存在:{final_path} and {final_path_walk}")
-    duration_list, final_clip = combine_videos_all(videos, final_path)
-    add_walking_man(final_clip, final_path_walk, duration_list)
-
-    logger.info(f"生成此次新闻JSON文件")
+    duration_list = combine_videos_with_transitions(video_paths, final_path)
+    add_walking_man(final_path, final_path_walk, duration_list)
+    end_time = time.time()  # 结束计时
+    elapsed_time = end_time - start_time
+    logger.info(f"生成新闻JSON文件...")
     save_today_news_json(topics, today)
+    logger.info(f"结束，视频整合生成总耗时: {elapsed_time:.2f} 秒")
 
 
-def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")):
+def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
     json_file_path = build_articles_json_path(today, TIMES_TAG)
     logger.info(f"新闻json文件path={json_file_path}")
     if not os.path.exists(json_file_path):
@@ -399,23 +410,28 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")):
         news_data = json.load(json_file)
 
     video_output_paths = []
-    news_video_list = []
     idx = 1
     for i, news_item in enumerate(news_data, start=1):
         article = NewsArticle(**news_item)
         dir_path = os.path.join(NEWS_FOLDER_NAME, today, article.source, article.folder)
+        logger.info(f" {article.source} {article.folder} {article.show} {article.title}   新闻正在处理...")
         if not article.show:
-            logger.warning(f"新闻已隐藏 {article.source} {article.folder} {article.title} ，跳过生成")
+            logger.warning(f" {article.source} {article.folder} {article.title} 新闻已隐藏，跳过生成")
             continue
-        logger.info(f"生成中… {article.source} {article.folder} {article.show} {article.title}   ")
 
+        # 新增逻辑：将摘要转换为音频并保存
         video_output_path = os.path.join(dir_path, VIDEO_FILE_NAME)
+        if os.path.exists(video_output_path) and not REWRITE:
+            logger.warning(
+                f" {article.source} {article.folder} {article.title}  视频已存在，跳过生成,path={video_output_path}")
+            video_output_paths.append(video_output_path)
+            continue
 
         audio_output_path = os.path.join(dir_path, AUDIO_FILE_NAME)
         img_list = []
         for image in article.images:
             img_list.append(os.path.join(dir_path, image))
-        generated_result, flip = generate_single_news_video(
+        generated_result = generate_three_layout_video(
             output_path=video_output_path,
             audio_path=audio_output_path,
             image_list=img_list,
@@ -427,9 +443,8 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")):
         )
         if generated_result:
             idx += 1
-            news_video_list.append(flip)
             video_output_paths.append(video_output_path)
-    return video_output_paths, news_video_list
+    return video_output_paths
 
 
 def load_json_by_source(source, today):
@@ -469,8 +484,8 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     txt = "\n".join(rows)
     with open(text_path, "a", encoding="utf-8") as file:
         file.write(txt)
-    logger.info(f'今次新闻简介信息 {txt}')
-    logger.info(f"今次新闻txt文件 {text_path}")
+    logger.info(f'今日新闻简介信息 {txt}')
+    logger.info(f"今日新闻text文件 {text_path}")
 
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
@@ -485,23 +500,23 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"))
     return data
 
 
-def _test_generate_all():
+def test_generate_all():
     today = '20250604'
     generate_all_news_video(today=today)
     generate_all_news_video(today=today)
     generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
     generate_video_introduction()
-    combine_videos_all(
+    combine_videos_with_transitions(
         ['cn_news/20250512/intro.mp4', 'cn_news/20250512/0000/video.mp4', 'cn_news/20250512/0001/video.mp4'], 'a.mp4',
         '', today)
 
 
-def _test_generate_video_introduction():
+def test_generate_video_introduction():
     REWRITE = True
     generate_video_introduction(today='20250606', is_preview=True)
 
 
-def _test_video_text_align():
+def test_video_text_align():
     list = [
         'news/20250604/chinadaily/0000/683fd3d86b8efd9fa6284ef8_m.png',
         'news/20250604/chinadaily/0000/683fd3d96b8efd9fa6284efa_m.jpg',
@@ -509,7 +524,7 @@ def _test_video_text_align():
         'news/20250604/chinadaily/0000/683fd3da6b8efd9fa6284efe_m.jpg'
     ]
 
-    generate_single_news_video(
+    generate_three_layout_video(
         output_path="news/20250604/chinadaily/0000/video.mp4",
         audio_path="news/20250604/chinadaily/0000/summary_audio.aiff",
         image_list=list,
@@ -520,7 +535,7 @@ def _test_video_text_align():
     )
 
 
-def _test_generate_video_end():
+def test_generate_video_end():
     generate_video_end(is_preview=True)
 
 
