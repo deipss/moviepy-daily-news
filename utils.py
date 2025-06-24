@@ -108,8 +108,8 @@ def build_end_path():
     return os.path.join(NEWS_FOLDER_NAME, "end.mp4")
 
 
-def build_month_text_path(month=datetime.now().strftime("%Y%m")):
-    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, month+"all.text")
+def build_daily_text_path(today=datetime.now().strftime("%Y%m%d")):
+    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "all.text")
 
 
 def build_introduction_audio_path(today=datetime.now().strftime("%Y%m%d")):
