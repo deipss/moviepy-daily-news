@@ -1,92 +1,18 @@
 import json
-
 from ollama_client import OllamaClient
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-
 from abc import abstractmethod
-from dataclasses import dataclass
-from typing import List
+from typing import List, LiteralString
 import re
-import sys
 import os
 import requests
 from datetime import datetime
 from logging_config import logger
 from fake_useragent import UserAgent
 import random
+from utils import *
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-NEWS_JSON_FILE_NAME = "news_results.json"
-PROCESSED_NEWS_JSON_FILE_NAME = "news_results_processed.json"
-CN_NEWS_FOLDER_NAME = "news"
-CN_NEWS_FOLDER_NAME_P = "news_p"
-FINAL_VIDEOS_FOLDER_NAME = "final_videos"
-TIMES_TAG: int = 0
-CHINADAILY = 'chinadaily'
-CHINADAILY_EN = 'chinadaily_en'
-RT = 'rt'
-ALJ = 'alj'
-ALJ_UP = 'alj_up'
-BBC = 'bbc'
-
-AUDIO_FILE_NAME = "summary_audio.mp3"
-
-SUB_COUNT = 15
-
-PROXY = {
-    'http': 'http://127.0.0.1:10809',
-    'https': 'http://127.0.0.1:10809',
-}
-
-
-@dataclass
-class NewsArticle:
-    def __init__(self,
-                 title: str = None,
-                 title_en: str = None,
-                 images: List[str] = None,
-                 video: str = None,
-                 audio: str = None,
-                 image_urls: List[str] = None,
-                 video_url: str = None,
-                 content_cn: str = None,
-                 content_en: str = None,
-                 folder: str = None,
-                 index_inner: int = None,
-                 index_show: int = None,
-                 url: str = None,
-                 source: str = None,
-                 news_type: str = None,
-                 publish_time: str = None,
-                 author: str = None,
-                 tags: List[str] = None,
-                 summary: str = None,
-                 show: bool = None):
-        self.title = title
-        self.title_en = title_en
-        self.images = images or []
-        self.video = video
-        self.audio = audio
-        self.image_urls = image_urls or []
-        self.video_url = video_url
-        self.content_cn = content_cn
-        self.content_en = content_en
-        self.folder = folder
-        self.index_inner = index_inner
-        self.index_show = index_show
-        self.url = url
-        self.source = source
-        self.news_type = news_type
-        self.publish_time = publish_time
-        self.author = author
-        self.tags = tags or []
-        self.summary = summary
-        self.show = show
-
-    def to_dict(self):
-        return self.__dict__
 
 
 class NewsScraper:
@@ -98,32 +24,36 @@ class NewsScraper:
         self.sleep_time = sleep_time
 
     def do_crawl_news(self, today: datetime.now().strftime("%Y%m%d")):
-        today_source_path = os.path.join(CN_NEWS_FOLDER_NAME, today, self.source)
+        today_source_path = self.build_today_source_path(today)
         if not os.path.exists(today_source_path):
-            self.crawling_news_meta(today)
+            self.crawling_news_article(today)
         else:
             logger.info(f" {today_source_path} today_source_path had exists. ")
         logger.info(f"{self.source} 爬取完成。")
 
+    def build_today_source_path(self, today):
+        today_source_path = os.path.join(NEWS_FOLDER_NAME, today, self.source)
+        return today_source_path
+
     @abstractmethod
-    def extract_all_not_visit_urls(self, today: str):
+    def extract_unlisted_urls(self, today: str):
         pass
 
     @abstractmethod
     def extract_news_content(self, today: str):
         pass
 
-    def crawling_news_meta(self, today):
+    def crawling_news_article(self, today):
         folder_path = self.create_folder(today)
-        today_source_path = os.path.join(CN_NEWS_FOLDER_NAME, today, self.source)
-        urls = self.extract_all_not_visit_urls(today)
+        today_source_path = self.build_today_source_path(today)
+        urls = self.extract_unlisted_urls(today)
         month_urls = load_month_urls(today[:6])
         results = []
         if urls is None:
             logger.info(f" {self.source}无法获取初始页面内容，程序退出。")
             return results
-        logger.info(f"{self.source} has  {len(urls)}  urls,now extract first {SUB_COUNT}")
-        for idx, url in enumerate(urls[:SUB_COUNT]):
+        logger.info(f"{self.source} has  {len(urls)}  urls,now extract first {SUB_LIST_LENGTH}")
+        for idx, url in enumerate(urls[:SUB_LIST_LENGTH]):
             if url in month_urls:
                 logger.info(f" {self.source} 跳过本月已访问过的新闻: {url}")
                 continue
@@ -131,7 +61,7 @@ class NewsScraper:
             if not article:
                 logger.warning(f"无法获取新闻内容: {url}")
                 continue
-            article.folder = "{:04d}".format(idx)
+            article.folder = "{:02d}".format(idx)
             article.index_inner = idx
             article.index_show = idx
             if len(article.images) == 0:
@@ -162,7 +92,7 @@ class NewsScraper:
             results.append(article)
         logger.info(f"{self.source} ，脱敏，过滤后，共发现 {len(results)} 条新闻。")
         json_path = os.path.join(folder_path, NEWS_JSON_FILE_NAME)
-        json_results = [i.to_dict() for i in results[:SUB_COUNT]]
+        json_results = [i.to_dict() for i in results[:SUB_LIST_LENGTH]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
         return results
@@ -182,8 +112,8 @@ class NewsScraper:
     def is_sensitive_word_en(self, word) -> bool:
         return "Jinping" in word
 
-    def create_folder(self, today=datetime.now().strftime("%Y%m%d")) -> str:
-        folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, self.source)
+    def create_folder(self, today=datetime.now().strftime("%Y%m%d")) -> LiteralString | str | bytes:
+        folder_path = self.build_today_source_path(today)
         os.makedirs(folder_path, exist_ok=True)
         return folder_path
 
@@ -286,7 +216,7 @@ class ChinaDailyScraper(NewsScraper):
                 urls.add(href)
         return urls
 
-    def extract_all_not_visit_urls(self, today):
+    def extract_unlisted_urls(self, today):
         visited_urls = set()
         full_urls = []
         for base_url in self.origin_url():
@@ -309,7 +239,7 @@ class ChinaDailyScraper(NewsScraper):
         return full_urls
 
 
-class ChinaDailyENScraper(ChinaDailyScraper):
+class CNDailyENScraper(ChinaDailyScraper):
     def origin_url(self) -> list[str]:
         return [
             'https://www.chinadaily.com.cn',
@@ -447,7 +377,7 @@ class BbcScraper(NewsScraper):
                 urls.add(href)
         return urls
 
-    def extract_all_not_visit_urls(self, today):
+    def extract_unlisted_urls(self, today):
         # 初始爬取目标页面
         visited_urls = set()
         full_urls = []
@@ -533,7 +463,7 @@ class ALJScraper(NewsScraper):
                 urls.add(href)
         return urls
 
-    def extract_all_not_visit_urls(self, today):
+    def extract_unlisted_urls(self, today):
         # 初始爬取目标页面
         visited_urls = set()
         full_urls = []
@@ -640,7 +570,7 @@ class RTScraper(NewsScraper):
                 urls.add(href)
         return urls
 
-    def extract_all_not_visit_urls(self, today):
+    def extract_unlisted_urls(self, today):
         # 初始爬取目标页面
         visited_urls = set()
         full_urls = []
@@ -718,8 +648,8 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
 
 
 def load_json_by_source(source, today):
-    folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
-    json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
+    folder_path = os.path.join(NEWS_FOLDER_NAME, today, source)
+    json_file_path = os.path.join(folder_path, NEWS_JSON_FILE_NAME_PROCESSED)
     if not os.path.exists(json_file_path):
         logger.info(f"{source}新闻json文件不存在,path={json_file_path}")
         return json_file_path, None
@@ -735,10 +665,10 @@ def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m
     :param today: 日期字符串，格式为 YYYYMMDD
     """
     logger.info(f"开始处理 {source} 的新闻结果文件...")
-    folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
+    folder_path = os.path.join(NEWS_FOLDER_NAME, today, source)
     json_file_path = os.path.join(folder_path, NEWS_JSON_FILE_NAME)
     if os.path.exists(json_file_path):
-        processed_json_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
+        processed_json_path = os.path.join(folder_path, NEWS_JSON_FILE_NAME_PROCESSED)
         if os.path.exists(processed_json_path):
             logger.info(f"{processed_json_path}已存在处理后的新闻结果文件，跳过处理,直接返回")
             _, data = load_json_by_source(source, today)
@@ -756,8 +686,8 @@ def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m
 
 
 def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%Y%m%d")) -> None:
-    folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
-    json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
+    folder_path = os.path.join(NEWS_FOLDER_NAME, today, source)
+    json_file_path = os.path.join(folder_path, NEWS_JSON_FILE_NAME_PROCESSED)
     if not os.path.exists(json_file_path):
         logger.warning(f"{json_file_path}不存在，跳过生成音频。")
         return
@@ -772,33 +702,18 @@ def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%
         audio_output_path = os.path.join(folder_path, article.folder, "%s" % AUDIO_FILE_NAME)
         generate_audio(article.summary, output_file=audio_output_path)
 
-
-def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False) -> None:
-    if os.path.exists(output_file) and not rewrite:
-        logger.info(f"{output_file}已存在，跳过生成音频。")
-        return
-    logger.info(f"{output_file}开始生成音频: {text}")
-    rate = 80
-    sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
-    os.system(sh)
-
-
 import time
+from threading import Thread
 
 
 def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     logger.info("开始爬取新闻")
     _start = time.time()
-    rt = RTScraper(source_url='https://www.rt.com/', source=RT, news_type='今日俄罗斯',
-                   sleep_time=4)
-    en = ChinaDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='中国日报',
-                             sleep_time=4)
-    al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='中东半岛新闻',
-                    sleep_time=20)
-    bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='BBC',
-                     sleep_time=20)
-
-    from threading import Thread
+    rt = RTScraper(source_url='https://www.rt.com/', source=RT, news_type='今日俄罗斯', sleep_time=4)
+    al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='中东半岛新闻', sleep_time=20)
+    bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='BBC', sleep_time=20)
+    en = CNDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='中国日报',
+                          sleep_time=4)
 
     threads = []
     for scraper in [bbc, al, rt, en]:
@@ -808,7 +723,7 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     for thread in threads:
         thread.join()
     _end = time.time()
-    logger.info(f"爬取新闻耗时: {_end - _start:.2f} 秒")
+    logger.info(f"并发爬取新闻耗时: {_end - _start:.2f} 秒")
 
     logger.info("开始AI生成摘要")
     _start = time.time()
@@ -820,24 +735,13 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     logger.info(f"AI生成摘要耗时: {_end - _start:.2f} 秒")
     build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles)
 
+    # 根据现有的资料，暂时不支持微软的edge-tts不支持并发，会有限流
     logger.info("开始生成音频")
     _start = time.time()
     for i in [BBC, ALJ, RT, CHINADAILY_EN]:
         generate_all_news_audio(source=i, today=today)
     _end = time.time()
     logger.info(f"生成音频耗时: {_end - _start:.2f} 秒")
-
-
-def build_new_articles_path(today=datetime.now().strftime("%Y%m%d"), times_tag=0):
-    path = os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles' + str(times_tag) + '.json')
-    logger.info(f" new_articles_path = {path}")
-    return path
-
-
-def build_new_articles_uploaded_path(today=datetime.now().strftime("%Y%m%d"), times_tag=1):
-    path = os.path.join(CN_NEWS_FOLDER_NAME, today, 'new_articles_uploaded' + str(times_tag) + '.json')
-    logger.info(f" new_articles_path_uploaded = {path}")
-    return path
 
 
 def build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles):
@@ -867,14 +771,14 @@ def build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_ar
         article.index_inner = idx
         idx += 1
         new_articles.append(article)
-    path = build_new_articles_path(today, TIMES_TAG)
+    path = build_articles_json_path(today, TIMES_TAG)
     with open(path, 'w', encoding='utf-8') as json_file:
         json.dump([article.to_dict() for article in new_articles], json_file, ensure_ascii=False, indent=4)
     logger.info(f"生成new_articles.json{TIMES_TAG}成功,path={path}")
 
 
 def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, "all.json")
+    return os.path.join(NEWS_FOLDER_NAME, today, "all.json")
 
 
 def get_today_morning_urls(today=datetime.now().strftime("%Y%m%d")):
@@ -885,39 +789,6 @@ def get_today_morning_urls(today=datetime.now().strftime("%Y%m%d")):
     json_data = json.load(open(json_path, 'r', encoding='utf-8'))
     return json_data['urls']
 
-
-def load_month_urls(year_month: str) -> set:
-    """
-    加载指定年月的已访问 URL 集合，并在追加新 URL 时写回文件。
-
-    :param year_month: 年月字符串，格式为 YYYYMM
-    :return: 包含已访问 URL 的集合
-    """
-    json_file_path = f"{year_month}_visited_urls.json"
-    urls_set = set()
-
-    # 尝试加载已存在的 JSON 文件
-    if os.path.exists(json_file_path):
-        with open(json_file_path, 'r', encoding='utf-8') as json_file:
-            urls_set = set(json.load(json_file))
-    logger.info(f"已加载 {year_month} 的已访问 URL{len(urls_set)}个")
-    return urls_set
-
-
-def append_and_save_month_urls(year_month: str, new_urls: set) -> None:
-    """
-    向指定年月的已访问 URL 集合中追加新 URL，并保存到 JSON 文件。
-
-    :param year_month: 年月字符串，格式为 YYYYMM
-    :param new_urls: 要追加的新 URL 集合
-    """
-    json_file_path = f"{year_month}_visited_urls.json"
-    existing_urls = load_month_urls(year_month)
-    updated_urls = existing_urls.union(new_urls)
-
-    with open(json_file_path, 'w', encoding='utf-8') as json_file:
-        json.dump(list(updated_urls), json_file, ensure_ascii=False, indent=4)
-    logger.info(f"已保存 {year_month} 的已访问URL {len(new_urls)} 个到 {json_file_path}")
 
 
 def _test_alj():

@@ -7,87 +7,27 @@ import os
 import math
 from PIL import Image
 from moviepy.video.fx import Loop
-from crawl_news import *
 from ollama_client import OllamaClient
 from logging_config import logger
 import sys
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-BACKGROUND_IMAGE_PATH = "videos/generated_background.png"
-GLOBAL_WIDTH = 1920
-GLOBAL_HEIGHT = 1080
-GAP = int(GLOBAL_WIDTH * 0.02)
-INNER_WIDTH = GLOBAL_WIDTH - GAP
-INNER_HEIGHT = GLOBAL_HEIGHT - GAP
-W_H_RADIO = GLOBAL_WIDTH / GLOBAL_HEIGHT
-W_H_RADIO = "{:.2f}".format(W_H_RADIO)
-FPS = 40
-MAIN_BG_COLOR = "#FF9900"
-VIDEO_FILE_NAME = "final.mp4"
-
+from utils import *
 import time
 
-REWRITE = False
-TIMES_TAG = 0
-
-TIMES_TYPE = {
-    0: '晨间全球快讯',
-    1: '午间全球快讯',
-    2: '晚间全球快讯',
-    3: '深夜全球快讯'
-}
-
-hint_information = """信息来源:[中国日报国际版] [中东半岛电视台] [英国广播公司] [今日俄罗斯电视台]"""
-
-
-def build_today_introduction_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, str(TIMES_TAG) + "introduction.mp4")
-
-
-def build_end_path():
-    return os.path.join(CN_NEWS_FOLDER_NAME, "end.mp4")
-
-
-def build_today_text_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, "all.text")
-
-
-def build_today_introduction_audio_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(CN_NEWS_FOLDER_NAME, today, "introduction.mp3")
-
-
-def build_today_end_audio_path():
-    return os.path.join(CN_NEWS_FOLDER_NAME, "end.mp3")
-
-
-def build_today_final_video_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(TIMES_TAG) + "_" + VIDEO_FILE_NAME)
-
-
-def build_today_final_video_walk_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(TIMES_TAG) + "_walk_" + VIDEO_FILE_NAME)
-
-
-def build_today_bg_music_path():
-    return os.path.join(CN_NEWS_FOLDER_NAME, "bg_music.mp4")
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR):
     # 创建一个新的图像
     image = Image.new("RGB", (width, height), color)  # 橘色背景
     draw = ImageDraw.Draw(image)
-
     # 计算边框宽度(1%的宽度)
     border_width = GAP * 1.5
-
     # 绘制圆角矩形(内部灰白色)
     draw.rounded_rectangle(
         [(border_width, border_width), (width - border_width, height - border_width)],
         radius=40,  # 圆角半径
         fill="#FCFEFE"  # 灰白色填充
     )
-
     image.save(BACKGROUND_IMAGE_PATH)
     return image
 
@@ -95,7 +35,6 @@ def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MA
 def add_newline_every_n_chars(text, n):
     if n <= 0:
         return text
-
     return '\n'.join([text[i:i + n] for i in range(0, len(text), n)])
 
 
@@ -119,7 +58,6 @@ def calculate_font_size_and_line_length(text, box_width, box_height, font_ratio=
         # 如果高度符合要求，返回当前字体大小和每行字符数
         if total_height <= box_height:
             return font_size, chars_per_line
-
     return 40, len(text)
 
 
@@ -232,7 +170,7 @@ def generate_three_layout_video(audio_path, image_list, title, summary, output_p
     return True
 
 
-def get_full_date(today=datetime.now()):
+def build_introduction_txt(today=datetime.now()):
     """获取完整的日期信息：公历日期、农历日期和星期"""
 
     # 获取公历日期
@@ -282,10 +220,10 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
         # 加载背景图片
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
 
-    # 加载背景音乐
+    # 片头音频生成
     date_obj = datetime.strptime(today, "%Y%m%d")
-    date_text = get_full_date(date_obj)
-    audio_path = build_today_introduction_audio_path(today)
+    date_text = build_introduction_txt(date_obj)
+    audio_path = build_introduction_audio_path(today)
     generate_audio(date_text, audio_path, rewrite=True)
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
@@ -294,7 +232,6 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     bg_clip = bg_clip.with_duration(duration).with_audio(audio_clip)
 
     # 创建日期文字
-
     date_parts = date_text.split('\n')
     max_length = max(len(part) for part in date_parts) if date_parts else len(date_text)
 
@@ -338,7 +275,7 @@ def generate_video_end(is_preview=False):
         logger.info(f"片尾{output_path}已存在,直接返回")
     generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT)
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
-    audio_path = build_today_end_audio_path()
+    audio_path = build_end_audio_path()
 
     generate_audio("今天的信息，至此结束，下次见", audio_path, rewrite=True)
     audio_clip = AudioFileClip(audio_path)
@@ -440,17 +377,18 @@ def add_walking_man(path, walk_video_path, duration_list):
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     start_time = time.time()
     video_paths = []
-    intro_path = build_today_introduction_path(today)
+    intro_path = build_introduction_path(today)
     video_paths.append(intro_path)
-    logger.info(f"正在生成视频片头{intro_path}...")
+    logger.info(f"正在生成视频片头 {intro_path}...")
     topics, duration = generate_video_introduction(intro_path, today)
+
     all_paths = generate_all_news_video(today=today)
     for i in range(len(all_paths)):
         video_paths.append(all_paths[i])
     video_paths.append(generate_video_end())
     logger.info(f"生成主视频并整合...")
-    final_path = build_today_final_video_path(today)
-    final_path_walk = build_today_final_video_walk_path(today)
+    final_path = build_final_video_path(today)
+    final_path_walk = build_final_video_walk_path(today)
     logger.info(f"主视频保存在:{final_path} and {final_path_walk}")
     duration_list = combine_videos_with_transitions(video_paths, final_path)
     add_walking_man(final_path, final_path_walk, duration_list)
@@ -462,7 +400,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
 
 
 def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
-    json_file_path = build_new_articles_path(today, TIMES_TAG)
+    json_file_path = build_articles_json_path(today, TIMES_TAG)
     logger.info(f"新闻json文件path={json_file_path}")
     if not os.path.exists(json_file_path):
         logger.warning(f"新闻json文件不存在,path={json_file_path}")
@@ -475,7 +413,7 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
     idx = 1
     for i, news_item in enumerate(news_data, start=1):
         article = NewsArticle(**news_item)
-        dir_path = os.path.join(CN_NEWS_FOLDER_NAME, today, article.source, article.folder)
+        dir_path = os.path.join(NEWS_FOLDER_NAME, today, article.source, article.folder)
         logger.info(f" {article.source} {article.folder} {article.show} {article.title}   新闻正在处理...")
         if not article.show:
             logger.warning(f" {article.source} {article.folder} {article.title} 新闻已隐藏，跳过生成")
@@ -510,8 +448,8 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
 
 
 def load_json_by_source(source, today):
-    folder_path = os.path.join(CN_NEWS_FOLDER_NAME, today, source)
-    json_file_path = os.path.join(folder_path, PROCESSED_NEWS_JSON_FILE_NAME)
+    folder_path = os.path.join(NEWS_FOLDER_NAME, today, source)
+    json_file_path = os.path.join(folder_path, NEWS_JSON_FILE_NAME_PROCESSED)
     if not os.path.exists(json_file_path):
         logger.warning(f"{source}新闻json文件不存在,path={json_file_path}")
         return json_file_path, None
@@ -522,7 +460,7 @@ def load_json_by_source(source, today):
 
 
 def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
-    text_path = build_new_articles_path(today, TIMES_TAG)
+    text_path = build_articles_json_path(today, TIMES_TAG)
 
     if not os.path.exists(text_path):
         logger.warning(f"新闻json文件不存在,path={text_path}")
@@ -531,7 +469,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     with open(text_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     urls = []
-    titles = [hint_information]
+    titles = [HINT_INFORMATION]
     show_idx = 1
     if news_data:
         for i in news_data:
@@ -540,7 +478,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
                 titles.append(str(show_idx) + ' ' + i['title'])
                 show_idx += 1
     append_and_save_month_urls(today[:6], set(urls))
-    text_path = build_today_text_path(today)
+    text_path = build_month_text_path(today)
     rows = ['\n', today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " "), '\n']
     rows.extend(titles)
     txt = "\n".join(rows)
@@ -552,7 +490,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d")) -> str:
     client = OllamaClient()
-    json_file_path = build_new_articles_path(today, TIMES_TAG)
+    json_file_path = build_articles_json_path(today, TIMES_TAG)
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     txt = ";".join([news_item['title'] if news_item['show'] else '' for news_item in news_data])
@@ -607,7 +545,15 @@ import argparse
 def print_init_parameters():
     logger.info('========================start generation==============================')
     logger.info(
-        f"\nGLOBAL_WIDTH:{GLOBAL_WIDTH}\nGLOBAL_HEIGHT:{GLOBAL_HEIGHT}\n W_H_RADIO:{W_H_RADIO}\n  FPS:{FPS}\n  BACKGROUND_IMAGE_PATH:{BACKGROUND_IMAGE_PATH}\nGAP:{GAP}\nINNER_WIDTH:{INNER_WIDTH}\nINNER_HEIGHT:{INNER_HEIGHT}")
+        f"""GLOBAL_WIDTH:{GLOBAL_WIDTH}
+GLOBAL_HEIGHT:{GLOBAL_HEIGHT}
+W_H_RADIO:{W_H_RADIO}
+FPS:{FPS}
+BACKGROUND_IMAGE_PATH:{BACKGROUND_IMAGE_PATH}
+GAP:{GAP}
+INNER_WIDTH:{INNER_WIDTH}
+INNER_HEIGHT:{INNER_HEIGHT}
+""")
     if not os.path.exists('temp'):
         os.mkdir('temp')
     if not os.path.exists('videos'):
@@ -618,7 +564,7 @@ def print_init_parameters():
 
 if __name__ == "__main__":
     print_init_parameters()
-
+    _start = time.time()
     parser = argparse.ArgumentParser(description="新闻视频生成工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
     parser.add_argument("--times", type=int, default=0, help="执行次数")
@@ -640,3 +586,4 @@ if __name__ == "__main__":
         combine_videos(args.today)
     except Exception as e:
         logger.error(f"视频生成主线失败,error={e}", exc_info=True)
+    logger.info(f"========================end generation==========time spend = {time.time() - _start:.2f} second")
