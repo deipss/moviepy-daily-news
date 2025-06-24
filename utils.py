@@ -133,7 +133,7 @@ def build_today_bg_music_path():
 
 
 def build_articles_json_path(today=datetime.now().strftime("%Y%m%d"), times_tag=0):
-    path = os.path.join(NEWS_FOLDER_NAME, today, 'new_articles' + str(times_tag) + '.json')
+    path = os.path.join(NEWS_FOLDER_NAME, today, 'new_articles_' + str(times_tag) + '.json')
     logger.info(f" new_articles_path = {path}")
     return path
 
@@ -160,7 +160,7 @@ def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False) -> 
     if os.path.exists(output_file) and not rewrite:
         logger.info(f"{output_file}已存在，跳过生成音频。")
         return
-    logger.info(f"{output_file}开始生成音频: {text}")
+    logger.info(f" {output_file} 开始生成音频: {text}")
     rate = 80
     sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)

@@ -14,7 +14,6 @@ import random
 from utils import *
 
 
-
 class NewsScraper:
 
     def __init__(self, source_url: str, source: str, news_type: str, sleep_time: int = 0):
@@ -88,7 +87,7 @@ class NewsScraper:
             if not do_download_images(article, today_source_path):
                 logger.info(f"图片下载失败: {url}")
                 continue
-            article.folder = "{:04d}".format(idx)
+            article.folder = "{:02d}".format(idx)
             results.append(article)
         logger.info(f"{self.source} ，脱敏，过滤后，共发现 {len(results)} 条新闻。")
         json_path = os.path.join(folder_path, NEWS_JSON_FILE_NAME)
@@ -699,8 +698,11 @@ def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%
 
         # 新增逻辑：将摘要转换为音频并保存
         folder_path = os.path.dirname(json_file_path)  # 获取新闻图片所在的文件夹路径
+        if len(article.folder) > 2:
+            article.folder = article.folder[2:]
         audio_output_path = os.path.join(folder_path, article.folder, "%s" % AUDIO_FILE_NAME)
-        generate_audio(article.summary, output_file=audio_output_path)
+        generate_audio(text=article.summary, output_file=audio_output_path)
+
 
 import time
 from threading import Thread
@@ -790,7 +792,6 @@ def get_today_morning_urls(today=datetime.now().strftime("%Y%m%d")):
     return json_data['urls']
 
 
-
 def _test_alj():
     cs = RTScraper(source_url='https://www.rt.com/', source=RT, news_type='国际新闻',
                    sleep_time=0)
@@ -820,5 +821,5 @@ if __name__ == "__main__":
     try:
         auto_download_daily(today=args.today)
     except  Exception as e:
-        logger.error(f"auto_download_daily error:{e}")
+        logger.error(f"auto_download_daily error:{e}", exc_info=True)
     logger.info(f"========================end crawl==========time spend = {time.time() - start:.2f} second")
