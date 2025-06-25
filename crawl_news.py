@@ -13,6 +13,16 @@ import random
 from utils import *
 from video_generator import REWRITE,combine_videos
 
+
+CHINADAILY = 'cn_daily'
+CHINADAILY_EN = 'cn_daily_en'
+RT = 'rt'
+ALJ = 'alj'
+ALJ_UP = 'alj_up'
+BBC = 'bbc'
+TIMES_TAG = 0
+
+
 class NewsScraper:
 
     def __init__(self, source_url: str, source: str, news_type: str, sleep_time: int = 0):
@@ -799,6 +809,17 @@ def _test_alj():
     logger.info("============")
 
 
+def reset_constant(time_tag):
+    global CHINADAILY_EN, ALJ, BBC, RT, TIMES_TAG
+    logger.info(f"before CHINADAILY_EN={CHINADAILY_EN},ALJ={ALJ},BBC={BBC},RT={RT},TIMES_TAG={TIMES_TAG}")
+    TIMES_TAG = time_tag
+    CHINADAILY_EN = CHINADAILY_EN + str(time_tag)
+    ALJ = ALJ + str(time_tag)
+    BBC = BBC + str(time_tag)
+    RT = RT + str(time_tag)
+    logger.info(f"after CHINADAILY_EN={CHINADAILY_EN},ALJ={ALJ},BBC={BBC},RT={RT},TIMES_TAG={TIMES_TAG}")
+
+
 import argparse
 
 if __name__ == "__main__":
@@ -810,8 +831,8 @@ if __name__ == "__main__":
     parser.add_argument("--rewrite", type=bool, default=False, help="是否重写")
     args = parser.parse_args()
     logger.info(f"新闻爬取和处理工具 args={args}")
-    logger.info(f"新闻爬取和处理工具 运行第{TIMES_TAG}次")
     reset_constant(args.times)
+    logger.info(f"新闻爬取和处理工具 运行第{TIMES_TAG}次")
     try:
         auto_download_daily(today=args.today)
     except  Exception as e:
@@ -824,7 +845,7 @@ if __name__ == "__main__":
         REWRITE = True
         logger.info("指定强制重写")
     try:
-        combine_videos(args.today)
+        combine_videos(args.today,args.times)
     except Exception as e:
         logger.error(f"视频生成主线失败,error={e}", exc_info=True)
     logger.info(f"========end combine_videos==========time spend = {time.time() - _start:.2f} second")

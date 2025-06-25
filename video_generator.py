@@ -15,6 +15,13 @@ import time
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+CHINADAILY = 'cn_daily'
+CHINADAILY_EN = 'cn_daily_en'
+RT = 'rt'
+ALJ = 'alj'
+ALJ_UP = 'alj_up'
+BBC = 'bbc'
+TIMES_TAG = 0
 
 def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR):
     # 创建一个新的图像
@@ -374,7 +381,8 @@ def add_walking_man(path, walk_video_path, duration_list):
     video_with_bg.write_videofile(walk_video_path, codec="libx264", audio_codec="aac", fps=FPS)
 
 
-def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
+def combine_videos(today: str = datetime.now().strftime("%Y%m%d"),times_tag:int = 0):
+    reset_constant(times_tag)
     start_time = time.time()
     video_paths = []
     intro_path = build_introduction_path(today, TIMES_TAG)
@@ -479,7 +487,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
                 show_idx += 1
     append_and_save_month_urls(today[:6], set(urls))
     text_path = build_daily_text_path(today)
-    rows = [TAGS, today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " ")]
+    rows = ['\n',TAGS, today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " ")]
     rows.extend(titles)
     rows.append(HINT_INFORMATION)
     txt = "\n".join(rows)
@@ -562,6 +570,17 @@ INNER_HEIGHT:{INNER_HEIGHT}
         os.mkdir('final_videos')
 
 
+
+def reset_constant(time_tag):
+    global CHINADAILY_EN, ALJ, BBC, RT, TIMES_TAG
+    logger.info(f"before CHINADAILY_EN={CHINADAILY_EN},ALJ={ALJ},BBC={BBC},RT={RT},TIMES_TAG={TIMES_TAG}")
+    TIMES_TAG = time_tag
+    CHINADAILY_EN = CHINADAILY_EN + str(time_tag)
+    ALJ = ALJ + str(time_tag)
+    BBC = BBC + str(time_tag)
+    RT = RT + str(time_tag)
+    logger.info(f"after CHINADAILY_EN={CHINADAILY_EN},ALJ={ALJ},BBC={BBC},RT={RT},TIMES_TAG={TIMES_TAG}")
+
 if __name__ == "__main__":
     logger.info('=========start generation')
 
@@ -580,7 +599,7 @@ if __name__ == "__main__":
         REWRITE = True
         logger.info("指定强制重写")
     try:
-        combine_videos(args.today)
+        combine_videos(args.today,args.times)
     except Exception as e:
         logger.error(f"视频生成主线失败,error={e}", exc_info=True)
     logger.info(f"=========end generation time spend = {time.time() - _start:.2f} second")
