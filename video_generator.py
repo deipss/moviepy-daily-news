@@ -396,7 +396,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     logger.info(f'添加进度条结束，耗时: {time.time() - start_time:.2f} 秒')
     logger.info(f"生成新闻JSON文件...")
     save_today_news_json(topics, today)
-    logger.info(f"结束，视频整合生成总耗时: {time.time() - start_time::.2f} 秒")
+    logger.info(f"结束，视频整合生成总耗时: {time.time() - start_time:.2f} 秒")
 
 
 def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
