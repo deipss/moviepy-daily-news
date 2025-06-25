@@ -479,7 +479,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
                 show_idx += 1
     append_and_save_month_urls(today[:6], set(urls))
     text_path = build_daily_text_path(today)
-    rows = [today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " ")]
+    rows = [TAGS, today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " ")]
     rows.extend(titles)
     rows.append(HINT_INFORMATION)
     txt = "\n".join(rows)
