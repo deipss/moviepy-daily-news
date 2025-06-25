@@ -469,7 +469,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
     with open(text_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     urls = []
-    titles = [HINT_INFORMATION]
+    titles = []
     show_idx = 1
     if news_data:
         for i in news_data:
@@ -479,8 +479,9 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
                 show_idx += 1
     append_and_save_month_urls(today[:6], set(urls))
     text_path = build_daily_text_path(today)
-    rows = ['\n', today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " "), '\n']
+    rows = [today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " ")]
     rows.extend(titles)
+    rows.append(HINT_INFORMATION)
     txt = "\n".join(rows)
     with open(text_path, "a", encoding="utf-8") as file:
         file.write(txt)
