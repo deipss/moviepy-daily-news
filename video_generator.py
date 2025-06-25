@@ -544,7 +544,6 @@ import argparse
 
 
 def print_init_parameters():
-    logger.info('========================start generation==============================')
     logger.info(
         f"""GLOBAL_WIDTH:{GLOBAL_WIDTH}
 GLOBAL_HEIGHT:{GLOBAL_HEIGHT}
@@ -564,6 +563,8 @@ INNER_HEIGHT:{INNER_HEIGHT}
 
 
 if __name__ == "__main__":
+    logger.info('========================start generation==============================')
+
     print_init_parameters()
     _start = time.time()
     parser = argparse.ArgumentParser(description="新闻视频生成工具")
