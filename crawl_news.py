@@ -3,7 +3,6 @@ from ollama_client import OllamaClient
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from abc import abstractmethod
-from typing import List, LiteralString
 import re
 import os
 import requests
@@ -111,7 +110,7 @@ class NewsScraper:
     def is_sensitive_word_en(self, word) -> bool:
         return "Jinping" in word
 
-    def create_folder(self, today=datetime.now().strftime("%Y%m%d")) -> LiteralString | str | bytes:
+    def create_folder(self, today=datetime.now().strftime("%Y%m%d")) :
         folder_path = self.build_today_source_path(today)
         os.makedirs(folder_path, exist_ok=True)
         return folder_path
