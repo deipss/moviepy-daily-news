@@ -354,7 +354,7 @@ def add_walking_man(path, walk_video_path, duration_list):
 
         txt_clip = TextClip(
             text=str(idx),
-            font_size=int(tag.h * 0.9),
+            font_size=int(tag.h * 0.85),
             color='white',
             font='./font/simhei.ttf',
             stroke_color='white',
