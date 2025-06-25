@@ -11,7 +11,7 @@ from logging_config import logger
 from fake_useragent import UserAgent
 import random
 from utils import *
-
+from video_generator import REWRITE,combine_videos
 
 class NewsScraper:
 
@@ -803,7 +803,7 @@ import argparse
 
 if __name__ == "__main__":
     logger.info('========================start crawl==============================')
-    start = time.time()
+    _start = time.time()
     parser = argparse.ArgumentParser(description="新闻爬取和处理工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
     parser.add_argument("--times", type=int, default=0, help="执行次数")
@@ -821,4 +821,16 @@ if __name__ == "__main__":
         auto_download_daily(today=args.today)
     except  Exception as e:
         logger.error(f"auto_download_daily error:{e}", exc_info=True)
-    logger.info(f"========================end crawl==========time spend = {time.time() - start:.2f} second")
+    logger.info(f"========================end crawl==========time spend = {time.time() - _start:.2f} second")
+
+    logger.info('========================start combine_videos==============================')
+    _start = time.time()
+    if args.rewrite:
+        REWRITE = True
+        logger.info("指定强制重写")
+    try:
+        combine_videos(args.today)
+    except Exception as e:
+        logger.error(f"视频生成主线失败,error={e}", exc_info=True)
+    logger.info(f"========================end combine_videos==========time spend = {time.time() - _start:.2f} second")
+
