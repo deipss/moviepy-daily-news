@@ -20,8 +20,8 @@ ALJ_UP = 'alj_up'
 BBC = 'bbc'
 
 AUDIO_FILE_NAME = "summary_audio.mp3"
-
 SUB_LIST_LENGTH = 15
+TIMES_TAG = 0
 
 PROXY = {
     'http': 'http://127.0.0.1:10809',
@@ -136,6 +136,17 @@ def build_articles_json_path(today=datetime.now().strftime("%Y%m%d"), times_tag=
     path = os.path.join(NEWS_FOLDER_NAME, today, 'new_articles_' + str(times_tag) + '.json')
     logger.info(f" new_articles_path = {path}")
     return path
+
+
+def reset_constant(time_tag):
+    global CHINADAILY_EN, ALJ, BBC, RT, TIMES_TAG
+    logger.info(f"before CHINADAILY_EN={CHINADAILY_EN},ALJ={ALJ},BBC={BBC},RT={RT},TIMES_TAG={TIMES_TAG}")
+    TIMES_TAG = time_tag
+    CHINADAILY_EN = CHINADAILY_EN + str(time_tag)
+    ALJ = ALJ + str(time_tag)
+    BBC = BBC + str(time_tag)
+    RT = RT + str(time_tag)
+    logger.info(f"after CHINADAILY_EN={CHINADAILY_EN},ALJ={ALJ},BBC={BBC},RT={RT},TIMES_TAG={TIMES_TAG}")
 
 
 def load_month_urls(year_month: str) -> set:

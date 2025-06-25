@@ -573,13 +573,8 @@ if __name__ == "__main__":
     parser.add_argument("--rewrite", type=bool, default=False, help="是否重写")
     args = parser.parse_args()
     logger.info(f"新闻视频生成工具 参数args={args}")
-    TIMES_TAG = args.times
     logger.info(f"新闻视频生成工具 运行第{TIMES_TAG}次")
-    CHINADAILY_EN = CHINADAILY_EN + str(TIMES_TAG)
-    CHINADAILY = CHINADAILY + str(TIMES_TAG)
-    ALJ = ALJ + str(TIMES_TAG)
-    BBC = BBC + str(TIMES_TAG)
-    RT = RT + str(TIMES_TAG)
+    reset_constant(args.times)
 
     if args.rewrite:
         REWRITE = True
