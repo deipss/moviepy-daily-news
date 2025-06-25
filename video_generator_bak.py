@@ -183,7 +183,7 @@ def build_introduction_txt(today=datetime.now()):
     weekday_map = ["一", "二", "三", "四", "五", "六", "日"]
     weekday = f"星期{weekday_map[today.weekday()]}"
     time_tag = TIMES_TYPE[TIMES_TAG]
-    return "今天是{}, \n农历{}, \n{},欢迎收看【今日快电的{}】".format(solar_date, lunar_date, weekday, time_tag)
+    return "今天是{}, \n农历{}, \n{},欢迎收看[今日快电]{}".format(solar_date, lunar_date, weekday, time_tag)
 
 
 def get_weekday_color():
@@ -377,7 +377,7 @@ def add_walking_man(path, walk_video_path, duration_list):
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     start_time = time.time()
     video_paths = []
-    intro_path = build_introduction_path(today)
+    intro_path = build_introduction_path(today,TIMES_TAG)
     video_paths.append(intro_path)
     logger.info(f"正在生成视频片头 {intro_path}...")
     topics, duration = generate_video_introduction(intro_path, today)
