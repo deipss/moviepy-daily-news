@@ -563,7 +563,7 @@ INNER_HEIGHT:{INNER_HEIGHT}
 
 
 if __name__ == "__main__":
-    logger.info('========================start generation==============================')
+    logger.info('=========start generation')
 
     print_init_parameters()
     _start = time.time()
@@ -583,4 +583,4 @@ if __name__ == "__main__":
         combine_videos(args.today)
     except Exception as e:
         logger.error(f"视频生成主线失败,error={e}", exc_info=True)
-    logger.info(f"========================end generation==========time spend = {time.time() - _start:.2f} second")
+    logger.info(f"=========end generation time spend = {time.time() - _start:.2f} second")
