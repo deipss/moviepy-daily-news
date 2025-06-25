@@ -377,7 +377,7 @@ def add_walking_man(path, walk_video_path, duration_list):
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     start_time = time.time()
     video_paths = []
-    intro_path = build_introduction_path(today,TIMES_TAG)
+    intro_path = build_introduction_path(today, TIMES_TAG)
     video_paths.append(intro_path)
     logger.info(f"正在生成视频片头 {intro_path}...")
     topics, duration = generate_video_introduction(intro_path, today)
@@ -387,16 +387,16 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
         video_paths.append(all_paths[i])
     video_paths.append(generate_video_end())
     logger.info(f"生成主视频并整合...")
-    final_path = build_final_video_path(today,TIMES_TAG)
-    final_path_walk = build_final_video_walk_path(today,TIMES_TAG)
+    final_path = build_final_video_path(today, TIMES_TAG)
+    final_path_walk = build_final_video_walk_path(today, TIMES_TAG)
     logger.info(f"主视频保存在:{final_path} and {final_path_walk}")
     duration_list = combine_videos_with_transitions(video_paths, final_path)
+    logger.info('开始添加进度条')
     add_walking_man(final_path, final_path_walk, duration_list)
-    end_time = time.time()  # 结束计时
-    elapsed_time = end_time - start_time
+    logger.info(f'添加进度条结束，耗时: {time.time() - start_time:.2f} 秒')
     logger.info(f"生成新闻JSON文件...")
     save_today_news_json(topics, today)
-    logger.info(f"结束，视频整合生成总耗时: {elapsed_time:.2f} 秒")
+    logger.info(f"结束，视频整合生成总耗时: {time.time() - start_time::.2f} 秒")
 
 
 def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> list[str]:
