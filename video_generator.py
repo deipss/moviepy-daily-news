@@ -366,7 +366,7 @@ def add_walking_man(final_clip, walk_video_path, duration_list):
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     videos = []
 
-    intro_path = build_introduction_path(today)
+    intro_path = build_introduction_path(today,TIMES_TAG)
     logger.info(f"正在生成视频片头 {intro_path}...")
     topics, introduction_clip = generate_video_introduction(intro_path, today)
     videos.append(introduction_clip)
@@ -378,8 +378,8 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d")):
     end_path, end_flip = generate_video_end()
     videos.append(end_flip)
 
-    final_path = build_final_video_path(today)
-    final_path_walk = build_final_video_walk_path(today)
+    final_path = build_final_video_path(today,TIMES_TAG)
+    final_path_walk = build_final_video_walk_path(today,TIMES_TAG)
     logger.info(f"主视频保存在:{final_path} and {final_path_walk}")
     duration_list, final_clip = combine_videos_all(videos, final_path)
     add_walking_man(final_clip, final_path_walk, duration_list)
@@ -529,7 +529,6 @@ import argparse
 
 
 def print_init_parameters():
-    logger.info('========================start generation==============================')
     logger.info(
         f"""GLOBAL_WIDTH:{GLOBAL_WIDTH}
 GLOBAL_HEIGHT:{GLOBAL_HEIGHT}
@@ -549,6 +548,8 @@ INNER_HEIGHT:{INNER_HEIGHT}
 
 
 if __name__ == "__main__":
+    logger.info('========================start generation==============================')
+
     print_init_parameters()
     _start = time.time()
     parser = argparse.ArgumentParser(description="新闻视频生成工具")
