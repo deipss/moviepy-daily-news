@@ -414,10 +414,10 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
     for i, news_item in enumerate(news_data, start=1):
         article = NewsArticle(**news_item)
         dir_path = os.path.join(NEWS_FOLDER_NAME, today, article.source, article.folder)
-        logger.info(f" {article.source} {article.folder} {article.show} {article.title}   新闻正在处理...")
         if not article.show:
             logger.warning(f" {article.source} {article.folder} {article.title} 新闻已隐藏，跳过生成")
             continue
+        logger.info(f"   新闻处理：{article.source} {article.folder} {article.show} {article.title} ")
 
         # 新增逻辑：将摘要转换为音频并保存
         video_output_path = os.path.join(dir_path, VIDEO_FILE_NAME)
@@ -451,7 +451,7 @@ def load_json_by_source(source, today):
     folder_path = os.path.join(NEWS_FOLDER_NAME, today, source)
     json_file_path = os.path.join(folder_path, NEWS_JSON_FILE_NAME_PROCESSED)
     if not os.path.exists(json_file_path):
-        logger.warning(f"{source}新闻json文件不存在,path={json_file_path}")
+        logger.warning(f"{source} 新闻json文件不存在,path={json_file_path}")
         return json_file_path, None
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
