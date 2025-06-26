@@ -91,7 +91,7 @@ class OllamaClient:
         response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
         while cnt > 0:
             if "error" in response:
-                response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
+                response = self._generate_text(prompt, model, {"max_new_tokens": max_tokens})
                 logger.error(f"生成摘要失败,last time is {cnt}: {response['error']},text={text}")
             cnt -= 1
         summary = response.get("response", "")
@@ -101,7 +101,7 @@ class OllamaClient:
             logger.info(f"当前摘要={summary}")
             logger.info(f"当前摘要={len(summary)},摘要超过{max_tokens}个字，再次生成摘要")
             prompt = f"请为以下文本生成一个简洁的中文新闻摘要（不超过{max_tokens}个字）：\n{summary}"
-            response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
+            response = self._generate_text(prompt, model, {"max_new_tokens": max_tokens})
             summary = response.get("response", "")
             summary = self._extract_think(summary)
 
@@ -130,10 +130,10 @@ class OllamaClient:
 
         prompt = f"请为以下文本生成一个简洁的中文新闻摘要（不超过{max_tokens}个字）：\n{text}"
         cnt = 3
-        response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
+        response = self._generate_text(prompt, model, {"max_new_tokens": max_tokens})
         while cnt > 0:
             if "error" in response:
-                response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
+                response = self._generate_text(prompt, model, {"max_new_tokens": max_tokens})
                 logger.error(f"生成摘要失败,last time is {cnt}: {response['error']},text={text}")
             cnt -= 1
         summary = response.get("response", "")
@@ -143,7 +143,7 @@ class OllamaClient:
             logger.info(f"当前摘要={summary}")
             logger.info(f"当前摘要={len(summary)},摘要超过{max_tokens}个字，再次生成摘要")
             prompt = f"请为以下文本生成一个简洁的中文新闻摘要（不超过{max_tokens}个字）：\n{summary}"
-            response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
+            response = self._generate_text(prompt, model, {"max_new_tokens": max_tokens})
             summary = response.get("response", "")
             summary = self._extract_think(summary)
 
@@ -151,7 +151,7 @@ class OllamaClient:
 
     def generate_top_topic(self, text: str, model: str = "deepseek-r1:8b", max_tokens: int = 50) -> str:
         prompt = f"请从以下新闻主题，提取出影响力最高的4个，这4个主题每个主题再精简到10个字左右，同时请排除一些未成年内容,只需返回按序号排列4个主题：\n{text}"
-        response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
+        response = self._generate_text(prompt, model, {"max_new_tokens": max_tokens})
         summary = response.get("response", "")
         summary = self._extract_think(summary, is_replace_line=False)
         summary = summary.replace("**", "")
@@ -159,7 +159,7 @@ class OllamaClient:
             logger.info(f"当前主题={summary}")
             logger.info(f"当前主题={len(summary)},主题超过{max_tokens}个字，再次生成主题")
             prompt = f"请从以下新闻主题，提取出影响力最高的4个，这4个主题每个主题再精简到8个字左右，同时请排除一些未成年内容，只需返回按序号排列4个主题：：\n{summary}"
-            response = self._generate_text(prompt, model, {"max_tokens": max_tokens // 10 * 9})
+            response = self._generate_text(prompt, model, {"max_new_tokens": max_tokens // 10 * 9})
             summary = response.get("response", "")
             summary = self._extract_think(summary, is_replace_line=False)
             summary = summary.replace("**", "")
@@ -168,7 +168,7 @@ class OllamaClient:
     def generate_top_title(self, text: str, model: str = "deepseek-r1:8b",
                            max_tokens: int = 80, count: int = 15) -> str:
         prompt = f"请从以下带有序号的新闻主题，提取出影响力最高的{count}个，过滤一些区县市的新闻，最终返回影响力最高的新闻的原始序号（用英文逗号隔开）：\n{text}"
-        response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
+        response = self._generate_text(prompt, model, {"max_new_tokens": max_tokens})
         summary = response.get("response", "")
         summary = self._extract_think(summary, is_replace_line=False)
         summary = summary.replace("**", "")
@@ -177,7 +177,7 @@ class OllamaClient:
     def generate_top_news_summary(self, text: str, model: str = "deepseek-r1:8b",
                                   max_tokens: int = 80, count: int = 15) -> str:
         prompt = f"请从以下标题信息，生成一从在{max_tokens}左右的新闻稿：\n{text}"
-        response = self._generate_text(prompt, model, {"max_tokens": max_tokens})
+        response = self._generate_text(prompt, model, {"max_new_tokens": max_tokens})
         summary = response.get("response", "")
         summary = self._extract_think(summary, is_replace_line=False)
         summary = summary.replace("**", "")
