@@ -118,7 +118,7 @@ class OllamaClient:
         """
 
         # 如果文本过长，截断为最大长度
-        max_length = 5000  # 假设 API 支持的最大长度为 5000 字符
+        max_length = 3000  # 假设 API 支持的最大长度为 5000 字符
         if len(text) > max_length:
             # 找到最后一个英文句号的位置
             last_period_index = text.rfind('.', 0, max_length)
