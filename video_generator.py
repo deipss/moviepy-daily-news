@@ -363,9 +363,7 @@ def add_walking_man(path, walk_video_path, duration_list):
             text=str(idx),
             font_size=int(tag.h * 0.85),
             color='white',
-            font='./font/simhei.ttf',
-            stroke_color='white',
-            stroke_width=1
+            font='./font/simhei.ttf'
         ).with_duration(origin_v.duration).with_position((num, 'bottom')).with_start(0)
         seg_clips.append(txt_clip)
     width = origin_v.w

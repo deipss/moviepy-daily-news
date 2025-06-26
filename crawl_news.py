@@ -848,5 +848,6 @@ if __name__ == "__main__":
         combine_videos(args.today,args.times)
     except Exception as e:
         logger.error(f"视频生成主线失败,error={e}", exc_info=True)
+    remove_outdated_documents()
     logger.info(f"========end combine_videos==========time spend = {time.time() - _start:.2f} second")
 

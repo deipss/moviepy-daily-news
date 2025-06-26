@@ -98,6 +98,10 @@ def build_introduction_path(today=datetime.now().strftime("%Y%m%d"), times_tag: 
     return os.path.join(NEWS_FOLDER_NAME, today, str(times_tag) + "introduction.mp4")
 
 
+def build_date_path(today=datetime.now().strftime("%Y%m%d")):
+    return os.path.join(NEWS_FOLDER_NAME, today)
+
+
 def build_end_path():
     return os.path.join(NEWS_FOLDER_NAME, "end.mp4")
 
@@ -130,7 +134,6 @@ def build_articles_json_path(today=datetime.now().strftime("%Y%m%d"), times_tag=
     path = os.path.join(NEWS_FOLDER_NAME, today, 'new_articles_' + str(times_tag) + '.json')
     logger.info(f" new_articles_path = {path}")
     return path
-
 
 
 def load_month_urls(year_month: str) -> set:
@@ -175,3 +178,24 @@ def append_and_save_month_urls(year_month: str, new_urls: set) -> None:
     with open(json_file_path, 'w', encoding='utf-8') as json_file:
         json.dump(list(updated_urls), json_file, ensure_ascii=False, indent=4)
     logger.info(f"已保存 {year_month} 的已访问URL {len(new_urls)} 个到 {json_file_path}")
+
+
+def remove_outdated_documents():
+    import shutil
+    from datetime import datetime, timedelta
+
+    # 获取当前日期和时间
+    current_date = datetime.now()
+    # 计算10天前的日期
+    ten_days_ago = current_date - timedelta(days=10)
+    folder_path = build_date_path(ten_days_ago.strftime("%Y%m%d"))
+
+    try:
+        shutil.rmtree(folder_path)
+        logger.info(f"文件夹 '{folder_path}' 删除成功！")
+    except FileNotFoundError:
+        logger.info(f"文件夹 '{folder_path}' 不存在")
+    except PermissionError:
+        logger.info(f"无权限删除文件夹 '{folder_path}'")
+    except Exception as e:
+        logger.info(f"删除文件夹时发生错误: {e}")
