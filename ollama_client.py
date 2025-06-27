@@ -49,7 +49,7 @@ class OllamaClient:
         url = "https://api.siliconflow.cn/v1/chat/completions"
 
         payload = {
-            "model": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+            "model": "Qwen/Qwen3-8B",
             "messages": [
                 {
                     "role": "user",
@@ -120,7 +120,7 @@ class OllamaClient:
         :param max_tokens: 摘要的最大token数，默认为50
         :return: 生成的摘要文本
         """
-        prompt = f"请为以下文本生成一个简洁不超过{max_tokens}个字的中文新闻摘要：\n{text}"
+        prompt = f"请为以下文本生成一份不超过{max_tokens}个字的中文新闻摘要，只返回摘要内容：\n{text}"
         cnt = 3
         response = self._generate_text_silicon(prompt, model)
         while cnt > 0:
@@ -133,7 +133,7 @@ class OllamaClient:
 
         if len(summary) > max_tokens:
             logger.info(f"当前摘要={summary}，{len(summary)}超过{max_tokens}个字，再次生成摘要")
-            prompt = f"请为以下文本生成一个简洁不超过{max_tokens}个字的中文新闻摘要：\n{summary}"
+            prompt = f"请为以下文本生成一份不超过{max_tokens}个字的中文新闻摘要，只返回摘要内容：\n{summary}"
             response = self._generate_text_silicon(prompt, model)
             summary = response.get("response", "")
             summary = self._extract_think(summary)
@@ -161,7 +161,7 @@ class OllamaClient:
             else:
                 text = text[:max_length]
 
-        prompt = f"请为以下文本生成一个简洁不超过{max_tokens}个字的中文新闻摘要：\n{text}"
+        prompt = f"请为以下文本生成一份不超过{max_tokens}个字的中文新闻摘要，只返回摘要内容：\n{text}"
         cnt = 3
         response = self._generate_text_silicon(prompt, model)
         while cnt > 0:
@@ -174,7 +174,7 @@ class OllamaClient:
 
         if len(summary) > max_tokens:
             logger.info(f"当前摘要={summary}，{len(summary)}超过{max_tokens}个字，再次生成摘要")
-            prompt = f"请为以下文本生成一个简洁不超过{max_tokens}个字的中文新闻摘要：\n{summary}"
+            prompt = f"请为以下文本生成一份不超过{max_tokens}个字的中文新闻摘要，只返回摘要内容：\n{summary}"
             response = self._generate_text_silicon(prompt, model)
             summary = response.get("response", "")
             summary = self._extract_think(summary)
