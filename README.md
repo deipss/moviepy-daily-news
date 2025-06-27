@@ -68,6 +68,7 @@ python vedio_generator.py 20250605
 - [ ] 视频爬取
 - [ ] 自动上传B站:制定一个APP，可以上传多平台
 - [x] multiple threading : is edge-tts thread safety? No, It is not safety, meanwhile it is would be limited traffic.
+- [x] multiple threading : is moviepy write_file thread safety? No, It is not safety, cause some global variates are shared .
 
 
 

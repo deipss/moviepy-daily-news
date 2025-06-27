@@ -23,6 +23,7 @@ ALJ_UP = 'alj_up'
 BBC = 'bbc'
 TIMES_TAG = 0
 
+
 def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR):
     # 创建一个新的图像
     image = Image.new("RGB", (width, height), color)  # 橘色背景
@@ -190,7 +191,8 @@ def build_introduction_txt(today=datetime.now()):
     weekday_map = ["一", "二", "三", "四", "五", "六", "日"]
     weekday = f"星期{weekday_map[today.weekday()]}"
     time_tag = TIMES_TYPE[TIMES_TAG]
-    return "今天是{}, \n农历{}, \n{},欢迎收看[今日快电]{}".format(solar_date, lunar_date, weekday, time_tag)
+    # return "今天是{}, \n农历{}, \n{},欢迎收看[今日快电]{}".format(solar_date, lunar_date, weekday, time_tag)
+    return "今天是{},{},\n欢迎收看[今日快电]{}".format(solar_date, weekday, time_tag)
 
 
 def get_weekday_color():
@@ -244,7 +246,9 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
 
     txt_clip = TextClip(
         text=date_text,
-        font_size=int(GLOBAL_WIDTH / max_length * 0.75),
+        text_align='right',
+        font_size=int(GLOBAL_WIDTH / max_length * 0.805),
+        interline=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.6) // 4,
         color=MAIN_BG_COLOR,
         font='./font/simhei.ttf',
         stroke_color='black',
@@ -361,8 +365,9 @@ def add_walking_man(path, walk_video_path, duration_list):
 
         txt_clip = TextClip(
             text=str(idx),
-            font_size=int(tag.h * 0.85),
+            font_size=int(tag.h * 0.83),
             color='white',
+            stroke_width=2,
             font='./font/simhei.ttf'
         ).with_duration(origin_v.duration).with_position((num, 'bottom')).with_start(0)
         seg_clips.append(txt_clip)
@@ -379,7 +384,7 @@ def add_walking_man(path, walk_video_path, duration_list):
     video_with_bg.write_videofile(walk_video_path, codec="libx264", audio_codec="aac", fps=FPS)
 
 
-def combine_videos(today: str = datetime.now().strftime("%Y%m%d"),times_tag:int = 0):
+def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), times_tag: int = 0):
     reset_constant(times_tag)
     start_time = time.time()
     video_paths = []
@@ -485,7 +490,7 @@ def save_today_news_json(topic, today: str = datetime.now().strftime("%Y%m%d")):
                 show_idx += 1
     append_and_save_month_urls(today[:6], set(urls))
     text_path = build_daily_text_path(today)
-    rows = ['\n',TAGS, today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " ")]
+    rows = ['\n', TAGS, today + TIMES_TYPE[TIMES_TAG] + " " + topic.replace("\n", " ")]
     rows.extend(titles)
     rows.append(HINT_INFORMATION)
     txt = "\n".join(rows)
@@ -520,7 +525,7 @@ def test_generate_all():
 
 def test_generate_video_introduction():
     REWRITE = True
-    generate_video_introduction(today='20250606', is_preview=True)
+    generate_video_introduction(today='20250624', is_preview=True)
 
 
 def test_video_text_align():
@@ -568,7 +573,6 @@ INNER_HEIGHT:{INNER_HEIGHT}
         os.mkdir('final_videos')
 
 
-
 def reset_constant(time_tag):
     global CHINADAILY_EN, ALJ, BBC, RT, TIMES_TAG
     logger.info(f"before CHINADAILY_EN={CHINADAILY_EN},ALJ={ALJ},BBC={BBC},RT={RT},TIMES_TAG={TIMES_TAG}")
@@ -578,6 +582,7 @@ def reset_constant(time_tag):
     BBC = BBC + str(time_tag)
     RT = RT + str(time_tag)
     logger.info(f"after CHINADAILY_EN={CHINADAILY_EN},ALJ={ALJ},BBC={BBC},RT={RT},TIMES_TAG={TIMES_TAG}")
+
 
 if __name__ == "__main__":
     logger.info('=========start generation')
@@ -597,7 +602,7 @@ if __name__ == "__main__":
         REWRITE = True
         logger.info("指定强制重写")
     try:
-        combine_videos(args.today,args.times)
+        combine_videos(args.today, args.times)
     except Exception as e:
         logger.error(f"视频生成主线失败,error={e}", exc_info=True)
     logger.info(f"=========end generation time spend = {time.time() - _start:.2f} second")
