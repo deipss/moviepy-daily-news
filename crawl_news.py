@@ -672,6 +672,7 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
         if check_news_content_social_influence(article.summary):
             article.show = False
             logger.warning(f"{article.url} - {article.title} - not crawl important content")
+            logger.warning(f"{article.summary}")
         logger.info(f"{article.url} - {article.title} - 补充完成")
         processed_news.append(article)
     return processed_news
