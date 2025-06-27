@@ -586,9 +586,7 @@ def reset_constant(time_tag):
 
 
 if __name__ == "__main__":
-    logger.info('=========start generation')
-
-
+    logger.info('=========start generation=========')
     _start = time.time()
     parser = argparse.ArgumentParser(description="新闻视频生成工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
@@ -606,6 +604,6 @@ if __name__ == "__main__":
         combine_videos(args.today, args.times)
     except Exception as e:
         logger.error(f"视频生成主线失败,error={e}", exc_info=True)
-    logger.info(f"=========end generation time spend = {time.time() - _start:.2f} second")
+    logger.info(f"=========end generation time spend = {time.time() - _start:.2f} second=========")
 
 # nohup python video_generator.py --times 1 --rewrite true 2>&1 &
