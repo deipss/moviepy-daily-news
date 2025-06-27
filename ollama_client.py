@@ -183,7 +183,7 @@ class OllamaClient:
 
         return summary
 
-    def generate_top_topic(self, text: str, model: str = "deepseek-r1:8b", max_tokens: int = 50) -> str:
+    def generate_top_topic(self, text: str, model: str = "deepseek-r1:8b", max_tokens: int = 66) -> str:
         def _temp(_text):
             import re
             lines = re.split(r'(\d\.)', _text)
