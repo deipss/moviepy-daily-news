@@ -607,3 +607,5 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"视频生成主线失败,error={e}", exc_info=True)
     logger.info(f"=========end generation time spend = {time.time() - _start:.2f} second")
+
+# nohup python video_generator.py --times 1 --rewrite true 2>&1 &

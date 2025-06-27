@@ -5,6 +5,7 @@ from typing import Dict, Any
 from logging_config import logger
 import time
 from functools import wraps
+from dotenv import load_dotenv
 
 
 def timeit(func):
@@ -43,7 +44,7 @@ class OllamaClient:
         return text
 
     def _generate_text_silicon(self, prompt, model):
-
+        load_dotenv()
         token = os.getenv('SILICON_API_KEY')
         url = "https://api.siliconflow.cn/v1/chat/completions"
 
