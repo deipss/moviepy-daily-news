@@ -1,5 +1,8 @@
 import json
 
+from moviepy import VideoFileClip
+from moviepy.video.fx import Loop
+
 from ollama_client import OllamaClient
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
@@ -41,15 +44,17 @@ proxies = {
 }
 
 
-def generate_audio(text: str, output_file: str = "audio.wav", name='zh-CN-XiaoxiaoNeural',rewrite=False) -> None:
+def generate_audio(text: str, output_file: str = "audio.wav", name='zh-CN-XiaoxiaoNeural', rewrite=False) -> None:
     logger.info(f"{output_file}开始生成音频: {text}")
     rate = 70
     sh = f'edge-tts --voice {name} --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
 
+
 def voice_verify():
-    for i in  ['zh-CN-XiaoxiaoNeural','zh-CN-XiaoyiNeural','zh-TW-HsiaoChenNeural','zh-TW-HsiaoYuNeural','zh-CN-liaoning-XiaobeiNeural','zh-CN-shaanxi-XiaoniNeural']:
-        generate_audio("你好，这一个清澈见底工的测试", output_file=f"temp/{i}audio.wav", name = i)
+    for i in ['zh-CN-XiaoxiaoNeural', 'zh-CN-XiaoyiNeural', 'zh-TW-HsiaoChenNeural', 'zh-TW-HsiaoYuNeural',
+              'zh-CN-liaoning-XiaobeiNeural', 'zh-CN-shaanxi-XiaoniNeural']:
+        generate_audio("你好，这一个清澈见底工的测试", output_file=f"temp/{i}audio.wav", name=i)
 
 
 def proxy_verify():
@@ -73,7 +78,7 @@ def proxy_verify():
         print(f"fetch_page请求失败: {url} 错误信息： {e}")
 
 
-def _generate_text_silicon( prompt):
+def _generate_text_silicon(prompt):
     token = os.getenv('SILICON_API_KEY')
     url = "https://api.siliconflow.cn/v1/chat/completions"
 
@@ -94,12 +99,10 @@ def _generate_text_silicon( prompt):
     response = requests.request("POST", url, json=payload, headers=headers)
     if response.status_code == 200:
         content = response.json()['choices'][0]['message']['content']
-        return {'response':content.replace("\n", "").replace(" ", "")}
+        return {'response': content.replace("\n", "").replace(" ", "")}
 
     logger.error(f"ollama请求失败，状态码: {response.status_code}, 响应内容: {response.text}")
     return {"error": f"请求失败，状态码: {response.status_code}"}
-
-
 
 
 def _silicon_t():
@@ -113,6 +116,10 @@ def _silicon_t():
     a = _generate_text_silicon(prompt)
     print(a)
 
-if __name__ == '__main__':
-    pass
 
+if __name__ == '__main__':
+    v = VideoFileClip('videos/man_announcer_1.mp4')
+    a = v.duration
+    # v.subclipped(start_time=a * 0.3, end_time=a * 0.75).with_effects([Loop(duration=15)]).preview()
+
+    v.subclipped(start_time=a * 0.3, end_time=a * 0.75).write_videofile('videos/man_announcer_1.mp4', fps=24)
