@@ -634,7 +634,7 @@ def check_news_content_social_influence(text):
     if '版权声明' in text or '书面授权' in text:
         score -= 0.9
 
-    return score > 0.8
+    return score < 1
 
 
 def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
