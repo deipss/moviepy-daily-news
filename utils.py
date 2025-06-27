@@ -188,7 +188,8 @@ def remove_outdated_documents():
     current_date = datetime.now()
     # 计算10天前的日期
     ten_days_ago = current_date - timedelta(days=10)
-    folder_path = build_date_path(ten_days_ago.strftime("%Y%m%d"))
+    strftime = ten_days_ago.strftime("%Y%m%d")
+    folder_path = build_date_path(strftime)
 
     try:
         shutil.rmtree(folder_path)
@@ -199,3 +200,14 @@ def remove_outdated_documents():
         logger.info(f"无权限删除文件夹 '{folder_path}'")
     except Exception as e:
         logger.info(f"删除文件夹时发生错误: {e}")
+
+    for filename in os.listdir(FINAL_VIDEOS_FOLDER_NAME):
+        file_path = os.path.join(folder_path, filename)
+
+        # 检查是否是文件且文件名以 'a' 开头
+        if os.path.isfile(file_path) and filename.startswith(strftime):
+            try:
+                os.remove(file_path)
+                print(f"已删除文件: {file_path}")
+            except Exception as e:
+                print(f"删除文件 {file_path} 失败: {e}")
