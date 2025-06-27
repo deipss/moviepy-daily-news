@@ -427,9 +427,9 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
         article = NewsArticle(**news_item)
         dir_path = os.path.join(NEWS_FOLDER_NAME, today, article.source, article.folder)
         if not article.show:
-            logger.warning(f" {article.source} {article.folder} {article.title} 新闻已隐藏，跳过生成")
+            logger.warning(f"新闻已隐藏:{article.source} {article.folder} {article.title}")
             continue
-        logger.info(f"   新闻处理：{article.source} {article.folder} {article.show} {article.title} ")
+        logger.info(f"新闻处理：{article.source} {article.folder} {article.show} {article.title} ")
 
         # 新增逻辑：将摘要转换为音频并保存
         video_output_path = os.path.join(dir_path, VIDEO_FILE_NAME)
