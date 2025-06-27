@@ -204,7 +204,7 @@ class OllamaClient:
             summary = response.get("response", "")
             summary = self._extract_think(summary, is_replace_line=False)
             summary = summary.replace("**", "")
-        return summary
+        return summary.replace('死亡','罹难')
 
     def generate_top_title(self, text: str, model: str = "deepseek-r1:8b",
                            max_tokens: int = 80, count: int = 15) -> str:
