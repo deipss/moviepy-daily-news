@@ -386,6 +386,7 @@ def add_walking_man(path, walk_video_path, duration_list):
 
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), times_tag: int = 0):
     reset_constant(times_tag)
+    print_init_parameters()
     start_time = time.time()
     video_paths = []
     intro_path = build_introduction_path(today, TIMES_TAG)
@@ -587,7 +588,7 @@ def reset_constant(time_tag):
 if __name__ == "__main__":
     logger.info('=========start generation')
 
-    print_init_parameters()
+
     _start = time.time()
     parser = argparse.ArgumentParser(description="新闻视频生成工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")

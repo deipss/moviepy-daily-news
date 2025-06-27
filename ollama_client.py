@@ -13,7 +13,7 @@ def timeit(func):
         start_time = time.time()
         result = func(*args, **kwargs)
         elapsed_time = time.time() - start_time
-        logger.info(f" Ollama函数 {func.__name__} 耗时 {elapsed_time:.4f} 秒")
+        logger.info(f" AI 函数 {func.__name__} 耗时 {elapsed_time:.4f} 秒")
         return result
 
     return wrapper
@@ -42,7 +42,7 @@ class OllamaClient:
             text = text.replace("\n", "")
         return text
 
-    def _generate_text_silicon(self, prompt):
+    def _generate_text_silicon(self, prompt, model):
 
         token = os.getenv('SILICON_API_KEY')
         url = "https://api.siliconflow.cn/v1/chat/completions"
@@ -67,9 +67,10 @@ class OllamaClient:
                 return {'response': content.replace("\n", "").replace(" ", "")}
             else:
                 logger.error(f"ollama请求失败，状态码: {response.status_code}, 响应内容: {response.text}")
+                return {"error": f"请求失败"}
         except Exception as e:
             logger.error(f'silicon调用异常 {e}', exc_info=True)
-        return {"error": f"请求异常"}
+            return {"error": f"请求异常"}
 
     def _generate_text_local(self, prompt: str, model: str = "deepseek-r1:8b", options: Dict[str, Any] = None) -> Dict[
         str, Any]:
@@ -120,10 +121,10 @@ class OllamaClient:
         """
         prompt = f"请为以下文本生成一个简洁的中文新闻摘要（不超过{max_tokens}个字）：\n{text}"
         cnt = 3
-        response = self._generate_text_local(prompt, model)
+        response = self._generate_text_silicon(prompt, model)
         while cnt > 0:
             if "error" in response:
-                response = self._generate_text_local(prompt, model)
+                response = self._generate_text_silicon(prompt, model)
                 logger.error(f"生成摘要失败,last time is {cnt}: {response['error']},text={text}")
             cnt -= 1
         summary = response.get("response", "")
@@ -133,7 +134,7 @@ class OllamaClient:
             logger.info(f"当前摘要={summary}")
             logger.info(f"当前摘要={len(summary)},摘要超过{max_tokens}个字，再次生成摘要")
             prompt = f"请为以下文本生成一个简洁的中文新闻摘要（不超过{max_tokens}个字）：\n{summary}"
-            response = self._generate_text_local(prompt, model)
+            response = self._generate_text_silicon(prompt, model)
             summary = response.get("response", "")
             summary = self._extract_think(summary)
 
@@ -162,10 +163,10 @@ class OllamaClient:
 
         prompt = f"请为以下文本生成一个简洁的中文新闻摘要（不超过{max_tokens}个字）：\n{text}"
         cnt = 3
-        response = self._generate_text_local(prompt, model)
+        response = self._generate_text_silicon(prompt, model)
         while cnt > 0:
             if "error" in response:
-                response = self._generate_text_local(prompt, model)
+                response = self._generate_text_silicon(prompt, model)
                 logger.error(f"生成摘要失败,last time is {cnt}: {response['error']},text={text}")
             cnt -= 1
         summary = response.get("response", "")
@@ -175,7 +176,7 @@ class OllamaClient:
             logger.info(f"当前摘要={summary}")
             logger.info(f"当前摘要={len(summary)},摘要超过{max_tokens}个字，再次生成摘要")
             prompt = f"请为以下文本生成一个简洁的中文新闻摘要（不超过{max_tokens}个字）：\n{summary}"
-            response = self._generate_text_local(prompt, model)
+            response = self._generate_text_silicon(prompt, model)
             summary = response.get("response", "")
             summary = self._extract_think(summary)
 
@@ -187,7 +188,7 @@ class OllamaClient:
 3.如果是发生不幸事件，可以用罹难等词汇，不要用死亡。
 4.只需返回按序号排列5个主题：
 {text}"""
-        response = self._generate_text_local(prompt, model)
+        response = self._generate_text_silicon(prompt, model)
         summary = response.get("response", "")
         summary = self._extract_think(summary, is_replace_line=False)
         summary = summary.replace("**", "")
@@ -199,7 +200,7 @@ class OllamaClient:
 3.如果是发生不幸事件，可以用罹难等词汇，不要用死亡。
 4.只需返回按序号排列5个主题：
 {summary}"""
-            response = self._generate_text_local(prompt, model)
+            response = self._generate_text_silicon(prompt, model)
             summary = response.get("response", "")
             summary = self._extract_think(summary, is_replace_line=False)
             summary = summary.replace("**", "")
@@ -208,7 +209,7 @@ class OllamaClient:
     def generate_top_title(self, text: str, model: str = "deepseek-r1:8b",
                            max_tokens: int = 80, count: int = 15) -> str:
         prompt = f"请从以下带有序号的新闻主题，提取出影响力最高的{count}个，过滤一些区县市的新闻，最终返回影响力最高的新闻的原始序号（用英文逗号隔开）：\n{text}"
-        response = self._generate_text_local(prompt, model)
+        response = self._generate_text_silicon(prompt, model)
         summary = response.get("response", "")
         summary = self._extract_think(summary, is_replace_line=False)
         summary = summary.replace("**", "")
@@ -217,7 +218,7 @@ class OllamaClient:
     def generate_top_news_summary(self, text: str, model: str = "deepseek-r1:8b",
                                   max_tokens: int = 80, count: int = 15) -> str:
         prompt = f"请从以下标题信息，生成一从在{max_tokens}左右的新闻稿：\n{text}"
-        response = self._generate_text_local(prompt, model)
+        response = self._generate_text_silicon(prompt, model)
         summary = response.get("response", "")
         summary = self._extract_think(summary, is_replace_line=False)
         summary = summary.replace("**", "")
@@ -226,13 +227,13 @@ class OllamaClient:
     def translate_to_chinese(self, text: str, model: str = "deepseek-r1:8b") -> str:
 
         prompt = f"请将以下英文文本翻译成中文,只返回中文：\n{text}"
-        response = self._generate_text_local(prompt, model)
+        response = self._generate_text_silicon(prompt, model)
         return self._extract_think(response.get("response", ""))
 
     def translate_to_english(self, text: str, model: str = "deepseek-r1:8b") -> str:
 
         prompt = f"请将以下英文文本翻译成英文，只返回英文：\n{text}"
-        response = self._generate_text_local(prompt, model)
+        response = self._generate_text_silicon(prompt, model)
         return self._extract_think(response.get("response", ""))
 
 
