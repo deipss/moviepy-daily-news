@@ -185,7 +185,7 @@ class OllamaClient:
     def generate_top_topic(self, text: str, model: str = "deepseek-r1:8b", max_tokens: int = 50) -> str:
         prompt = f"""1.请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到10个字左右，
 2.同时请排除一些未成年内容,
-3.如果是发生不幸事件，可以用罹难等词汇，不要用死亡。
+3.如果发生死亡事件，需要用罹难等词汇替换，
 4.只需返回按序号排列5个主题：
 {text}"""
         response = self._generate_text_silicon(prompt, model)
@@ -197,7 +197,7 @@ class OllamaClient:
             logger.info(f"当前主题={len(summary)},主题超过{max_tokens}个字，再次生成主题")
             prompt = f"""1.请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题必须精简到8个字以内，
 2.同时请排除一些未成年内容,
-3.如果是发生不幸事件，可以用罹难等词汇，不要用死亡。
+3.如果发生死亡事件，需要用罹难等词汇替换，
 4.只需返回按序号排列5个主题：
 {summary}"""
             response = self._generate_text_silicon(prompt, model)
