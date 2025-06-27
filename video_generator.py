@@ -24,7 +24,7 @@ BBC = 'bbc'
 TIMES_TAG = 0
 
 
-def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR,time_tag =TIMES_TAG):
+def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR, time_tag=TIMES_TAG):
     # 创建一个新的图像
     image = Image.new("RGB", (width, height), color)  # 橘色背景
     draw = ImageDraw.Draw(image)
@@ -118,7 +118,7 @@ def generate_single_video(audio_path, image_list, title, summary, output_path, i
 
     bottom_right_width = int(bg_width * 0.2)
     bottom_left_width = bg_width - bottom_right_width
-    
+
     bottom_right_img = VideoFileClip(build_announcer_path(TIMES_TAG)).with_effects([Loop(duration=duration)])
     if bottom_right_img.w > bottom_right_width or bottom_right_img.h > bottom_height:
         scale = min(bottom_right_width / bottom_right_img.w, bottom_height / bottom_right_img.h)
@@ -233,7 +233,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     date_obj = datetime.strptime(today, "%Y%m%d")
     date_text = build_introduction_txt(date_obj)
     audio_path = build_introduction_audio_path(today)
-    generate_audio(date_text, audio_path, rewrite=True,times_tag=TIMES_TAG)
+    generate_audio(date_text, audio_path, rewrite=True, times_tag=TIMES_TAG)
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
 
@@ -288,7 +288,7 @@ def generate_video_end(is_preview=False):
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
     audio_path = build_end_audio_path()
 
-    generate_audio("本次信息，至此结束，下次见", audio_path, rewrite=True,times_tag=TIMES_TAG)
+    generate_audio("本次信息，至此结束，下次见", audio_path, rewrite=True, times_tag=TIMES_TAG)
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
 
@@ -372,10 +372,10 @@ def add_walking_man(path, walk_video_path, duration_list):
         ).with_duration(origin_v.duration).with_position((num, 'bottom')).with_start(0)
         seg_clips.append(txt_clip)
     width = origin_v.w
-    walk = ImageClip('videos/arrowhead.png')
+    walk = VideoFileClip('videos/dog.mp4')
     walk = walk.resized(GAP / 2 / walk.h)
-    walk = walk.with_position(lambda t: (t / origin_v.duration * width, 'bottom')).with_duration(
-        origin_v.duration).with_start(0)
+    walk = walk.with_position(lambda t: (t / origin_v.duration * width, 'bottom')).with_effects(
+        [Loop(duration=origin_v.duration)])
     seg_clips.insert(0, origin_v)
     seg_clips.append(walk)
     video_with_bg = CompositeVideoClip(seg_clips, use_bgclip=True)
@@ -546,6 +546,8 @@ def test_video_text_align():
         is_preview=False
     )
 
+def test_add_walking_man():
+    add_walking_man('final_videos/20250616_3_final.mp4','final_videos/20250616_3_final_walk.mp4',[10,20,50])
 
 def test_generate_video_end():
     generate_video_end(is_preview=True)
