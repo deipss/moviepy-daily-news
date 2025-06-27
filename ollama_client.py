@@ -190,7 +190,7 @@ class OllamaClient:
             formatted_lines = ["".join(lines[i:i + 2]).strip() for i in range(1, len(lines), 2)]
             return "\n".join(formatted_lines)
 
-        prompt = f"""1.请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到10个字左右，
+        prompt = f"""1.请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到13个字左右，
 2.同时请排除一些未成年内容,
 3.如果发生死亡事件，需要用罹难等词汇替换，
 4.只需返回按序号排列5个主题：
@@ -200,7 +200,7 @@ class OllamaClient:
         summary = self._extract_think(summary, is_replace_line=False)
         if len(summary) > max_tokens:
             logger.info(f"当前主题={summary},{len(summary)} > {max_tokens}个字，再次生成主题")
-            prompt = f"""1.请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题必须精简到8个字以内，
+            prompt = f"""1.请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题必须精简到10个字以内，
 2.同时请排除一些未成年内容,
 3.如果发生死亡事件，需要用罹难等词汇替换，
 4.只需返回按序号排列5个主题：
