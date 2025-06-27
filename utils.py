@@ -118,6 +118,16 @@ def build_end_audio_path():
     return os.path.join(NEWS_FOLDER_NAME, "end.mp3")
 
 
+def build_announcer_path(times_tag: int = 0):
+    announcer_map = {
+        0: 'lady_announcer.mp4',
+        1: 'man_announcer.mp4',
+        2: 'lady_announcer_1.mp4',
+        3: 'man_announcer_1.mp4'
+    }
+    return os.path.join('videos', announcer_map[times_tag])
+
+
 def build_final_video_path(today=datetime.now().strftime("%Y%m%d"), times_tag: int = 0):
     return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(times_tag) + "_" + VIDEO_FILE_NAME)
 
@@ -154,13 +164,19 @@ def load_month_urls(year_month: str) -> set:
     return urls_set
 
 
-def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False) -> None:
+def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False, times_tag: int = 0) -> None:
     if os.path.exists(output_file) and not rewrite:
         logger.info(f"{output_file}已存在，跳过生成音频。")
         return
     logger.info(f" {output_file} 开始生成音频: {text}")
     rate = 80
-    sh = f'edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media {output_file} --rate="+{rate}%"'
+    announcer_map = {
+        0: 'zh-CN-XiaoxiaoNeural',
+        1: 'zh-CN-YunjianNeural',
+        2: 'zh-CN-XiaoxiaoNeural',
+        3: 'zh-CN-YunjianNeural'
+    }
+    sh = f'edge-tts --voice {announcer_map[times_tag]} --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
 
 

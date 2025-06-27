@@ -118,8 +118,8 @@ def generate_three_layout_video(audio_path, image_list, title, summary, output_p
 
     bottom_right_width = int(bg_width * 0.2)
     bottom_left_width = bg_width - bottom_right_width
-
-    bottom_right_img = VideoFileClip('videos/lady_announcer.mp4').with_effects([Loop(duration=duration)])
+    
+    bottom_right_img = VideoFileClip(build_announcer_path(TIMES_TAG)).with_effects([Loop(duration=duration)])
     if bottom_right_img.w > bottom_right_width or bottom_right_img.h > bottom_height:
         scale = min(bottom_right_width / bottom_right_img.w, bottom_height / bottom_right_img.h)
         bottom_right_img = bottom_right_img.resized(scale)
@@ -233,7 +233,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     date_obj = datetime.strptime(today, "%Y%m%d")
     date_text = build_introduction_txt(date_obj)
     audio_path = build_introduction_audio_path(today)
-    generate_audio(date_text, audio_path, rewrite=True)
+    generate_audio(date_text, audio_path, rewrite=True,times_tag=TIMES_TAG)
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
 
@@ -268,7 +268,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
 
     ).with_duration(duration).with_position((GAP * 1.85, GLOBAL_HEIGHT * 0.1))
 
-    lady = (VideoFileClip('videos/lady_announcer.mp4').with_effects([Loop(duration=duration)])
+    lady = (VideoFileClip(build_announcer_path(TIMES_TAG)).with_effects([Loop(duration=duration)])
             .with_position((GLOBAL_WIDTH * 0.68, GLOBAL_HEIGHT * 0.47)).resized(0.7))
 
     # 合成最终视频
@@ -288,7 +288,7 @@ def generate_video_end(is_preview=False):
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
     audio_path = build_end_audio_path()
 
-    generate_audio("今天的信息，至此结束，下次见", audio_path, rewrite=True)
+    generate_audio("本次信息，至此结束，下次见", audio_path, rewrite=True,times_tag=TIMES_TAG)
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
 
@@ -305,7 +305,7 @@ def generate_video_end(is_preview=False):
         stroke_width=2
     ).with_duration(duration).with_position(('center', GLOBAL_HEIGHT * 0.7))
 
-    lady = (VideoFileClip('videos/lady_announcer.mp4').with_duration(duration)
+    lady = (VideoFileClip(build_announcer_path(TIMES_TAG)).with_duration(duration)
             .with_position((GLOBAL_WIDTH * 0.38, GLOBAL_HEIGHT * 0.17)).resized(0.7))
 
     # 合成最终视频
@@ -367,7 +367,7 @@ def add_walking_man(path, walk_video_path, duration_list):
             text=str(idx),
             font_size=int(tag.h * 0.83),
             color='white',
-            stroke_width=2,
+            stroke_width=1,
             font='./font/simhei.ttf'
         ).with_duration(origin_v.duration).with_position((num, 'bottom')).with_start(0)
         seg_clips.append(txt_clip)

@@ -11,7 +11,7 @@ from logging_config import logger
 from fake_useragent import UserAgent
 import random
 from utils import *
-from video_generator import REWRITE, combine_videos
+from video_generator import combine_videos
 
 CHINADAILY = 'cn_daily'
 CHINADAILY_EN = 'cn_daily_en'
@@ -663,9 +663,9 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
 
         # 提取中文摘要
         if article.content_cn:
-            article.summary = ollama_client.generate_summary(article.content_cn, max_tokens=100)
+            article.summary = ollama_client.generate_summary(article.content_cn, max_tokens=150)
         if article.content_en:
-            article.summary = ollama_client.generate_summary_cn(article.content_en, max_tokens=100)
+            article.summary = ollama_client.generate_summary_cn(article.content_en, max_tokens=150)
         if check_english_percentage(article.summary):
             article.show = False
             logger.warning(f"{article.url} - {article.title} - all is english")
@@ -733,7 +733,7 @@ def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%
         if len(article.folder) > 2:
             article.folder = article.folder[2:]
         audio_output_path = os.path.join(folder_path, article.folder, "%s" % AUDIO_FILE_NAME)
-        generate_audio(text=article.summary, output_file=audio_output_path)
+        generate_audio(text=article.summary, output_file=audio_output_path, times_tag=TIMES_TAG)
 
 
 import time
