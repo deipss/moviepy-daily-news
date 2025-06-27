@@ -24,7 +24,7 @@ BBC = 'bbc'
 TIMES_TAG = 0
 
 
-def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR):
+def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR,time_tag =TIMES_TAG):
     # 创建一个新的图像
     image = Image.new("RGB", (width, height), color)  # 橘色背景
     draw = ImageDraw.Draw(image)
@@ -34,7 +34,7 @@ def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MA
     draw.rounded_rectangle(
         [(border_width, border_width), (width - border_width, height - border_width)],
         radius=40,  # 圆角半径
-        fill="#FCFEFE"  # 灰白色填充
+        fill=build_bg_color_hex(time_tag)
     )
     image.save(BACKGROUND_IMAGE_PATH)
     return image
@@ -93,11 +93,11 @@ def calculate_segment_times(duration, num_segments):
     return segment_times
 
 
-def generate_three_layout_video(audio_path, image_list, title, summary, output_path, index, is_preview=False,
-                                news_type=""):
+def generate_single_video(audio_path, image_list, title, summary, output_path, index, is_preview=False,
+                          times_tag=TIMES_TAG):
     title = "" + index + " " + title
     # 加载背景和音频
-    bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=(252, 254, 254))  # 白色背景
+    bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=build_bg_color_rgb(times_tag))  # 白色背景
     try:
         audio_clip = AudioFileClip(audio_path)
     except IOError as e:
@@ -443,15 +443,14 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d")) -> l
         img_list = []
         for image in article.images:
             img_list.append(os.path.join(dir_path, image))
-        generated_result = generate_three_layout_video(
+        generated_result = generate_single_video(
             output_path=video_output_path,
             audio_path=audio_output_path,
             image_list=img_list,
             summary=article.summary,
             title=article.title,
             index=str(idx),
-            is_preview=False,
-            news_type=article.news_type
+            is_preview=False
         )
         if generated_result:
             idx += 1
@@ -537,7 +536,7 @@ def test_video_text_align():
         'news/20250604/chinadaily/0000/683fd3da6b8efd9fa6284efe_m.jpg'
     ]
 
-    generate_three_layout_video(
+    generate_single_video(
         output_path="news/20250604/chinadaily/0000/video.mp4",
         audio_path="news/20250604/chinadaily/0000/summary_audio.aiff",
         image_list=list,

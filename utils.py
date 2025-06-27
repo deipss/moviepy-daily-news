@@ -128,6 +128,26 @@ def build_announcer_path(times_tag: int = 0):
     return os.path.join('videos', announcer_map[times_tag])
 
 
+# 将 HEX 转换为 RGB 的小函数
+def hex_to_rgb(hex_color):
+    hex_color = hex_color.lstrip('#')  # 去掉 #
+    return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def build_bg_color_hex(times_tag: int = 0):
+    announcer_map = {
+        0: '#FCFEFE',
+        1: '#F2F2F0',
+        2: '#F2F2F0',
+        3: '#F2F2F0'
+    }
+    return announcer_map[times_tag]
+
+
+def build_bg_color_rgb(times_tag: int = 0):
+    return hex_to_rgb(build_bg_color_hex(times_tag))
+
+
 def build_final_video_path(today=datetime.now().strftime("%Y%m%d"), times_tag: int = 0):
     return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(times_tag) + "_" + VIDEO_FILE_NAME)
 
