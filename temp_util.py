@@ -73,5 +73,38 @@ def proxy_verify():
         print(f"fetch_page请求失败: {url} 错误信息： {e}")
 
 
+def _generate_text_silicon( prompt):
+    token = os.getenv('SILICON_API_KEY')
+    url = "https://api.siliconflow.cn/v1/chat/completions"
+
+    payload = {
+        "model": "Qwen/Qwen3-8B",
+        "messages": [
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    }
+    headers = {
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json"
+    }
+
+    response = requests.request("POST", url, json=payload, headers=headers)
+    if response.status_code == 200:
+        content = response.json()['choices'][0]['message']['content']
+        return {'response':content.replace("\n", "").replace(" ", "")}
+
+    logger.error(f"ollama请求失败，状态码: {response.status_code}, 响应内容: {response.text}")
+    return {"error": f"请求失败，状态码: {response.status_code}"}
+
+
+
 if __name__ == '__main__':
-    voice_verify()
+    max_tokens = 150,
+    text="""Tech giant rejects ‘false reports’ after Iranian state media urges citizens to delete messaging app. US tech giant Meta has expressed concern that Iran may block WhatsApp after state media claimed the messaging service is being used for snooping by Israel. “We’re concerned these false reports will be an excuse for our services to be blocked at a time when people need them the most,” Meta, the parent company of Facebook, WhatsApp and Instagram, said in a statement on Tuesday. “All of the messages you send to family and friends on WhatsApp are end-to-end encrypted meaning no-one except the sender and recipient has access to those messages, not even WhatsApp.” Meta added that it does not track users’ precise location or maintain logs of who is messaging whom. “We do not provide bulk information to any government,” the California-based tech firm said. “For over a decade, Meta has provided consistent transparency reports that include the limited circumstances when WhatsApp information has been requested.” Meta’s statement came after the  Islamic Republic News Agency (IRNA) urged citizens to deactivate or delete their WhatsApp accounts because the “Zionist regime is using citizens’ information to harm us”. “This is extremely important because they are using the information on your phone, your location and the content you share, which is likely private but still accessible,” an IRNA host said, according to a subtitled clip shared by Iraqi media outlet Rudaw. “Many of us have friends and relatives living nearby, and some of them could be nuclear scientists or beloved figures, don’t forget.” End-to-end encryption makes it technically impossible for third parties, including tech companies, to access the contents of messages while they are en route from a sender to a recipient. However, Meta and other tech platforms do collect so-called metadata, such as contacts and device information, which they can share with authorities when requested. Iran added WhatsApp and Instagram to its list of prohibited apps in September 2022 amid protests over the death of Mahsa Amini, a 22-year-old Iranian Kurd, in custody. Iranian authorities voted to lift the ban two months later as part of reforms to enhance internet freedom promised by President Masoud Pezeshkian."""
+    prompt = f"请为以下文本生成一个简洁的中文新闻摘要（不超过{max_tokens}个字）：\n{text}"
+    a =_generate_text_silicon(prompt)
+    print(a)
+
