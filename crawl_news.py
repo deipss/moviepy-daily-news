@@ -11,8 +11,7 @@ from logging_config import logger
 from fake_useragent import UserAgent
 import random
 from utils import *
-from video_generator import REWRITE,combine_videos
-
+from video_generator import REWRITE, combine_videos
 
 CHINADAILY = 'cn_daily'
 CHINADAILY_EN = 'cn_daily_en'
@@ -120,7 +119,7 @@ class NewsScraper:
     def is_sensitive_word_en(self, word) -> bool:
         return "Jinping" in word
 
-    def create_folder(self, today=datetime.now().strftime("%Y%m%d")) :
+    def create_folder(self, today=datetime.now().strftime("%Y%m%d")):
         folder_path = self.build_today_source_path(today)
         os.makedirs(folder_path, exist_ok=True)
         return folder_path
@@ -615,6 +614,29 @@ def check_english_percentage(text):
     return (english_count / total_chars) > 0.4
 
 
+def check_news_content_social_influence(text):
+    score = 1
+    if '游戏公司' in text:
+        score -= 0.3
+
+    if '演唱会' in text and '我' in text:
+        score -= 0.3
+
+    if '音乐会' in text and '我' in text:
+        score -= 0.3
+
+    if '人工智能' in text or 'AI' in text:
+        score += 0.9
+
+    if '明星' in text or '综艺' in text:
+        score -= 0.3
+
+    if '版权声明' in text or '书面授权' in text:
+        score -= 0.9
+
+    return score > 0.8
+
+
 def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
     """
     加载新闻数据，提取中文摘要，并翻译英文内容为中文。
@@ -647,9 +669,9 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
         if check_english_percentage(article.summary):
             article.show = False
             logger.warning(f"{article.url} - {article.title} - all is english")
-        if '版权声明' in article.summary or '书面授权' in article.summary:
+        if check_news_content_social_influence(article.summary):
             article.show = False
-            logger.warning(f"{article.url} - {article.title} - not crawl full content")
+            logger.warning(f"{article.url} - {article.title} - not crawl important content")
         logger.info(f"{article.url} - {article.title} - 补充完成")
         processed_news.append(article)
     return processed_news
@@ -845,9 +867,8 @@ if __name__ == "__main__":
         REWRITE = True
         logger.info("指定强制重写")
     try:
-        combine_videos(args.today,args.times)
+        combine_videos(args.today, args.times)
     except Exception as e:
         logger.error(f"视频生成主线失败,error={e}", exc_info=True)
     remove_outdated_documents()
     logger.info(f"========end combine_videos==========time spend = {time.time() - _start:.2f} second")
-
