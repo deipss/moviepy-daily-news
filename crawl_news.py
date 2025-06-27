@@ -663,9 +663,9 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
 
         # 提取中文摘要
         if article.content_cn:
-            article.summary = ollama_client.generate_summary(article.content_cn, max_tokens=150)
+            article.summary = ollama_client.generate_summary(article.content_cn, max_tokens=120)
         if article.content_en:
-            article.summary = ollama_client.generate_summary_cn(article.content_en, max_tokens=150)
+            article.summary = ollama_client.generate_summary_cn(article.content_en, max_tokens=120)
         if check_english_percentage(article.summary):
             article.show = False
             logger.warning(f"{article.url} - {article.title} - all is english")
