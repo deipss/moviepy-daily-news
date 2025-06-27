@@ -22,6 +22,7 @@ PROXY = {
 }
 
 BACKGROUND_IMAGE_PATH = "videos/generated_background.png"
+BACKGROUND_IMAGE_INNER_PATH = "videos/generated_background_inner.png"
 GLOBAL_WIDTH = 1920
 GLOBAL_HEIGHT = 1080
 GAP = int(GLOBAL_WIDTH * 0.02)
@@ -141,11 +142,15 @@ def build_bg_color_hex(times_tag: int = 0):
         2: '#F2F2F0',
         3: '#F2F2F0'
     }
-    return announcer_map[times_tag]
+    hex = announcer_map[times_tag]
+    logger.info(f"build_bg_color_hex: {hex}")
+    return hex
 
 
 def build_bg_color_rgb(times_tag: int = 0):
-    return hex_to_rgb(build_bg_color_hex(times_tag))
+    rgb = hex_to_rgb(build_bg_color_hex(times_tag))
+    logger.info(f"build_bg_color_rgb: {rgb}")
+    return rgb
 
 
 def build_final_video_path(today=datetime.now().strftime("%Y%m%d"), times_tag: int = 0):

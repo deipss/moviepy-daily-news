@@ -26,17 +26,20 @@ TIMES_TAG = 0
 
 def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR, time_tag=TIMES_TAG):
     # 创建一个新的图像
-    image = Image.new("RGB", (width, height), color)  # 橘色背景
+    image = Image.new("RGB", (width, height), color)
     draw = ImageDraw.Draw(image)
     # 计算边框宽度(1%的宽度)
-    border_width = GAP * 1.5
+    border_width = GAP * 1.4
     # 绘制圆角矩形(内部灰白色)
     draw.rounded_rectangle(
         [(border_width, border_width), (width - border_width, height - border_width)],
         radius=40,  # 圆角半径
-        fill=build_bg_color_hex(time_tag)
+        fill=build_bg_color_rgb(time_tag)
     )
     image.save(BACKGROUND_IMAGE_PATH)
+
+    image_inner = Image.new("RGB", (INNER_WIDTH, INNER_HEIGHT), color=build_bg_color_rgb(time_tag))
+    image_inner.save(BACKGROUND_IMAGE_INNER_PATH)
     return image
 
 
@@ -97,7 +100,7 @@ def generate_single_video(audio_path, image_list, title, summary, output_path, i
                           times_tag=TIMES_TAG):
     title = "" + index + " " + title
     # 加载背景和音频
-    bg_clip = ColorClip(size=(INNER_WIDTH, INNER_HEIGHT), color=build_bg_color_rgb(times_tag))  # 白色背景
+    bg_clip = ImageClip(BACKGROUND_IMAGE_INNER_PATH)  # 白色背景
     try:
         audio_clip = AudioFileClip(audio_path)
     except IOError as e:
@@ -328,11 +331,7 @@ def combine_videos_with_transitions(video_paths, output_path):
     duration_list = []
     for i, video_path in enumerate(video_paths):
         # 加载视频
-        video = VideoFileClip(video_path)
-        if (video.duration < 2):
-            logger.warning(f"视频{video_path}时长不足2秒,跳过")
-            continue
-        video = video.with_position(('center', 'center'), relative=True)
+        video = VideoFileClip(video_path).with_position(('center', 'center'), relative=True)
         # 将视频放置在背景上
         video_with_bg = CompositeVideoClip([
             bg_clip,
@@ -552,6 +551,9 @@ def test_add_walking_man():
 def test_generate_video_end():
     generate_video_end(is_preview=True)
 
+
+def test_generate_background_image():
+    generate_background_image(time_tag=1)
 
 import argparse
 
