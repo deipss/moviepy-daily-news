@@ -378,7 +378,7 @@ def add_walking_man(path, walk_video_path, duration_list):
 
 
 def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), time_tag: int = 0):
-    logger(f'today={today} time_tag={time_tag}')
+    logger.info(f'today={today} time_tag={time_tag}')
     print_init_parameters()
     video_paths = []
     intro_path = build_introduction_path(today, time_tag)
