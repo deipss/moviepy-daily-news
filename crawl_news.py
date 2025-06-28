@@ -849,7 +849,7 @@ if __name__ == "__main__":
         REWRITE = True
         logger.info("指定强制重写")
     try:
-        combine_videos(today=args.today, times_tag=args.times)
+        combine_videos(today=args.today, time_tag=args.times)
     except Exception as e:
         logger.error(f"视频生成主线失败,error={e}", exc_info=True)
     remove_outdated_documents()
