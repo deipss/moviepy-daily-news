@@ -57,10 +57,10 @@ class NewsScraper:
                 logger.info(f" {self.source} 跳过本月已访问过的新闻: {url}")
                 continue
             article = self.extract_news_content(url)
-            article.times = self.times
             if not article:
                 logger.warning(f"无法获取新闻内容: {url}")
                 continue
+            article.times = self.times
             article.folder = "{:02d}".format(idx)
             article.index_inner = idx
             article.index_show = idx
@@ -744,7 +744,7 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), times_tag: int 
                           sleep_time=4, times=times_tag)
 
     threads = []
-    for scraper in [bbc, al, rt, en]:
+    for scraper in [rt, al, bbc, en]:
         thread = Thread(target=scraper.do_crawl_news, args=(today,))
         threads.append(thread)
         thread.start()
@@ -755,8 +755,8 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), times_tag: int 
 
     logger.info("开始AI生成摘要")
     _start = time.time()
-    bbc_articles = process_news_results(source=bbc.source, today=today)
     rt_articles = process_news_results(source=rt.source, today=today)
+    bbc_articles = process_news_results(source=bbc.source, today=today)
     en_articles = process_news_results(source=en.source, today=today)
     al_articles = process_news_results(source=al.source, today=today)
     _end = time.time()
