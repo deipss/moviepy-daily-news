@@ -726,22 +726,22 @@ def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%
         if len(article.folder) > 2:
             article.folder = article.folder[2:]
         audio_output_path = os.path.join(folder_path, article.folder, "%s" % AUDIO_FILE_NAME)
-        generate_audio(text=article.summary, output_file=audio_output_path, times_tag=article.times)
+        generate_audio(text=article.summary, output_file=audio_output_path, time_tag=article.times)
 
 
 import time
 from threading import Thread
 
 
-def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), times_tag: int = 0):
+def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), time_tag: int = 0):
     logger.info("开始爬取新闻")
     _start = time.time()
-    rt = RTScraper(source_url='https://www.rt.com/', source=RT, news_type='今日俄罗斯', sleep_time=4, times=times_tag)
+    rt = RTScraper(source_url='https://www.rt.com/', source=RT, news_type='今日俄罗斯', sleep_time=4, times=time_tag)
     al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='中东半岛新闻', sleep_time=20,
-                    times=times_tag)
-    bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='BBC', sleep_time=20, times=times_tag)
+                    times=time_tag)
+    bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='BBC', sleep_time=20, times=time_tag)
     en = CNDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='中国日报',
-                          sleep_time=4, times=times_tag)
+                          sleep_time=4, times=time_tag)
 
     threads = []
     for scraper in [rt, al, bbc, en]:
@@ -761,7 +761,7 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), times_tag: int 
     al_articles = process_news_results(source=al.source, today=today)
     _end = time.time()
     logger.info(f"AI生成摘要耗时: {_end - _start:.2f} 秒")
-    build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles, times_tag)
+    build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles, time_tag)
 
     # 根据现有的资料，暂时不支持微软的edge-tts不支持并发，会有限流
     logger.info("开始生成音频")
@@ -772,7 +772,7 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), times_tag: int 
     logger.info(f"生成音频耗时: {_end - _start:.2f} 秒")
 
 
-def build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles, times_tag):
+def build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles, time_tag):
     def reset_article_attributes(article):
         article.content_en = ''
         article.content_cn = ''
@@ -799,10 +799,10 @@ def build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_ar
         article.index_inner = idx
         idx += 1
         new_articles.append(article)
-    path = build_articles_json_path(today, times_tag)
+    path = build_articles_json_path(today, time_tag)
     with open(path, 'w', encoding='utf-8') as json_file:
         json.dump([article.to_dict() for article in new_articles], json_file, ensure_ascii=False, indent=4)
-    logger.info(f"生成new_articles.json{times_tag}成功,path={path}")
+    logger.info(f"生成new_articles.json{time_tag}成功,path={path}")
 
 
 def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):
@@ -838,7 +838,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logger.info(f"新闻爬取调用参数 args={args}")
     try:
-        auto_download_daily(today=args.today, times_tag=args.times)
+        auto_download_daily(today=args.today, time_tag=args.times)
     except  Exception as e:
         logger.error(f"auto_download_daily error:{e}", exc_info=True)
     logger.info(f"========end crawl==========time spend = {time.time() - _start:.2f} second")
