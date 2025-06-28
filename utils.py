@@ -101,8 +101,8 @@ class NewsArticle:
         return self.__dict__
 
 
-def build_introduction_path(today=datetime.now().strftime("%Y%m%d"), times_tag: int = 0):
-    return os.path.join(NEWS_FOLDER_NAME, today, str(times_tag) + "introduction.mp4")
+def build_introduction_path(today=datetime.now().strftime("%Y%m%d"), time_tag: int = 0):
+    return os.path.join(NEWS_FOLDER_NAME, today, str(time_tag) + "introduction.mp4")
 
 
 def build_date_path(today=datetime.now().strftime("%Y%m%d")):
@@ -117,22 +117,22 @@ def build_daily_text_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "all.text")
 
 
-def build_introduction_audio_path(today=datetime.now().strftime("%Y%m%d"), times_tag: int = 0):
-    return os.path.join(NEWS_FOLDER_NAME, today, str(times_tag) + "introduction.mp3")
+def build_introduction_audio_path(today=datetime.now().strftime("%Y%m%d"), time_tag: int = 0):
+    return os.path.join(NEWS_FOLDER_NAME, today, str(time_tag) + "introduction.mp3")
 
 
 def build_end_audio_path():
     return os.path.join(NEWS_FOLDER_NAME, "end.mp3")
 
 
-def build_announcer_path(times_tag: int = 0):
+def build_announcer_path(time_tag: int = 0):
     announcer_map = {
         0: 'lady_announcer.mp4',
         1: 'man_announcer_1.mp4',
         2: 'lady_announcer_1.mp4',
         3: 'man_announcer_3.mp4'
     }
-    return os.path.join('videos', announcer_map[times_tag])
+    return os.path.join('videos', announcer_map[time_tag])
 
 
 # 将 HEX 转换为 RGB 的小函数
@@ -141,38 +141,38 @@ def hex_to_rgb(hex_color):
     return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
 
 
-def build_bg_color_hex(times_tag: int = 0):
+def build_bg_color_hex(time_tag: int = 0):
     announcer_map = {
         0: '#FCFEFE',
         1: '#F2F2F0',
         2: '#F2F2F0',
         3: '#F2F2F0'
     }
-    hex = announcer_map[times_tag]
-    logger.info(f" {times_tag} build_bg_color_hex: {hex}")
+    hex = announcer_map[time_tag]
+    logger.info(f" {time_tag} build_bg_color_hex: {hex}")
     return hex
 
 
-def build_bg_color_rgb(times_tag: int = 0):
-    rgb = hex_to_rgb(build_bg_color_hex(times_tag))
-    logger.info(f" {times_tag} build_bg_color_rgb: {rgb}")
+def build_bg_color_rgb(time_tag: int = 0):
+    rgb = hex_to_rgb(build_bg_color_hex(time_tag))
+    logger.info(f" {time_tag} build_bg_color_rgb: {rgb}")
     return rgb
 
 
-def build_final_video_path(today=datetime.now().strftime("%Y%m%d"), times_tag: int = 0):
-    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(times_tag) + "_" + VIDEO_FILE_NAME)
+def build_final_video_path(today=datetime.now().strftime("%Y%m%d"), time_tag: int = 0):
+    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(time_tag) + "_" + VIDEO_FILE_NAME)
 
 
-def build_final_video_walk_path(today=datetime.now().strftime("%Y%m%d"), times_tag: int = 0):
-    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(times_tag) + "_walk_" + VIDEO_FILE_NAME)
+def build_final_video_walk_path(today=datetime.now().strftime("%Y%m%d"), time_tag: int = 0):
+    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "_" + str(time_tag) + "_walk_" + VIDEO_FILE_NAME)
 
 
 def build_today_bg_music_path():
     return os.path.join(NEWS_FOLDER_NAME, "bg_music.mp4")
 
 
-def build_articles_json_path(today=datetime.now().strftime("%Y%m%d"), times_tag=0):
-    path = os.path.join(NEWS_FOLDER_NAME, today, 'new_articles_' + str(times_tag) + '.json')
+def build_articles_json_path(today=datetime.now().strftime("%Y%m%d"), time_tag=0):
+    path = os.path.join(NEWS_FOLDER_NAME, today, 'new_articles_' + str(time_tag) + '.json')
     logger.info(f" new_articles_path = {path}")
     return path
 
@@ -195,7 +195,7 @@ def load_month_urls(year_month: str) -> set:
     return urls_set
 
 
-def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False, times_tag: int = 0) -> None:
+def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False, time_tag: int = 0) -> None:
     if os.path.exists(output_file) and not rewrite:
         logger.info(f"{output_file}已存在，跳过生成音频。")
         return
@@ -207,7 +207,7 @@ def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False, tim
         2: 'zh-CN-XiaoxiaoNeural',
         3: 'zh-CN-YunjianNeural'
     }
-    sh = f'edge-tts --voice {announcer_map[times_tag]} --text "{text}" --write-media {output_file} --rate="+{rate}%"'
+    sh = f'edge-tts --voice {announcer_map[time_tag]} --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
 
 

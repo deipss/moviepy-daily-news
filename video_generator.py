@@ -90,7 +90,7 @@ def calculate_segment_times(duration, num_segments):
 
 
 def generate_single_video(audio_path, image_list, title, summary, output_path, index, is_preview=False,
-                          times_tag=0):
+                          time_tag=0):
     title = "" + index + " " + title
     # 加载背景和音频
     bg_clip = ImageClip(BACKGROUND_IMAGE_INNER_PATH)  # 白色背景
@@ -115,7 +115,7 @@ def generate_single_video(audio_path, image_list, title, summary, output_path, i
     bottom_right_width = int(bg_width * 0.2)
     bottom_left_width = bg_width - bottom_right_width
 
-    bottom_right_img = VideoFileClip(build_announcer_path(times_tag)).with_effects([Loop(duration=duration)])
+    bottom_right_img = VideoFileClip(build_announcer_path(time_tag)).with_effects([Loop(duration=duration)])
     if bottom_right_img.w > bottom_right_width or bottom_right_img.h > bottom_height:
         scale = min(bottom_right_width / bottom_right_img.w, bottom_height / bottom_right_img.h)
         bottom_right_img = bottom_right_img.resized(scale)
@@ -174,7 +174,7 @@ def generate_single_video(audio_path, image_list, title, summary, output_path, i
     return True
 
 
-def build_introduction_txt(today=datetime.now(), times_tag=0):
+def build_introduction_txt(today=datetime.now(), time_tag=0):
     """获取完整的日期信息：公历日期、农历日期和星期"""
 
     # 获取公历日期
@@ -186,7 +186,7 @@ def build_introduction_txt(today=datetime.now(), times_tag=0):
     # 获取星期几
     weekday_map = ["一", "二", "三", "四", "五", "六", "日"]
     weekday = f"星期{weekday_map[today.weekday()]}"
-    time_tag = TIMES_TYPE[times_tag]
+    time_tag = TIMES_TYPE[time_tag]
     # return "今天是{}, \n农历{}, \n{},欢迎收看[今日快电]{}".format(solar_date, lunar_date, weekday, time_tag)
     return "今天是{},{},\n欢迎收看[今日快电]{}".format(solar_date, weekday, time_tag)
 
@@ -211,26 +211,26 @@ def get_weekday_color():
 
 
 def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),
-                                is_preview=False, times_tag=0):
+                                is_preview=False, time_tag=0):
     """生成带日期文字和背景音乐的片头视频
 
     Args:
         bg_music_path: 背景音乐文件路径
         output_path: 输出视频路径
-        :param times_tag:
+        :param time_tag:
     """
-    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT, times_tag)
+    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT, time_tag)
     if os.path.exists(output_path) and not REWRITE:
         logger.info(f"片头{output_path}已存在,直接返回")
-        return generate_top_topic_by_ollama(today), 0
+        return generate_top_topic_by_ollama(today=today, time_tag=time_tag), 0
         # 加载背景图片
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
 
     # 片头音频生成
     date_obj = datetime.strptime(today, "%Y%m%d")
-    date_text = build_introduction_txt(date_obj, times_tag)
-    audio_path = build_introduction_audio_path(today, times_tag)
-    generate_audio(date_text, audio_path, rewrite=True, times_tag=times_tag)
+    date_text = build_introduction_txt(date_obj, time_tag)
+    audio_path = build_introduction_audio_path(today, time_tag)
+    generate_audio(date_text, audio_path, rewrite=True, time_tag=time_tag)
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
 
@@ -252,7 +252,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
         stroke_width=2
     ).with_duration(duration).with_position((GAP * 1.75, GLOBAL_HEIGHT * 0.7))
 
-    topics = generate_top_topic_by_ollama(today)
+    topics = generate_top_topic_by_ollama(today, time_tag)
     logger.info(f"generate introduction topics=\n{topics}")
     topic_txt_clip = TextClip(
         text=topics,
@@ -265,7 +265,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
 
     ).with_duration(duration).with_position((GAP * 1.85, GLOBAL_HEIGHT * 0.1))
 
-    lady = (VideoFileClip(build_announcer_path(times_tag)).with_effects([Loop(duration=duration)])
+    lady = (VideoFileClip(build_announcer_path(time_tag)).with_effects([Loop(duration=duration)])
             .with_position((GLOBAL_WIDTH * 0.68, GLOBAL_HEIGHT * 0.47)).resized(0.7))
 
     # 合成最终视频
@@ -277,15 +277,15 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     return topics, duration
 
 
-def generate_video_end(is_preview=False, times_tag=0):
+def generate_video_end(is_preview=False, time_tag=0):
     output_path = build_end_path()
     if os.path.exists(output_path) and not REWRITE:
         logger.info(f"片尾{output_path}已存在,直接返回")
-    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT, times_tag)
+    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT, time_tag)
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
     audio_path = build_end_audio_path()
 
-    generate_audio("本次信息，至此结束，下次见", audio_path, rewrite=True, times_tag=times_tag)
+    generate_audio("本次信息，至此结束，下次见", audio_path, rewrite=True, time_tag=time_tag)
     audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration
 
@@ -302,7 +302,7 @@ def generate_video_end(is_preview=False, times_tag=0):
         stroke_width=2
     ).with_duration(duration).with_position(('center', GLOBAL_HEIGHT * 0.7))
 
-    lady = (VideoFileClip(build_announcer_path(times_tag)).with_duration(duration)
+    lady = (VideoFileClip(build_announcer_path(time_tag)).with_duration(duration)
             .with_position((GLOBAL_WIDTH * 0.38, GLOBAL_HEIGHT * 0.17)).resized(0.7))
 
     # 合成最终视频
@@ -377,21 +377,22 @@ def add_walking_man(path, walk_video_path, duration_list):
     video_with_bg.write_videofile(walk_video_path, codec="libx264", audio_codec="aac", fps=FPS)
 
 
-def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), times_tag: int = 0):
+def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), time_tag: int = 0):
+    logger(f'today={today} time_tag={time_tag}')
     print_init_parameters()
     video_paths = []
-    intro_path = build_introduction_path(today, times_tag)
+    intro_path = build_introduction_path(today, time_tag)
     video_paths.append(intro_path)
     logger.info(f"正在生成视频片头 {intro_path}")
-    topics, duration = generate_video_introduction(output_path=intro_path, today=today, times_tag=times_tag)
+    topics, duration = generate_video_introduction(output_path=intro_path, today=today, time_tag=time_tag)
 
-    all_paths = generate_all_news_video(today=today, times_tag=times_tag)
+    all_paths = generate_all_news_video(today=today, time_tag=time_tag)
     for i in range(len(all_paths)):
         video_paths.append(all_paths[i])
-    video_paths.append(generate_video_end(times_tag=times_tag))
+    video_paths.append(generate_video_end(time_tag=time_tag))
     logger.info(f"生成主视频并整合...")
-    final_path = build_final_video_path(today, times_tag)
-    final_path_walk = build_final_video_walk_path(today, times_tag)
+    final_path = build_final_video_path(today, time_tag)
+    final_path_walk = build_final_video_walk_path(today, time_tag)
     logger.info(f"主视频保存在:{final_path} and {final_path_walk}")
     duration_list = combine_videos_with_transitions(video_paths, final_path)
     logger.info('开始添加进度条')
@@ -402,8 +403,8 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), times_tag: in
     save_today_news_json(topics, today)
 
 
-def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"), times_tag=0) -> list[str]:
-    json_file_path = build_articles_json_path(today, times_tag)
+def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"), time_tag=0) -> list[str]:
+    json_file_path = build_articles_json_path(today, time_tag)
     logger.info(f"新闻json文件path={json_file_path}")
     if not os.path.exists(json_file_path):
         logger.warning(f"新闻json文件不存在,path={json_file_path}")
@@ -441,7 +442,7 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"), time
             summary=article.summary,
             title=article.title,
             index=str(idx),
-            times_tag=times_tag,
+            time_tag=time_tag,
             is_preview=False
         )
         if generated_result:
@@ -462,7 +463,7 @@ def load_json_by_source(source, today):
     return json_file_path, news_data
 
 
-def save_today_news_json(topic,time_tag, today: str = datetime.now().strftime("%Y%m%d")):
+def save_today_news_json(topic, time_tag, today: str = datetime.now().strftime("%Y%m%d")):
     text_path = build_articles_json_path(today, time_tag)
 
     if not os.path.exists(text_path):
@@ -492,7 +493,7 @@ def save_today_news_json(topic,time_tag, today: str = datetime.now().strftime("%
     logger.info(f"今日新闻text文件 {text_path}")
 
 
-def generate_top_topic_by_ollama(time_tag,today: str = datetime.now().strftime("%Y%m%d")) -> str:
+def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"),time_tag=0) -> str:
     client = OllamaClient()
     json_file_path = build_articles_json_path(today, time_tag)
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
