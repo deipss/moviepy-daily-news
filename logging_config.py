@@ -20,8 +20,9 @@ def setup_logger(log_file='app.log', log_level=logging.INFO):
         console_handler.setLevel(logging.DEBUG)
 
         # 定义日志格式
+        #             '%(asctime)s PID: %(process)d TID:%(thread)d %(levelname)s %(filename)s:%(lineno)d  %(message)s'
         formatter = logging.Formatter(
-            '%(asctime)s PID: %(process)d TID:%(thread)d %(levelname)s %(filename)s:%(lineno)d  %(message)s'
+            '%(asctime)s PID: %(process)d %(levelname)s %(filename)s %(funcName)s %(lineno)d  %(message)s'
         )
         file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
