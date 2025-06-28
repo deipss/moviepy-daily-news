@@ -14,7 +14,11 @@ NEWS_FOLDER_NAME = "news"
 FINAL_VIDEOS_FOLDER_NAME = "final_videos"
 AUDIO_FILE_NAME = "summary_audio.mp3"
 SUB_LIST_LENGTH = 15
-TIMES_TAG = 0
+
+RT = "rt"
+ALJ = "rlj"
+BBC = "bbc"
+CHINADAILY_EN = "c_en"
 
 PROXY = {
     'http': 'http://127.0.0.1:10809',
@@ -69,6 +73,7 @@ class NewsArticle:
                  author: str = None,
                  tags: List[str] = None,
                  summary: str = None,
+                 times: int = 0,
                  show: bool = None):
         self.title = title
         self.title_en = title_en
@@ -89,6 +94,7 @@ class NewsArticle:
         self.author = author
         self.tags = tags or []
         self.summary = summary
+        self.times = times
         self.show = show
 
     def to_dict(self):
@@ -111,8 +117,8 @@ def build_daily_text_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "all.text")
 
 
-def build_introduction_audio_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(NEWS_FOLDER_NAME, today, "introduction.mp3")
+def build_introduction_audio_path(today=datetime.now().strftime("%Y%m%d"), times_tag: int = 0):
+    return os.path.join(NEWS_FOLDER_NAME, today, str(times_tag) + "introduction.mp3")
 
 
 def build_end_audio_path():
@@ -143,13 +149,13 @@ def build_bg_color_hex(times_tag: int = 0):
         3: '#F2F2F0'
     }
     hex = announcer_map[times_tag]
-    logger.info(f"build_bg_color_hex: {hex}")
+    logger.info(f" {times_tag} build_bg_color_hex: {hex}")
     return hex
 
 
 def build_bg_color_rgb(times_tag: int = 0):
     rgb = hex_to_rgb(build_bg_color_hex(times_tag))
-    logger.info(f"build_bg_color_rgb: {rgb}")
+    logger.info(f" {times_tag} build_bg_color_rgb: {rgb}")
     return rgb
 
 

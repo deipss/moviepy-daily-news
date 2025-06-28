@@ -13,22 +13,15 @@ import random
 from utils import *
 from video_generator import combine_videos
 
-CHINADAILY = 'cn_daily'
-CHINADAILY_EN = 'cn_daily_en'
-RT = 'rt'
-ALJ = 'alj'
-ALJ_UP = 'alj_up'
-BBC = 'bbc'
-TIMES_TAG = 0
-
 
 class NewsScraper:
 
-    def __init__(self, source_url: str, source: str, news_type: str, sleep_time: int = 0):
+    def __init__(self, source_url: str, source: str, news_type: str, sleep_time: int = 0, times: int = 0):
         self.source_url = source_url
-        self.source = source
         self.news_type = news_type
         self.sleep_time = sleep_time
+        self.times = times
+        self.source = source + str(times)
 
     def do_crawl_news(self, today: datetime.now().strftime("%Y%m%d")):
         today_source_path = self.build_today_source_path(today)
@@ -52,12 +45,11 @@ class NewsScraper:
 
     def crawling_news_article(self, today):
         folder_path = self.create_folder(today)
-        today_source_path = self.build_today_source_path(today)
         urls = self.extract_unlisted_urls(today)
         month_urls = load_month_urls(today[:6])
         results = []
         if urls is None:
-            logger.info(f" {self.source}无法获取初始页面内容，程序退出。")
+            logger.info(f" {self.source} 无法获取初始页面内容，程序退出。")
             return results
         logger.info(f"{self.source} has  {len(urls)}  urls,now extract first {SUB_LIST_LENGTH}")
         for idx, url in enumerate(urls[:SUB_LIST_LENGTH]):
@@ -65,6 +57,7 @@ class NewsScraper:
                 logger.info(f" {self.source} 跳过本月已访问过的新闻: {url}")
                 continue
             article = self.extract_news_content(url)
+            article.times = self.times
             if not article:
                 logger.warning(f"无法获取新闻内容: {url}")
                 continue
@@ -92,7 +85,7 @@ class NewsScraper:
             if article.content_cn and len(article.content_cn) < 8:
                 logger.warning(f"{article.source} 内容过短: {url}")
                 continue
-            if not do_download_images(article, today_source_path):
+            if not do_download_images(article, folder_path):
                 logger.info(f"图片下载失败: {url}")
                 continue
             article.folder = "{:02d}".format(idx)
@@ -733,21 +726,22 @@ def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%
         if len(article.folder) > 2:
             article.folder = article.folder[2:]
         audio_output_path = os.path.join(folder_path, article.folder, "%s" % AUDIO_FILE_NAME)
-        generate_audio(text=article.summary, output_file=audio_output_path, times_tag=TIMES_TAG)
+        generate_audio(text=article.summary, output_file=audio_output_path, times_tag=article.times)
 
 
 import time
 from threading import Thread
 
 
-def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
+def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), times_tag: int = 0):
     logger.info("开始爬取新闻")
     _start = time.time()
-    rt = RTScraper(source_url='https://www.rt.com/', source=RT, news_type='今日俄罗斯', sleep_time=4)
-    al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='中东半岛新闻', sleep_time=20)
-    bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='BBC', sleep_time=20)
+    rt = RTScraper(source_url='https://www.rt.com/', source=RT, news_type='今日俄罗斯', sleep_time=4, times=times_tag)
+    al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='中东半岛新闻', sleep_time=20,
+                    times=times_tag)
+    bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='BBC', sleep_time=20, times=times_tag)
     en = CNDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='中国日报',
-                          sleep_time=4)
+                          sleep_time=4, times=times_tag)
 
     threads = []
     for scraper in [bbc, al, rt, en]:
@@ -767,7 +761,7 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     al_articles = process_news_results(source=ALJ, today=today)
     _end = time.time()
     logger.info(f"AI生成摘要耗时: {_end - _start:.2f} 秒")
-    build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles)
+    build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles, times_tag)
 
     # 根据现有的资料，暂时不支持微软的edge-tts不支持并发，会有限流
     logger.info("开始生成音频")
@@ -778,7 +772,7 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d")):
     logger.info(f"生成音频耗时: {_end - _start:.2f} 秒")
 
 
-def build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles):
+def build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles, times_tag):
     def reset_article_attributes(article):
         article.content_en = ''
         article.content_cn = ''
@@ -805,10 +799,10 @@ def build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_ar
         article.index_inner = idx
         idx += 1
         new_articles.append(article)
-    path = build_articles_json_path(today, TIMES_TAG)
+    path = build_articles_json_path(today, times_tag)
     with open(path, 'w', encoding='utf-8') as json_file:
         json.dump([article.to_dict() for article in new_articles], json_file, ensure_ascii=False, indent=4)
-    logger.info(f"生成new_articles.json{TIMES_TAG}成功,path={path}")
+    logger.info(f"生成new_articles.json{times_tag}成功,path={path}")
 
 
 def build_today_json_path(today=datetime.now().strftime("%Y%m%d")):
@@ -832,17 +826,6 @@ def _test_alj():
     logger.info("============")
 
 
-def reset_constant(time_tag):
-    global CHINADAILY_EN, ALJ, BBC, RT, TIMES_TAG
-    logger.info(f"before CHINADAILY_EN={CHINADAILY_EN},ALJ={ALJ},BBC={BBC},RT={RT},TIMES_TAG={TIMES_TAG}")
-    TIMES_TAG = time_tag
-    CHINADAILY_EN = CHINADAILY_EN + str(time_tag)
-    ALJ = ALJ + str(time_tag)
-    BBC = BBC + str(time_tag)
-    RT = RT + str(time_tag)
-    logger.info(f"after CHINADAILY_EN={CHINADAILY_EN},ALJ={ALJ},BBC={BBC},RT={RT},TIMES_TAG={TIMES_TAG}")
-
-
 import argparse
 
 if __name__ == "__main__":
@@ -853,11 +836,9 @@ if __name__ == "__main__":
     parser.add_argument("--times", type=int, default=0, help="执行次数")
     parser.add_argument("--rewrite", type=bool, default=False, help="是否重写")
     args = parser.parse_args()
-    logger.info(f"新闻爬取和处理工具 args={args}")
-    reset_constant(args.times)
-    logger.info(f"新闻爬取和处理工具 运行第{TIMES_TAG}次")
+    logger.info(f"新闻爬取调用参数 args={args}")
     try:
-        auto_download_daily(today=args.today)
+        auto_download_daily(today=args.today, times_tag=args.times)
     except  Exception as e:
         logger.error(f"auto_download_daily error:{e}", exc_info=True)
     logger.info(f"========end crawl==========time spend = {time.time() - _start:.2f} second")
