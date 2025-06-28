@@ -128,9 +128,9 @@ def build_end_audio_path():
 def build_announcer_path(times_tag: int = 0):
     announcer_map = {
         0: 'lady_announcer.mp4',
-        1: 'man_announcer.mp4',
+        1: 'man_announcer_1.mp4',
         2: 'lady_announcer_1.mp4',
-        3: 'man_announcer_1.mp4'
+        3: 'man_announcer_3.mp4'
     }
     return os.path.join('videos', announcer_map[times_tag])
 

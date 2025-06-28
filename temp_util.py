@@ -2,7 +2,7 @@ import json
 
 from moviepy import VideoFileClip
 from moviepy.video.fx import Loop
-
+from utils import  *
 from ollama_client import OllamaClient
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
@@ -120,6 +120,5 @@ def _silicon_t():
 if __name__ == '__main__':
     v = VideoFileClip('videos/man_announcer_1.mp4')
     a = v.duration
-    # v.subclipped(start_time=a * 0.3, end_time=a * 0.75).with_effects([Loop(duration=15)]).preview()
-
-    v.subclipped(start_time=a * 0.3, end_time=a * 0.75).write_videofile('videos/man_announcer_1.mp4', fps=24)
+    v1 = v.subclipped(start_time=a*0.53, end_time=a*0.75).with_effects([Loop(n=2)])
+    # v1.write_videofile('videos/man_announcer_1.mp4', fps=FPS)
