@@ -755,10 +755,10 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), times_tag: int 
 
     logger.info("开始AI生成摘要")
     _start = time.time()
-    bbc_articles = process_news_results(source=BBC, today=today)
-    rt_articles = process_news_results(source=RT, today=today)
-    en_articles = process_news_results(source=CHINADAILY_EN, today=today)
-    al_articles = process_news_results(source=ALJ, today=today)
+    bbc_articles = process_news_results(source=rt.source, today=today)
+    rt_articles = process_news_results(source=al.source, today=today)
+    en_articles = process_news_results(source=bbc.source, today=today)
+    al_articles = process_news_results(source=en.source, today=today)
     _end = time.time()
     logger.info(f"AI生成摘要耗时: {_end - _start:.2f} 秒")
     build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles, times_tag)
@@ -766,8 +766,8 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), times_tag: int 
     # 根据现有的资料，暂时不支持微软的edge-tts不支持并发，会有限流
     logger.info("开始生成音频")
     _start = time.time()
-    for i in [BBC, ALJ, RT, CHINADAILY_EN]:
-        generate_all_news_audio(source=i, today=today)
+    for i in [rt, al, bbc, en]:
+        generate_all_news_audio(source=i.source, today=today)
     _end = time.time()
     logger.info(f"生成音频耗时: {_end - _start:.2f} 秒")
 
