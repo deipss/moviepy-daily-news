@@ -17,6 +17,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MAIN_BG_COLOR, time_tag=0):
+    logger.info(f'time_tag={time_tag}')
     # 创建一个新的图像
     image = Image.new("RGB", (width, height), color)
     draw = ImageDraw.Draw(image)
@@ -211,15 +212,8 @@ def get_weekday_color():
 
 
 def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),
-                                is_preview=False, time_tag=0):
-    """生成带日期文字和背景音乐的片头视频
-
-    Args:
-        bg_music_path: 背景音乐文件路径
-        output_path: 输出视频路径
-        :param time_tag:
-    """
-    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT, time_tag)
+                                time_tag=0, is_preview=False):
+    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT,MAIN_BG_COLOR, time_tag)
     if os.path.exists(output_path) and not REWRITE:
         logger.info(f"片头{output_path}已存在,直接返回")
         return generate_top_topic_by_ollama(today=today, time_tag=time_tag), 0
@@ -281,7 +275,7 @@ def generate_video_end(is_preview=False, time_tag=0):
     output_path = build_end_path()
     if os.path.exists(output_path) and not REWRITE:
         logger.info(f"片尾{output_path}已存在,直接返回")
-    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT, time_tag)
+    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT,MAIN_BG_COLOR, time_tag)
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
     audio_path = build_end_audio_path()
 
@@ -493,7 +487,7 @@ def save_today_news_json(topic, time_tag, today: str = datetime.now().strftime("
     logger.info(f"今日新闻text文件 {text_path}")
 
 
-def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"),time_tag=0) -> str:
+def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"), time_tag=0) -> str:
     client = OllamaClient()
     json_file_path = build_articles_json_path(today, time_tag)
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
