@@ -144,9 +144,9 @@ def hex_to_rgb(hex_color):
 def build_bg_color_hex(time_tag: int = 0):
     announcer_map = {
         0: '#FCFEFE',
-        1: '#F2F2F0',
-        2: '#F2F2F0',
-        3: '#F2F2F0'
+        1: '#F9F9F7',
+        2: '#F7F7F5',
+        3: '#FAFBF8'
     }
     hex = announcer_map[time_tag]
     logger.info(f" {time_tag} build_bg_color_hex: {hex}")
