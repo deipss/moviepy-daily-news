@@ -203,9 +203,9 @@ def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False, tim
     rate = 80
     announcer_map = {
         0: 'zh-CN-XiaoxiaoNeural',
-        1: 'zh-CN-YunjianNeural',
+        1: 'zh-CNYunxiNeural',
         2: 'zh-CN-XiaoxiaoNeural',
-        3: 'zh-CN-YunjianNeural'
+        3: 'zh-CN-YunxiNeural'
     }
     sh = f'edge-tts --voice {announcer_map[time_tag]} --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
