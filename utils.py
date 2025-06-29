@@ -109,8 +109,8 @@ def build_date_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(NEWS_FOLDER_NAME, today)
 
 
-def build_end_path():
-    return os.path.join(NEWS_FOLDER_NAME, "end.mp4")
+def build_end_path(time_tag):
+    return os.path.join(NEWS_FOLDER_NAME, str(time_tag)+"end.mp4")
 
 
 def build_daily_text_path(today=datetime.now().strftime("%Y%m%d")):

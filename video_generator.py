@@ -272,7 +272,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
 
 
 def generate_video_end(is_preview=False, time_tag=0):
-    output_path = build_end_path()
+    output_path = build_end_path(time_tag)
     if os.path.exists(output_path) and not REWRITE:
         logger.info(f"片尾{output_path}已存在,直接返回")
     generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT,MAIN_BG_COLOR, time_tag)
@@ -337,6 +337,9 @@ def combine_videos_with_transitions(video_paths, output_path):
 
 
 def add_walking_man(path, walk_video_path, duration_list):
+    if os.path.exists(walk_video_path) and not REWRITE:
+        logger.info(f'{walk_video_path} had exists')
+        return
     origin_v = VideoFileClip(path)
     all_duration = origin_v.duration
     duration_width_list = [duration / all_duration * GLOBAL_WIDTH for duration in duration_list]
@@ -394,7 +397,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), time_tag: int
     add_walking_man(final_path, final_path_walk, duration_list)
     logger.info(f'添加进度条结束，耗时: {time.time() - start_time:.2f} 秒')
     logger.info(f"生成新闻JSON文件...")
-    save_today_news_json(topics, today)
+    save_today_news_json(topics=topics,time_tag=time_tag, today=today)
 
 
 def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"), time_tag=0) -> list[str]:
@@ -457,8 +460,8 @@ def load_json_by_source(source, today):
     return json_file_path, news_data
 
 
-def save_today_news_json(topic, time_tag, today: str = datetime.now().strftime("%Y%m%d")):
-    text_path = build_articles_json_path(today, time_tag)
+def save_today_news_json(topics, time_tag, today: str = datetime.now().strftime("%Y%m%d")):
+    text_path = build_articles_json_path(today=today, time_tag=time_tag)
 
     if not os.path.exists(text_path):
         logger.warning(f"新闻json文件不存在,path={text_path}")
@@ -477,7 +480,7 @@ def save_today_news_json(topic, time_tag, today: str = datetime.now().strftime("
                 show_idx += 1
     append_and_save_month_urls(today[:6], set(urls))
     text_path = build_daily_text_path(today)
-    rows = ['\n', TAGS, today + TIMES_TYPE[time_tag] + " " + topic.replace("\n", " ")]
+    rows = ['\n', TAGS, today + TIMES_TYPE[time_tag] + " " + topics.replace("\n", " ")]
     rows.extend(titles)
     rows.append(HINT_INFORMATION)
     txt = "\n".join(rows)
