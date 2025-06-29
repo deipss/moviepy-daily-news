@@ -199,11 +199,11 @@ def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False, tim
     if os.path.exists(output_file) and not rewrite:
         logger.info(f"{output_file}已存在，跳过生成音频。")
         return
-    logger.info(f" {output_file} 开始生成音频: {text}")
-    rate = 80
+    logger.info(f"time_tag={time_tag} output_file={output_file} 开始生成音频: {text}")
+    rate = 75
     announcer_map = {
         0: 'zh-CN-XiaoxiaoNeural',
-        1: 'zh-CNYunxiNeural',
+        1: 'zh-CN-YunxiNeural',
         2: 'zh-CN-XiaoxiaoNeural',
         3: 'zh-CN-YunxiNeural'
     }
