@@ -128,9 +128,9 @@ def build_end_audio_path():
 def build_announcer_path(time_tag: int = 0):
     announcer_map = {
         0: 'lady_announcer.mp4',
-        1: 'man_announcer_1.mp4',
-        2: 'lady_announcer_1.mp4',
-        3: 'man_announcer_3.mp4'
+        1: 'lady_announcer.mp4',
+        2: 'lady_announcer.mp4',
+        3: 'lady_announcer.mp4'
     }
     return os.path.join('videos', announcer_map[time_tag])
 
@@ -144,9 +144,9 @@ def hex_to_rgb(hex_color):
 def build_bg_color_hex(time_tag: int = 0):
     announcer_map = {
         0: '#FCFEFE',
-        1: '#F9F9F7',
-        2: '#F7F7F5',
-        3: '#FAFBF8'
+        1: '#FCFEFE',
+        2: '#FCFEFE',
+        3: '#FCFEFE'
     }
     hex = announcer_map[time_tag]
     logger.info(f" {time_tag} build_bg_color_hex: {hex}")
@@ -203,9 +203,9 @@ def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False, tim
     rate = 75
     announcer_map = {
         0: 'zh-CN-XiaoxiaoNeural',
-        1: 'zh-CN-YunxiNeural',
+        1: 'zh-CN-XiaoxiaoNeural',
         2: 'zh-CN-XiaoxiaoNeural',
-        3: 'zh-CN-YunxiNeural'
+        3: 'zh-CN-XiaoxiaoNeural'
     }
     sh = f'edge-tts --voice {announcer_map[time_tag]} --text "{text}" --write-media {output_file} --rate="+{rate}%"'
     os.system(sh)
