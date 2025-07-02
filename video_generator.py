@@ -213,7 +213,7 @@ def get_weekday_color():
 
 def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),
                                 time_tag=0, is_preview=False):
-    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT,MAIN_BG_COLOR, time_tag)
+    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT, MAIN_BG_COLOR, time_tag)
     if os.path.exists(output_path) and not REWRITE:
         logger.info(f"片头{output_path}已存在,直接返回")
         return generate_top_topic_by_ollama(today=today, time_tag=time_tag), 0
@@ -275,7 +275,7 @@ def generate_video_end(is_preview=False, time_tag=0):
     output_path = build_end_path(time_tag)
     if os.path.exists(output_path) and not REWRITE:
         logger.info(f"片尾{output_path}已存在,直接返回")
-    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT,MAIN_BG_COLOR, time_tag)
+    generate_background_image(GLOBAL_WIDTH, GLOBAL_HEIGHT, MAIN_BG_COLOR, time_tag)
     bg_clip = ImageClip(BACKGROUND_IMAGE_PATH)
     audio_path = build_end_audio_path()
 
@@ -397,7 +397,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), time_tag: int
     add_walking_man(final_path, final_path_walk, duration_list)
     logger.info(f'添加进度条结束，耗时: {time.time() - start_time:.2f} 秒')
     logger.info(f"生成新闻JSON文件...")
-    save_today_news_json(topics=topics,time_tag=time_tag, today=today)
+    save_today_news_json(topics=topics, time_tag=time_tag, today=today)
 
 
 def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"), time_tag=0) -> list[str]:
@@ -461,6 +461,7 @@ def load_json_by_source(source, today):
 
 
 def save_today_news_json(topics, time_tag, today: str = datetime.now().strftime("%Y%m%d")):
+    today_formatted = datetime.strptime(today, "%Y%m%d").strftime("%Y年%m月%d日")
     text_path = build_articles_json_path(today=today, time_tag=time_tag)
 
     if not os.path.exists(text_path):
@@ -472,15 +473,20 @@ def save_today_news_json(topics, time_tag, today: str = datetime.now().strftime(
     urls = []
     titles = []
     show_idx = 1
+    words_count = 0
     if news_data:
         for i in news_data:
             urls.append(i['url'])
             if i['show']:
-                titles.append(str(show_idx) + ' ' + i['title'])
+                words = str(show_idx) + ' ' + i['title']
+                words_count += len(words)
+                if words_count > 400:
+                    break
+                titles.append(words)
                 show_idx += 1
     append_and_save_month_urls(today[:6], set(urls))
     text_path = build_daily_text_path(today)
-    rows = ['\n', TAGS, today + TIMES_TYPE[time_tag] + " " + topics.replace("\n", " ")]
+    rows = ['\n', today_formatted + TIMES_TYPE[time_tag], TAGS, topics.replace("\n", " ")]
     rows.extend(titles)
     rows.append(HINT_INFORMATION)
     txt = "\n".join(rows)
