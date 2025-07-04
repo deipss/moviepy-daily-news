@@ -480,7 +480,7 @@ def save_today_news_json(topics, time_tag, today: str = datetime.now().strftime(
             if i['show']:
                 words = str(show_idx) + ' ' + i['title']
                 words_count += len(words)
-                if words_count > 400:
+                if words_count > 380:
                     break
                 titles.append(words)
                 show_idx += 1
