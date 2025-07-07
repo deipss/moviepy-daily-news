@@ -7,7 +7,8 @@ import time
 from functools import wraps
 from dotenv import load_dotenv
 
-
+# MODEL_NAME = "deepseek-r1:8b"
+MODEL_NAME = "qwen3:8b"
 def timeit(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -73,13 +74,13 @@ class OllamaClient:
             logger.error(f'silicon调用异常 {e}', exc_info=True)
             return {"error": f"请求异常"}
 
-    def _generate_text_local(self, prompt: str, model: str = "deepseek-r1:8b", options: Dict[str, Any] = None) -> Dict[
+    def _generate_text_local(self, prompt: str, model: str = MODEL_NAME, options: Dict[str, Any] = None) -> Dict[
         str, Any]:
         """
         使用Ollama服务生成文本。
 
         :param prompt: 输入的提示文本
-        :param model: 使用的模型名称，默认为"deepseek-r1:8b"
+        :param model: 使用的模型名称，默认为MODEL_NAME
         :param options: 其他选项，如max_tokens等
         :return: 包含生成文本的字典
         """
@@ -111,12 +112,12 @@ class OllamaClient:
         response = requests.get(url)
         return response.json()
 
-    def generate_summary(self, text: str, model: str = "deepseek-r1:8b", max_tokens: int = 200) -> str:
+    def generate_summary(self, text: str, model: str = MODEL_NAME, max_tokens: int = 200) -> str:
         """
         生成中文文本的摘要。
 
         :param text: 输入的中文文本
-        :param model: 使用的模型名称，默认为"deepseek-r1:8b"
+        :param model: 使用的模型名称，默认为MODEL_NAME
         :param max_tokens: 摘要的最大token数，默认为50
         :return: 生成的摘要文本
         """
@@ -140,12 +141,12 @@ class OllamaClient:
 
         return summary
 
-    def generate_summary_cn(self, text: str, model: str = "deepseek-r1:8b", max_tokens: int = 200) -> str:
+    def generate_summary_cn(self, text: str, model: str = MODEL_NAME, max_tokens: int = 200) -> str:
         """
         生成中文文本的摘要。
 
         :param text: 输入的中文文本
-        :param model: 使用的模型名称，默认为"deepseek-r1:8b"
+        :param model: 使用的模型名称，默认为MODEL_NAME
         :param max_tokens: 摘要的最大token数，默认为50
         :return: 生成的摘要文本
         """
@@ -181,7 +182,35 @@ class OllamaClient:
 
         return summary
 
-    def generate_top_topic(self, text: str, model: str = "deepseek-r1:8b", max_tokens: int = 66) -> str:
+    def optimize_summary_cn(self, text: str, model: str = MODEL_NAME, max_tokens: int = 200) -> str:
+        """
+        生成中文文本的摘要。
+
+        :param text: 输入的中文文本
+        :param model: 使用的模型名称，默认为MODEL_NAME
+        :param max_tokens: 摘要的最大token数，默认为50
+        :return: 生成的摘要文本
+        """
+        prompt = f"以下文字是英文翻译后的中文新闻摘要，请优化下内容，以便更适合中文的语境：\n{text}"
+        cnt = 3
+        response = self._generate_text_local(prompt, model)
+        while cnt > 0:
+            if "error" in response:
+                response = self._generate_text_local(prompt, model)
+                logger.error(f"优化摘要失败,last time is {cnt}: {response['error']},text={text}")
+            cnt -= 1
+        summary = response.get("response", "")
+        summary = self._extract_think(summary)
+
+        if len(summary) > max_tokens:
+            logger.info(f"当前摘要={summary} {len(summary)}>{max_tokens}个字 再次优化摘要")
+            prompt = f"以下文字是英文翻译后的中文新闻摘要，请优化下内容，以更适合中文的语境，尽量不超过个{max_tokens}字：\n{summary}"
+            response = self._generate_text_local(prompt, model)
+            summary = response.get("response", "")
+            summary = self._extract_think(summary)
+        return summary
+
+    def generate_top_topic(self, text: str, model: str = MODEL_NAME, max_tokens: int = 66) -> str:
 
         prompt = f"""1.请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到17个字左右，
 2.同时请排除一些未成年内容,
@@ -204,7 +233,7 @@ class OllamaClient:
         summary = summary.replace("**", "")
         return summary.replace('死亡', '罹难')
 
-    def generate_top_title(self, text: str, model: str = "deepseek-r1:8b",
+    def generate_top_title(self, text: str, model: str = MODEL_NAME,
                            max_tokens: int = 80, count: int = 15) -> str:
         prompt = f"请从以下带有序号的新闻主题，提取出影响力最高的{count}个，过滤一些区县市的新闻，最终返回影响力最高的新闻的原始序号（用英文逗号隔开）：\n{text}"
         response = self._generate_text_local(prompt, model)
@@ -213,7 +242,7 @@ class OllamaClient:
         summary = summary.replace("**", "")
         return summary
 
-    def generate_top_news_summary(self, text: str, model: str = "deepseek-r1:8b",
+    def generate_top_news_summary(self, text: str, model: str = MODEL_NAME,
                                   max_tokens: int = 80, count: int = 15) -> str:
         prompt = f"请从以下标题信息，生成一从在{max_tokens}左右的新闻稿：\n{text}"
         response = self._generate_text_local(prompt, model)
@@ -222,13 +251,13 @@ class OllamaClient:
         summary = summary.replace("**", "")
         return summary
 
-    def translate_to_chinese(self, text: str, model: str = "deepseek-r1:8b") -> str:
+    def translate_to_chinese(self, text: str, model: str = MODEL_NAME) -> str:
 
         prompt = f"请将以下英文文本翻译成中文,只返回中文：\n{text}"
         response = self._generate_text_local(prompt, model)
         return self._extract_think(response.get("response", ""))
 
-    def translate_to_english(self, text: str, model: str = "deepseek-r1:8b") -> str:
+    def translate_to_english(self, text: str, model: str = MODEL_NAME) -> str:
 
         prompt = f"请将以下英文文本翻译成英文，只返回英文：\n{text}"
         response = self._generate_text_local(prompt, model)
