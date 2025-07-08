@@ -7,8 +7,8 @@ import time
 from functools import wraps
 from dotenv import load_dotenv
 
-# MODEL_NAME = "deepseek-r1:8b"
-MODEL_NAME = "qwen3:8b"
+MODEL_NAME = "deepseek-r1:8b"
+# MODEL_NAME = "qwen3:8b"
 def timeit(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
