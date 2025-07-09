@@ -6,6 +6,8 @@ from logging_config import logger
 import time
 from functools import wraps
 from dotenv import load_dotenv
+import threading
+lock = threading.RLock()
 
 MODEL_NAME = "deepseek-r1:8b"
 # MODEL_NAME = "qwen3:8b"
@@ -45,34 +47,35 @@ class OllamaClient:
         return text
 
     def _generate_text_silicon(self, prompt, model):
-        load_dotenv()
-        token = os.getenv('SILICON_API_KEY')
-        url = "https://api.siliconflow.cn/v1/chat/completions"
+        with lock:  # 加锁保护共享资源
+            load_dotenv()
+            token = os.getenv('SILICON_API_KEY')
+            url = "https://api.siliconflow.cn/v1/chat/completions"
 
-        payload = {
-            "model": "Qwen/Qwen3-8B",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        }
-        headers = {
-            "Authorization": "Bearer " + token,
-            "Content-Type": "application/json"
-        }
-        try:
-            response = requests.request("POST", url, json=payload, headers=headers)
-            if response.status_code == 200:
-                content = response.json()['choices'][0]['message']['content']
-                return {'response': content.replace("\n", "").replace(" ", "")}
-            else:
-                logger.error(f"ollama请求失败，状态码: {response.status_code}, 响应内容: {response.text}")
-                return {"error": f"请求失败"}
-        except Exception as e:
-            logger.error(f'silicon调用异常 {e}', exc_info=True)
-            return {"error": f"请求异常"}
+            payload = {
+                "model": "Qwen/Qwen3-8B",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            }
+            headers = {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            }
+            try:
+                response = requests.request("POST", url, json=payload, headers=headers)
+                if response.status_code == 200:
+                    content = response.json()['choices'][0]['message']['content']
+                    return {'response': content.replace("\n", "").replace(" ", "")}
+                else:
+                    logger.error(f"ollama请求失败，状态码: {response.status_code}, 响应内容: {response.text}")
+                    return {"error": f"请求失败"}
+            except Exception as e:
+                logger.error(f'silicon调用异常 {e}', exc_info=True)
+                return {"error": f"请求异常"}
 
     def _generate_text_local(self, prompt: str, model: str = MODEL_NAME, options: Dict[str, Any] = None) -> Dict[
         str, Any]:
@@ -162,7 +165,7 @@ class OllamaClient:
             else:
                 text = text[:max_length]
 
-        prompt = f"请为以下文本生成一份不超过{max_tokens}个字的中文新闻摘要，只返回摘要内容：\n{text}"
+        prompt = f"请为以下文本生成一份不超过{max_tokens}个字的中文新闻摘要，使用中文语境，只返回摘要内容：\n{text}"
         cnt = 3
         response = self._generate_text_local(prompt, model)
         while cnt > 0:
@@ -175,7 +178,7 @@ class OllamaClient:
 
         if len(summary) > max_tokens:
             logger.info(f"当前摘要={summary} {len(summary)}>{max_tokens}个字 再次生成摘要")
-            prompt = f"请为以下文本生成一份不超过{max_tokens}个字的中文新闻摘要，只返回摘要内容：\n{summary}"
+            prompt = f"请为以下文本生成一份不超过{max_tokens}个字的中文新闻摘要，使用中文语境，只返回摘要内容：\n{summary}"
             response = self._generate_text_local(prompt, model)
             summary = response.get("response", "")
             summary = self._extract_think(summary)
@@ -191,7 +194,7 @@ class OllamaClient:
         :param max_tokens: 摘要的最大token数，默认为50
         :return: 生成的摘要文本
         """
-        prompt = f"以下文字是英文翻译后的中文新闻摘要，请优化下内容，以便更适合中文的语境：\n{text}"
+        prompt = f"以下文字是英文翻译后的中文新闻摘要，请优化下内容，以便更适合中文的语境,只返回优化后的正文：\n{text}"
         cnt = 3
         response = self._generate_text_local(prompt, model)
         while cnt > 0:
@@ -204,7 +207,7 @@ class OllamaClient:
 
         if len(summary) > max_tokens:
             logger.info(f"当前摘要={summary} {len(summary)}>{max_tokens}个字 再次优化摘要")
-            prompt = f"以下文字是英文翻译后的中文新闻摘要，请优化下内容，以更适合中文的语境，尽量不超过个{max_tokens}字：\n{summary}"
+            prompt = f"以下文字是英文翻译后的中文新闻摘要，请优化下内容，以更适合中文的语境，尽量不超过个{max_tokens}字，,只返回优化后的正文：\n{summary}"
             response = self._generate_text_local(prompt, model)
             summary = response.get("response", "")
             summary = self._extract_think(summary)

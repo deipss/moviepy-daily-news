@@ -13,7 +13,7 @@ NEWS_JSON_FILE_NAME_PROCESSED = "news_results_processed.json"
 NEWS_FOLDER_NAME = "news"
 FINAL_VIDEOS_FOLDER_NAME = "final_videos"
 AUDIO_FILE_NAME = "summary_audio.mp3"
-SUB_LIST_LENGTH = 15
+SUB_LIST_LENGTH = 7
 
 RT = "rt"
 ALJ = "rlj"
@@ -46,7 +46,8 @@ TIMES_TYPE = {
     2: '晚间全球快讯',
     3: '深夜全球快讯'
 }
-
+import threading
+lock = threading.RLock()
 HINT_INFORMATION = """信息来源:[中国日报国际版] [中东半岛电视台] [英国广播公司] [今日俄罗斯电视台]"""
 TAGS = """#新闻 #每日新闻 #热点新闻 #信息差"""
 
@@ -199,17 +200,18 @@ def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False, tim
     if os.path.exists(output_file) and not rewrite:
         logger.info(f"{output_file}已存在，跳过生成音频。")
         return
-    logger.info(f"time_tag={time_tag} output_file={output_file} 开始生成音频: {text}")
-    rate = 75
-    announcer_map = {
-        0: 'zh-CN-XiaoxiaoNeural',
-        1: 'zh-CN-XiaoxiaoNeural',
-        2: 'zh-CN-XiaoxiaoNeural',
-        3: 'zh-CN-XiaoxiaoNeural'
-    }
-    sh = f'edge-tts --voice {announcer_map[time_tag]} --text "{text}" --write-media {output_file} --rate="+{rate}%"'
-    logger.info(f"sh={sh}")
-    os.system(sh)
+    with lock:
+        logger.info(f"time_tag={time_tag} output_file={output_file} 开始生成音频: {text}")
+        rate = 75
+        announcer_map = {
+            0: 'zh-CN-XiaoxiaoNeural',
+            1: 'zh-CN-XiaoxiaoNeural',
+            2: 'zh-CN-XiaoxiaoNeural',
+            3: 'zh-CN-XiaoxiaoNeural'
+        }
+        sh = f'edge-tts --voice {announcer_map[time_tag]} --text "{text}" --write-media {output_file} --rate="+{rate}%"'
+        logger.info(f"sh={sh}")
+        os.system(sh)
 
 
 def append_and_save_month_urls(year_month: str, new_urls: set) -> None:
