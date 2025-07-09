@@ -2,7 +2,6 @@ from moviepy import *
 from PIL import ImageDraw
 from datetime import datetime
 import json
-from zhdate import ZhDate
 import os
 import math
 from PIL import Image
@@ -180,9 +179,6 @@ def build_introduction_txt(today=datetime.now(), time_tag=0):
 
     # 获取公历日期
     solar_date = today.strftime("%Y年%m月%d日")
-
-    # 获取农历日期
-    lunar_date = ZhDate.from_datetime(today).chinese()
 
     # 获取星期几
     weekday_map = ["一", "二", "三", "四", "五", "六", "日"]

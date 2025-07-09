@@ -16,7 +16,6 @@ import os
 import requests
 from datetime import datetime
 from logging_config import logger
-from fake_useragent import UserAgent
 import random
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -118,7 +117,6 @@ def _silicon_t():
 
 
 if __name__ == '__main__':
-    v = VideoFileClip('videos/man_announcer_1.mp4')
+    v = VideoFileClip('videos/lady_announcer.mp4')
     a = v.duration
     v1 = v.subclipped(start_time=a*0.53, end_time=a*0.75).with_effects([Loop(n=2)])
-    # v1.write_videofile('videos/man_announcer_1.mp4', fps=FPS)
