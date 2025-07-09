@@ -857,9 +857,9 @@ if __name__ == "__main__":
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
     parser.add_argument("--times", type=int, default=0, help="执行次数")
     parser.add_argument("--rewrite", type=bool, default=False, help="是否重写")
-    parser.add_argument("--function", type=str, default='crawl', help="默认爬取")
+    parser.add_argument("--func", type=str, default='crawl', help="默认爬取")
     args = parser.parse_args()
-    if args.function == 'crawl':
+    if args.func == 'crawl':
         logger.info(f"新闻爬取调用参数 args={args}")
         try:
             auto_download_daily(today=args.today, time_tag=args.times)
