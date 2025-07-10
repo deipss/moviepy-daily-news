@@ -660,7 +660,7 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
             article.summary = ollama_client.generate_summary(article.content_cn, max_tokens=120)
         if article.content_en:
             article.summary = ollama_client.generate_summary_cn(article.content_en, max_tokens=120)
-        article.summary = ollama_client.optimize_summary_cn(article.summary, max_tokens=120)
+        # article.summary = ollama_client.optimize_summary_cn(article.summary, max_tokens=120)
         logger.info(f'summary is {article.summary} ,len = {len(article.summary)}')
         if check_english_percentage(article.summary):
             article.show = False
@@ -842,14 +842,6 @@ def _test_alj():
 
 import argparse
 
-
-def generate_video(today, time_tag):
-    try:
-        add_summary_audio(today=today, time_tag=time_tag)
-    except Exception as e:
-        logger.error(f"添加摘要和声音失败{today} {time_tag},error={e}", exc_info=True)
-
-
 if __name__ == "__main__":
     logger.info('========start crawl==============')
     _start = time.time()
@@ -874,12 +866,10 @@ if __name__ == "__main__":
             logger.info("指定强制重写")
         threads = []
         for idx in [0, 1, 2, 3]:
-            thread = Thread(target=generate_video,
-                            args=(args.today, idx))
-            threads.append(thread)
-            thread.start()
-        for thread in threads:
-            thread.join()
+            try:
+                add_summary_audio(today=args.today, time_tag=idx)
+            except Exception as e:
+                logger.error(f"添加摘要和声音失败{args.today} {idx},error={e}", exc_info=True)
 
         for idx in [0, 1, 2, 3]:
             try:
