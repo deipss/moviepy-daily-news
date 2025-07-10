@@ -868,12 +868,12 @@ if __name__ == "__main__":
         if args.rewrite:
             REWRITE = True
             logger.info("指定强制重写")
+
         combine_events = [threading.Semaphore(0), threading.Semaphore(0), threading.Semaphore(0),
                           threading.Semaphore(0)]
-        threads = []
 
 
-        def generate_audio(today, i):
+        def thread_generate_video(today, i):
             try:
                 if i < 1:
                     logger.info(f'combine_videos start today={args.today}, time_tag={idx}')
@@ -890,6 +890,8 @@ if __name__ == "__main__":
                 combine_events[i].release()
 
 
+        threads = []
+
         for idx in range(4):
             try:
                 logger.info(f'add_summary_audio start today={args.today}, time_tag={idx}')
@@ -898,12 +900,11 @@ if __name__ == "__main__":
             except Exception as e:
                 logger.error(f"添加摘要和声音失败{args.today} {idx},error={e}", exc_info=True)
 
-            t = threading.Thread(target=generate_audio, args=(args.today, idx))
+            t = threading.Thread(target=thread_generate_video, args=(args.today, idx))
             t.start()
             threads.append(t)
 
         for thread in threads:
-
             thread.join()
 
         remove_outdated_documents()
