@@ -1,4 +1,8 @@
 import json
+import threading
+
+from rope.contrib.autoimport.parse import combine
+
 from ollama_client import OllamaClient
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
@@ -864,43 +868,43 @@ if __name__ == "__main__":
         if args.rewrite:
             REWRITE = True
             logger.info("指定强制重写")
-        semaphore0 = threading.Semaphore(0)
-        semaphore1 = threading.Semaphore(-1)
-        semaphore2 = threading.Semaphore(-1)
-        semaphore3 = threading.Semaphore(-1)
-        semaphores = [semaphore0, semaphore1, semaphore2, semaphore3]
+        combine_events = [threading.Semaphore(0), threading.Semaphore(0), threading.Semaphore(0),
+                          threading.Semaphore(0)]
+        threads = []
 
 
-        def process_idx(idx, today):
+        def generate_audio(today, i):
             try:
-                add_summary_audio(today=today, time_tag=idx)
+                if i < 1:
+                    logger.info(f'combine_videos start today={args.today}, time_tag={idx}')
+                    combine_videos(time_tag=idx, today=args.today)
+                    logger.info(f'combine_videos  end today={args.today}, time_tag={idx}')
+                else:
+                    with combine_events[i - 1]:
+                        logger.info(f'combine_videos start today={today}, time_tag={i}')
+                        combine_videos(time_tag=idx, today=args.today)
+                        logger.info(f'combine_videos end today={today}, time_tag={i}')
             except Exception as e:
-                logger.error(f"添加摘要和声音失败{today} {idx},error={e}", exc_info=True)
+                logger.error(f"视频生成失败{today} {i},error={e}", exc_info=True)
             finally:
-                semaphores[idx].release()
+                combine_events[i].release()
 
+
+        for idx in range(4):
             try:
-                with semaphores[idx]:
-                    combine_videos(today=today, time_tag=idx)
+                logger.info(f'add_summary_audio start today={args.today}, time_tag={idx}')
+                add_summary_audio(time_tag=idx, today=args.today)
+                logger.info(f'add_summary_audio  end today={args.today}, time_tag={idx}')
             except Exception as e:
-                logger.error(f"视频生成失败{today} {idx},error={e}", exc_info=True)
-            finally:
-                if idx + 1 < len(semaphores):
-                    semaphores[idx + 1].release()
+                logger.error(f"添加摘要和声音失败{args.today} {idx},error={e}", exc_info=True)
 
+            t = threading.Thread(target=generate_audio, args=(args.today, idx))
+            t.start()
+            threads.append(t)
 
-        def run_parallel(today):
-            threads = []
-            for idx in range(4):
-                thread = threading.Thread(target=process_idx, args=(idx, today))
-                thread.start()
-                threads.append(thread)
+        for thread in threads:
 
-            for thread in threads:
-                thread.join()
-
-
-        run_parallel(args.today)
+            thread.join()
 
         remove_outdated_documents()
         logger.info(f"========end combine_videos time spend = {time.time() - _start:.2f} second=========")
