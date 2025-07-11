@@ -844,7 +844,6 @@ def _test_alj():
 import argparse
 
 if __name__ == "__main__":
-    logger.info('========start crawl==============')
     _start = time.time()
     parser = argparse.ArgumentParser(description="新闻爬取和处理工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
@@ -853,6 +852,7 @@ if __name__ == "__main__":
     parser.add_argument("--func", type=str, default='crawl', help="默认爬取")
     args = parser.parse_args()
     if args.func == 'crawl':
+        logger.info('========start crawl==============')
         logger.info(f"新闻爬取调用参数 args={args}")
         try:
             auto_download_daily(today=args.today, time_tag=args.times)
@@ -866,29 +866,6 @@ if __name__ == "__main__":
             REWRITE = True
             logger.info("指定强制重写")
 
-        combine_events = [threading.Semaphore(0), threading.Semaphore(0), threading.Semaphore(0),
-                          threading.Semaphore(0)]
-
-
-        def thread_generate_video(today, i):
-            try:
-                if i < 1:
-                    logger.info(f'combine_videos start today={args.today}, time_tag={idx}')
-                    combine_videos(time_tag=idx, today=args.today)
-                    logger.info(f'combine_videos  end today={args.today}, time_tag={idx}')
-                else:
-                    with combine_events[i - 1]:
-                        logger.info(f'combine_videos start today={today}, time_tag={i}')
-                        combine_videos(time_tag=idx, today=args.today)
-                        logger.info(f'combine_videos end today={today}, time_tag={i}')
-            except Exception as e:
-                logger.error(f"视频生成失败{today} {i},error={e}", exc_info=True)
-            finally:
-                combine_events[i].release()
-
-
-        threads = []
-
         for idx in range(4):
             try:
                 logger.info(f'add_summary_audio start today={args.today}, time_tag={idx}')
@@ -896,13 +873,14 @@ if __name__ == "__main__":
                 logger.info(f'add_summary_audio  end today={args.today}, time_tag={idx}')
             except Exception as e:
                 logger.error(f"添加摘要和声音失败{args.today} {idx},error={e}", exc_info=True)
+        for idx in range(4):
+            try:
+                logger.info(f'combine_videos start today={args.today}, time_tag={idx}')
+                combine_videos(time_tag=idx, today=args.today)
+                logger.info(f'combine_videos  end today={args.today}, time_tag={idx}')
+            except Exception as e:
+                logger.error(f"添加摘要和声音失败{args.today} {idx},error={e}", exc_info=True)
 
-            t = threading.Thread(target=thread_generate_video, args=(args.today, idx))
-            t.start()
-            threads.append(t)
-
-        for thread in threads:
-            thread.join()
 
         remove_outdated_documents()
         logger.info(f"========end combine_videos time spend = {time.time() - _start:.2f} second=========")
