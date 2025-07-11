@@ -215,7 +215,7 @@ class OllamaClient:
 
     def generate_top_topic(self, text: str, model: str = MODEL_NAME, max_tokens: int = 66) -> str:
 
-        prompt = f"""1.请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到17个字左右，
+        prompt = f"""1.请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到15个字左右，
 2.同时请排除一些未成年内容,
 3.同时请排除一些死亡事件，
 4.只需返回按序号排列5个主题：
@@ -223,16 +223,6 @@ class OllamaClient:
         response = self._generate_text_local(prompt, model)
         summary = response.get("response", "")
         summary = self._extract_think(summary, is_replace_line=False)
-        if len(summary) > max_tokens:
-            logger.info(f"当前主题={summary},{len(summary)} > {max_tokens}个字，再次生成主题")
-            prompt = f"""1.请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题精简到15个字以内，
-2.同时请排除一些未成年内容,
-3.同时请排除一些死亡事件，
-4.只需返回按序号排列5个主题：
-{summary}"""
-            response = self._generate_text_local(prompt, model)
-            summary = response.get("response", "")
-            summary = self._extract_think(summary, is_replace_line=False)
         summary = summary.replace("**", "")
         return summary.replace('死亡', '罹难')
 
