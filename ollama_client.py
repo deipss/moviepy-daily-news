@@ -218,7 +218,7 @@ class OllamaClient:
         prompt = f"""1.请从以下新闻主题，提取出影响力最高的5个，这5个主题每个主题再精简到15个字左右，
 2.同时请排除一些未成年内容,
 3.同时请排除一些死亡事件，
-4.只需返回按序号排列5个主题：
+4.只需返回按序号排列5个主题,精简过程不需要返回：
 {text}"""
         response = self._generate_text_local(prompt, model)
         summary = response.get("response", "")
