@@ -492,13 +492,13 @@ def save_today_news_json(topics, time_tag, today: str = datetime.now().strftime(
 
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"), time_tag=0) -> str:
-    client = OllamaClient()
     json_file_path = build_articles_json_path(today, time_tag)
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
-    txt = ";".join([news_item['title'] if news_item['show'] else '' for news_item in news_data])
-    data = client.generate_top_topic(txt)
-    data = data.replace(' ', '')
+    show_titles = [news_item['title'] if news_item['show'] else '' for news_item in news_data]
+    show_titles = [f"{idx}. {i[:15]}" for idx,i in enumerate(show_titles[:5],start=1)]
+    txt = "\n".join(show_titles)
+    data = txt.replace(' ', '')
     logger.info(f'topic is \n{data}')
     return data
 
