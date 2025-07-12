@@ -505,13 +505,13 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"),
             if item_len // 15 == 1:
                 result = news_item['title'][:item_len // 2] + "\n" + news_item['title'][item_len // 2:]
                 show_titles.append(result)
-                cnt+1
+                cnt+=1
             else:
                 show_titles.append(news_item['title'])
             cnt += 1
         if cnt > 4:
             break
-    txt = "\n".join([f'{idx} {i}' for idx, i in enumerate(show_titles, start=1)])
+    txt = "\n".join([f'{idx}.{i}' for idx, i in enumerate(show_titles, start=1)])
     data = txt.replace(' ', '')
     logger.info(f'topic is \n{data}')
     return data
