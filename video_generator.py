@@ -496,18 +496,21 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"),
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     show_titles = []
+    cnt = 0
     for news_item in news_data:
-        if news_item['show'] and len(news_item['title']) < 16:
-            show_titles.append(news_item['title'])
-    if len(show_titles) < 3:
-        cnt = 0
-        for news_item in news_data:
-            if news_item['show']:
-                show_titles.append(news_item['title'][:15])
-                cnt += 1
-            if cnt > 4:
-                break
-    txt = "\n".join(show_titles)
+        if news_item['show']:
+            item_len = len(news_item['title'])
+            if item_len // 15 > 1:
+                continue
+            if item_len // 15 == 1:
+                result = news_item['title'][:item_len // 2] + "\n" + news_item['title'][item_len // 2:]
+                show_titles.append(result)
+            else:
+                show_titles.append(news_item['title'])
+            cnt += 1
+        if cnt > 4:
+            break
+    txt = "\n".join([f'{idx} i' for idx, i in enumerate(show_titles, start=1)])
     data = txt.replace(' ', '')
     logger.info(f'topic is \n{data}')
     return data
