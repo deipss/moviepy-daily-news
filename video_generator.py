@@ -510,7 +510,7 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"),
             cnt += 1
         if cnt > 4:
             break
-    txt = "\n".join([f'{idx} i' for idx, i in enumerate(show_titles, start=1)])
+    txt = "\n".join([f'{idx} {i}' for idx, i in enumerate(show_titles, start=1)])
     data = txt.replace(' ', '')
     logger.info(f'topic is \n{data}')
     return data
