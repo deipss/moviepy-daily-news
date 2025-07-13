@@ -756,7 +756,9 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), time_tag: int =
     for thread in threads:
         thread.join()
     _end = time.time()
-    logger.info(f"并发爬取新闻耗时: {_end - _start:.2f} 秒")
+    info = f"{today},{time_tag} 并发爬取新闻耗时: {_end - _start:.2f} 秒"
+    logger.info(info)
+    send_to_dingtalk(info)
     urls = []
     [urls.append(i.url) for i in results]
     append_and_save_month_urls(today[:6], set(urls))
@@ -858,6 +860,8 @@ if __name__ == "__main__":
             auto_download_daily(today=args.today, time_tag=args.times)
         except  Exception as e:
             logger.error(f"auto_download_daily error:{e}", exc_info=True)
+            info = f"{args.today},{args.times} 并发爬取新闻异常，Exception type: {type(e)},Exception args: {e.args},Exception message: {str(e)}"
+            send_to_dingtalk(info)
         logger.info(f"========end crawl==========time spend = {time.time() - _start:.2f} second")
     else:
         logger.info('========start combine_videos===========')
@@ -872,14 +876,18 @@ if __name__ == "__main__":
                 add_summary_audio(time_tag=idx, today=args.today)
                 logger.info(f'add_summary_audio  end today={args.today}, time_tag={idx}')
             except Exception as e:
-                logger.error(f"添加摘要和声音失败{args.today} {idx},error={e}", exc_info=True)
+                logger.error(f"添加摘要和声音异常{args.today} {idx},error={e}", exc_info=True)
+                info = f"{args.today},{args.times} 添加摘要和声音异常，Exception type: {type(e)},Exception args: {e.args},Exception message: {str(e)}"
+                send_to_dingtalk(info)
         for idx in range(4):
             try:
                 logger.info(f'combine_videos start today={args.today}, time_tag={idx}')
                 combine_videos(time_tag=idx, today=args.today)
                 logger.info(f'combine_videos  end today={args.today}, time_tag={idx}')
             except Exception as e:
-                logger.error(f"添加摘要和声音失败{args.today} {idx},error={e}", exc_info=True)
+                logger.error(f"视频生成异常{args.today} {idx},error={e}", exc_info=True)
+                info = f"{args.today},{args.times} 视频生成异常，Exception type: {type(e)},Exception args: {e.args},Exception message: {str(e)}"
+                send_to_dingtalk(info)
 
 
         remove_outdated_documents()

@@ -387,13 +387,14 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), time_tag: int
     logger.info(f"生成主视频并整合...")
     final_path = build_final_video_path(today, time_tag)
     final_path_walk = build_final_video_walk_path(today, time_tag)
-    logger.info(f"主视频保存在:{final_path} and {final_path_walk}")
+    logger.info(f"主视频生成，保存在:{final_path} and {final_path_walk}，")
     duration_list = combine_videos_with_transitions(video_paths, final_path)
     logger.info('开始添加进度条')
     start_time = time.time()
     add_walking_man(final_path, final_path_walk, duration_list)
-    logger.info(f'添加进度条结束，耗时: {time.time() - start_time:.2f} 秒')
-    logger.info(f"生成新闻JSON文件...")
+    info = f'{today},{time_tag},添加进度条结束，耗时: {time.time() - start_time:.2f} 秒'
+    logger.info(info)
+    send_to_dingtalk(info)
     save_today_news_json(topics=topics, time_tag=time_tag, today=today)
 
 
