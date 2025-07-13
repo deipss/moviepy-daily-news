@@ -246,9 +246,9 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     logger.info(f"generate introduction topics=\n{topics}")
     topic_txt_clip = TextClip(
         text=topics,
-        font_size=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.6),
+        font_size=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.55),
         color=get_weekday_color(),
-        interline=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.6) // 4,
+        interline=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.55) // 4,
         font='./font/simhei.ttf',
         stroke_color=MAIN_BG_COLOR,
         stroke_width=2
