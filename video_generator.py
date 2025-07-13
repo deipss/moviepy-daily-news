@@ -244,16 +244,17 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
 
     topics = generate_top_topic_by_ollama(today, time_tag)
     logger.info(f"generate introduction topics=\n{topics}")
+    topic_font_size = int(GLOBAL_HEIGHT * 0.75 / 5 * 0.59)
     topic_txt_clip = TextClip(
         text=topics,
-        font_size=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.55),
+        font_size=topic_font_size,
         color=get_weekday_color(),
-        interline=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.55) // 4,
+        interline=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.59) // 4,
         font='./font/simhei.ttf',
         stroke_color=MAIN_BG_COLOR,
-        stroke_width=2
+        stroke_width=1
 
-    ).with_duration(duration).with_position((GAP * 1.85, GLOBAL_HEIGHT * 0.1))
+    ).with_duration(duration).with_position((GAP * 1.85 + topic_font_size * 2, GLOBAL_HEIGHT * 0.1))
 
     lady = (VideoFileClip(build_announcer_path(time_tag)).with_effects([Loop(duration=duration)])
             .with_position((GLOBAL_WIDTH * 0.68, GLOBAL_HEIGHT * 0.47)).resized(0.7))
@@ -505,7 +506,7 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"),
             if item_len // 15 == 1:
                 result = news_item['title'][:item_len // 2] + "\n" + news_item['title'][item_len // 2:]
                 show_titles.append(result)
-                cnt+=1
+                cnt += 1
             else:
                 show_titles.append(news_item['title'])
             cnt += 1
