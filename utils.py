@@ -301,7 +301,7 @@ def send_to_dingtalk(msg: str):
     at_mobiles = []
     send_custom_robot_group_message(
         'f38e4a0b83763311cff9aed9bfc1bb789dafa10c51ed8356649dcba8786feea2',
-        msg,
+        "【通知】\n"+msg,
         at_user_ids=at_user_ids,
         at_mobiles=at_mobiles,
         is_at_all=False
