@@ -11,6 +11,7 @@ from logging_config import logger
 import sys
 from utils import *
 import time
+from typing import Dict
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -395,7 +396,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), time_tag: int
     info = f'{today},{time_tag},添加进度条结束，耗时: {time.time() - start_time:.2f} 秒'
     logger.info(info)
     send_to_dingtalk(info)
-    save_today_news_json(topics=topics, time_tag=time_tag, today=today)
+    save_today_news_json(topics=topics, time_tag=time_tag, today=today, final_path_walk=final_path_walk)
 
 
 def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"), time_tag=0) -> list[str]:
@@ -458,15 +459,15 @@ def load_json_by_source(source, today):
     return json_file_path, news_data
 
 
-def save_today_news_json(topics, time_tag, today: str = datetime.now().strftime("%Y%m%d")):
+def save_today_news_json(topics, time_tag, final_path_walk, today: str = datetime.now().strftime("%Y%m%d")):
     today_formatted = datetime.strptime(today, "%Y%m%d").strftime("%Y年%m月%d日")
-    text_path = build_articles_json_path(today=today, time_tag=time_tag)
+    articles_path = build_articles_json_path(today=today, time_tag=time_tag)
 
-    if not os.path.exists(text_path):
-        logger.warning(f"新闻json文件不存在,path={text_path}")
+    if not os.path.exists(articles_path):
+        logger.warning(f"新闻json文件不存在,path={articles_path}")
         return []
 
-    with open(text_path, 'r', encoding='utf-8') as json_file:
+    with open(articles_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     urls = []
     titles = []
@@ -482,15 +483,22 @@ def save_today_news_json(topics, time_tag, today: str = datetime.now().strftime(
                     break
                 titles.append(words)
                 show_idx += 1
-    text_path = build_daily_text_path(today)
-    rows = ['\n', today_formatted + TIMES_TYPE[time_tag], TAGS, topics.replace("\n", " ")]
+    daily_text_path = build_daily_json_path(today)
+    upload_file_json: Dict[str, Dict[str, object]] = {}
+    if os.path.exists(daily_text_path):
+        with open(daily_text_path, 'r', encoding='utf-8') as json_file:
+            upload_file_json = json.load(json_file)
+    rows = [topics.replace("\n", " ")]
     rows.extend(titles)
     rows.append(HINT_INFORMATION)
     txt = "\n".join(rows)
-    with open(text_path, "a", encoding="utf-8") as file:
-        file.write(txt)
+    upload_json = {'title': today_formatted + TIMES_TYPE[time_tag], 'tags': TAGS, 'introduction': txt,
+                   'final_path_walk': final_path_walk}
+    upload_file_json[time_tag] = upload_json
+    with open(daily_text_path, "a", encoding="utf-8") as file:
+        json.dump(upload_file_json, file, ensure_ascii=False, indent=4)
     logger.info(f'今日新闻简介信息 {txt}')
-    logger.info(f"今日新闻text文件 {text_path}")
+    logger.info(f"今日新闻text文件 {daily_text_path}")
 
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"), time_tag=0) -> str:

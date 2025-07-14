@@ -1,11 +1,12 @@
 import os
 import sys
 import json
-from datetime import datetime
 from logging_config import logger
 from dataclasses import dataclass
 from typing import List
 import requests
+from datetime import datetime, timedelta
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 NEWS_JSON_FILE_NAME = "news_results.json"
@@ -49,7 +50,7 @@ TIMES_TYPE = {
 import threading
 lock = threading.RLock()
 HINT_INFORMATION = """信息来源:[中国日报国际版] [中东半岛电视台] [英国广播公司] [今日俄罗斯电视台]"""
-TAGS = """#新闻 #每日新闻 #热点新闻 #信息差"""
+TAGS = ['新闻', '每日新闻', '热点新闻', '信息差','中东',' BBC','热点事件','今日来电']
 
 
 @dataclass
@@ -114,9 +115,12 @@ def build_end_path(time_tag):
     return os.path.join(NEWS_FOLDER_NAME, str(time_tag)+"end.mp4")
 
 
-def build_daily_text_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "all.text")
+def build_daily_json_path(today=datetime.now().strftime("%Y%m%d")):
+    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "all.json")
 
+def get_yesterday_str() -> str:
+    yesterday = datetime.now() - timedelta(days=1)
+    return yesterday.strftime("%Y%m%d")
 
 def build_introduction_audio_path(today=datetime.now().strftime("%Y%m%d"), time_tag: int = 0):
     return os.path.join(NEWS_FOLDER_NAME, today, str(time_tag) + "introduction.mp3")
