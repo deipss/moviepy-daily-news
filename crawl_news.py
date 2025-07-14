@@ -744,19 +744,19 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), time_tag: int =
     al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='中东半岛新闻', sleep_time=20,
                     times=time_tag)
     bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='BBC', sleep_time=20, times=time_tag)
-    en = CNDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='中国日报',
+    cn = CNDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='中国日报',
                           sleep_time=4, times=time_tag)
 
     threads = []
     results = []
-    for scraper in [rt, al, bbc, en]:
+    for scraper in [rt, al, bbc, cn]:
         thread = Thread(target=lambda q, arg1, s=scraper: q.extend(s.do_crawl_news(arg1)), args=(results, today))
         threads.append(thread)
         thread.start()
     for thread in threads:
         thread.join()
     _end = time.time()
-    info = f"{today},{time_tag} 并发爬取新闻耗时: {_end - _start:.2f} 秒"
+    info = f"{today},{time_tag},并发爬取新闻耗时: {_end - _start:.2f} 秒,获取到 {len(results)} 个新闻"
     logger.info(info)
     send_to_dingtalk(info)
     urls = []
@@ -846,13 +846,13 @@ def _test_alj():
 import argparse
 
 if __name__ == "__main__":
-    _start = time.time()
     parser = argparse.ArgumentParser(description="新闻爬取和处理工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
     parser.add_argument("--times", type=int, default=0, help="执行次数")
     parser.add_argument("--rewrite", type=bool, default=False, help="是否重写")
     parser.add_argument("--func", type=str, default='crawl', help="默认爬取")
     args = parser.parse_args()
+    _start = time.time()
     if args.func == 'crawl':
         logger.info('========start crawl==============')
         logger.info(f"新闻爬取调用参数 args={args}")
@@ -864,7 +864,7 @@ if __name__ == "__main__":
             send_to_dingtalk(info)
         logger.info(f"========end crawl==========time spend = {time.time() - _start:.2f} second")
     else:
-        logger.info('========start combine_videos===========')
+        logger.info('========start combine_videos==========')
         _start = time.time()
         if args.rewrite:
             REWRITE = True
