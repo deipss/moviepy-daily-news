@@ -191,13 +191,13 @@ def build_introduction_txt(today=datetime.now(), time_tag=0):
 def get_weekday_color():
     # 星期与颜色的映射关系 (0 = Monday, 6 = Sunday)
     weekday_color_map = {
-        0: 'Red',  # 周一 - 红色
-        1: 'Orange',  # 周二 - 橙色
-        2: 'Black',  # 周三 - 黑色
-        3: 'Green',  # 周四 - 绿色
-        4: 'Blue',  # 周五 - 蓝色
-        5: 'Purple',  # 周六 - 紫色
-        6: 'Pink'  # 周日 - 粉色
+        0: '#F70968',  # 周一 - 红色
+        1: '#3352CC',  # 周二 - 橙色
+        2: '#336600',  # 周三 - 黑色
+        3: '#6666CC',  # 周四 - 绿色
+        4: '#003333',  # 周五 - 蓝色
+        5: '#666666',  # 周六 - 紫色
+        6: '#CCCCFF'  # 周日 - 粉色
     }
 
     # 获取当前星期几 (0=Monday, 6=Sunday)
