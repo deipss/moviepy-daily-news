@@ -495,7 +495,7 @@ def save_today_news_json(topics, time_tag, final_path_walk, today: str = datetim
     upload_json = {'title': today_formatted + TIMES_TYPE[time_tag], 'tags': TAGS, 'introduction': txt,
                    'final_path_walk': final_path_walk}
     upload_file_json[time_tag] = upload_json
-    with open(daily_text_path, "a", encoding="utf-8") as file:
+    with open(daily_text_path, "w", encoding="utf-8") as file:
         json.dump(upload_file_json, file, ensure_ascii=False, indent=4)
     logger.info(f'今日新闻简介信息 {txt}')
     logger.info(f"今日新闻text文件 {daily_text_path}")

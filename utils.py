@@ -241,7 +241,7 @@ def remove_outdated_documents():
     # 获取当前日期和时间
     current_date = datetime.now()
     # 计算10天前的日期
-    days_ago = current_date - timedelta(days=2)
+    days_ago = current_date - timedelta(days=10)
     strftime = days_ago.strftime("%Y%m%d")
     logger.info(f'start to remove outdated documents:  {strftime} ')
     folder_path = build_date_path(strftime)
