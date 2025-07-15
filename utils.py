@@ -310,3 +310,25 @@ def send_to_dingtalk(msg: str):
         at_mobiles=at_mobiles,
         is_at_all=False
     )
+
+
+def print_dir_tree(start_path: str, prefix: str = ""):
+    """递归打印目录结构为文本树图"""
+    items = sorted(os.listdir(start_path))
+    entries = [item for item in items if not item.startswith('.')]  # 忽略隐藏文件
+
+    for index, name in enumerate(entries):
+        path = os.path.join(start_path, name)
+        is_last = index == len(entries) - 1
+
+        connector = "└── " if is_last else "├── "
+        print(prefix + connector + name)
+
+        if os.path.isdir(path):
+            extension = "    " if is_last else "│   "
+            print_dir_tree(path, prefix + extension)
+# 示例用法
+if __name__ == "__main__":
+    root_directory = "./news"  # 👈 替换成你的目录路径
+    print(os.path.basename(root_directory) + "/")
+    print_dir_tree(root_directory)

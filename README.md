@@ -72,6 +72,95 @@
 
 > 硬件最好是有GPU，用来运行ollama，当然可以用云服务器或AI服务提供商代替，取决于个人的资源。
 
+<p align="center">
+  <img src="assets/architecture.png" alt="architecture.png" />
+</p>
+
+## [crawl_news.py](crawl_news.py)
+
+主要用以抓取几个新闻网址的新闻内容，每天定时任务执行4次，早、中、晚、夜。会把爬取的文件`news_results.json`存放如下：
+
+- 主要使用的框架是`from bs4 import BeautifulSoup`
+
+```text
+├── 20250709
+│   ├── bbc0
+│   │   ├── 05
+│   │   │   ├── 0a6d77f0-5664-11f0-960d-e9f1088a89fe.png
+│   │   │   ├── 2a31d540-5be6-11f0-a40e-a1af2950b220.png
+│   │   │   ├── 3cbc1490-5665-11f0-960d-e9f1088a89fe.png
+│   │   │   ├── 44c481e0-5665-11f0-960d-e9f1088a89fe.png
+│   │   │   ├── 57920b80-5665-11f0-9074-8989d8c97d87.png
+│   │   │   ├── 5e81dce0-5665-11f0-960d-e9f1088a89fe.png
+│   │   │   ├── 81079dc0-5bdf-11f0-960d-e9f1088a89fe.png
+│   │   │   ├── 84b897d0-5bdf-11f0-960d-e9f1088a89fe.png
+│   │   │   └── b08afdb0-5be6-11f0-a40e-a1af2950b220.png
+│   │   ├── 06
+│   │   │   └── 84339410-5c05-11f0-9d64-1b7197dd7c07.jpg
+│   │   ├── 08
+│   │   │   ├── 0b5f2290-58e3-11f0-b5c5-012c5796682d.jpg
+│   │   │   ├── 300dcf70-58e2-11f0-960d-e9f1088a89fe.jpg
+│   │   │   ├── 3885a070-581e-11f0-960d-e9f1088a89fe.jpg
+│   │   │   ├── 5b49e5a0-5821-11f0-b5c5-012c5796682d.jpg
+│   │   │   ├── 62c8cd00-58e4-11f0-b5c5-012c5796682d.jpg
+│   │   │   └── eae1ea60-58e3-11f0-b5c5-012c5796682d.jpg
+│   │   └── news_results.json
+│   ├── c_en0
+│   │   ├── 10
+│   │   │   ├── 686e2ce9a31000e98c7d7c1b.jpeg
+│   │   │   ├── 686e2ce9a31000e98c7d7c1d.jpeg
+│   │   │   └── 686e2ce9a31000e98c7d7c1f.jpeg
+│   │   ├── 11
+│   │   │   └── 686d9aa9a31000e98c7d68df.jpeg
+│   │   ├── 12
+│   │   │   └── 686e081aa31000e98c7d757b.gif
+│   │   ├── 13
+│   │   │   └── 686e5b20a31000e98c7d7e2b.jpeg
+│   │   └── news_results.json
+│   ├── rlj0
+│   │   ├── 06
+│   │   │   └── AFP__20250708__66884GK__v3__HighRes__BritainFranceRoyalsDiplomacy-1752028160.jpg
+│   │   ├── 07
+│   │   │   └── AP25190083362645-1752031483.jpg
+│   │   ├── 08
+│   │   │   ├── AFP__20250707__662999A__v6__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752044877.jpg
+│   │   │   ├── AFP__20250707__662B6JY__v1__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752044813.jpg
+│   │   │   ├── AFP__20250708__2223487921__v3__HighRes__DeathTollRisesAfterFlashFloodsInTexasHillCou-1752045110.jpg
+│   │   │   ├── AFP__20250708__668C9XV__v1__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752044908.jpg
+│   │   │   ├── AFP__20250708__668C9XZ__v1__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752044936.jpg
+│   │   │   ├── AFP__20250708__668C9Y7__v2__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752044979.jpg
+│   │   │   ├── AFP__20250708__668C9YC__v1__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752045013.jpg
+│   │   │   ├── AFP__20250708__668C9YM__v1__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752045056.jpg
+│   │   │   ├── AFP__20250708__668C9YN__v1__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752045088.jpg
+│   │   │   └── AP25190135889726-1752045130.jpg
+│   │   └── news_results.json
+│   └── rt0
+│       ├── 01
+│       │   └── 686bd2e020302712b375521e.jpg
+│       └── news_results.json
+└── end.mp3
+```
+
+## [video_generator.py](video_generator.py)
+
+使用`moviepy`生成视频
+
+## [upload.py](upload.py)
+
+使用`实现自动`实现B站自动登陆，以及自动上传
+
+## [ollama_client.py](ollama_client.py)
+
+使用··生成新闻的摘要
+
+## [logging_config.py](logging_config.py)
+
+打印日志的配置
+
+## [utils.py](utils.py)
+
+日期、文件路径、音频等工具类
+
 # 🧠 新闻来源
 
 - [x] 中国日报（chinadaily）
@@ -93,9 +182,8 @@
 source activate py311
 python crawl_news.py
 python video_generator.py
-# 支持日期的传入
-python crawl_news.py 20250605
-python vedio_generator.py 20250605
+python crawl_news.py 
+python vedio_generator.py 
 ```
 
 # 🔮 效果
@@ -129,7 +217,7 @@ python vedio_generator.py 20250605
 - [x] ~~china daily asis 版~~
 - [ ] 背景音乐
 - [ ] 视频爬取
-- [ ] 自动上传B站:制定一个APP，可以上传多平台
+- [ ] 自动上传B站:制定一个APP，~~可以上传多平台~~
 - [x] multiple threading : is edge-tts thread safety? No, It is not safety, meanwhile it is would be limited traffic.
 - [x] multiple threading : is moviepy write_file thread safety? No, It is not safety, cause some global variates are
   shared .

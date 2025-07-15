@@ -189,7 +189,7 @@ def build_introduction_txt(today=datetime.now(), time_tag=0):
     return "今天是{},{},\n欢迎收看[今日快电]{}".format(solar_date, weekday, time_tag)
 
 
-def get_weekday_color():
+def get_weekday_color(date_str):
     # 星期与颜色的映射关系 (0 = Monday, 6 = Sunday)
     weekday_color_map = {
         0: '#F70968',  # 周一 - 红色
@@ -202,10 +202,9 @@ def get_weekday_color():
     }
 
     # 获取当前星期几 (0=Monday, 6=Sunday)
-    weekday = datetime.today().weekday()
-
+    date_obj = datetime.strptime(date_str, "%Y%m%d")
     # 返回对应颜色
-    return weekday_color_map[weekday]
+    return weekday_color_map[date_obj.weekday()]
 
 
 def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),
@@ -249,7 +248,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
     topic_txt_clip = TextClip(
         text=topics,
         font_size=topic_font_size,
-        color=get_weekday_color(),
+        color=get_weekday_color(today),
         interline=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.59) // 4,
         font='./font/simhei.ttf',
         stroke_color=MAIN_BG_COLOR,
