@@ -48,9 +48,10 @@ TIMES_TYPE = {
     3: '深夜全球快讯'
 }
 import threading
+
 lock = threading.RLock()
 HINT_INFORMATION = """信息来源:[中国日报国际版] [中东半岛电视台] [英国广播公司] [今日俄罗斯电视台]"""
-TAGS = ['新闻', '每日新闻', '热点新闻', '信息差','中东',' BBC','热点事件','今日来电']
+TAGS = ['新闻', '每日新闻', '热点新闻', '信息差', '中东', ' BBC', '热点事件', '今日来电']
 
 
 @dataclass
@@ -112,15 +113,17 @@ def build_date_path(today=datetime.now().strftime("%Y%m%d")):
 
 
 def build_end_path(time_tag):
-    return os.path.join(NEWS_FOLDER_NAME, str(time_tag)+"end.mp4")
+    return os.path.join(NEWS_FOLDER_NAME, str(time_tag) + "end.mp4")
 
 
 def build_daily_json_path(today=datetime.now().strftime("%Y%m%d")):
     return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "all.json")
 
+
 def get_yesterday_str() -> str:
     yesterday = datetime.now() - timedelta(days=1)
     return yesterday.strftime("%Y%m%d")
+
 
 def build_introduction_audio_path(today=datetime.now().strftime("%Y%m%d"), time_tag: int = 0):
     return os.path.join(NEWS_FOLDER_NAME, today, str(time_tag) + "introduction.mp3")
@@ -268,7 +271,6 @@ def remove_outdated_documents():
                 print(f"删除文件 {file_path} 失败: {e}")
 
 
-
 def send_custom_robot_group_message(access_token, msg, at_user_ids=None, at_mobiles=None, is_at_all=False):
     """
     发送钉钉自定义机器人群消息
@@ -282,6 +284,7 @@ def send_custom_robot_group_message(access_token, msg, at_user_ids=None, at_mobi
     """
 
     url = f'https://oapi.dingtalk.com/robot/send?access_token={access_token}'
+    formatted_utc_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
     body = {
         "at": {
@@ -289,10 +292,11 @@ def send_custom_robot_group_message(access_token, msg, at_user_ids=None, at_mobi
             "atUserIds": at_user_ids or [],
             "atMobiles": at_mobiles or []
         },
-        "text": {
-            "content": msg
+        "markdown": {
+            "title": formatted_utc_time,
+            "text": msg
         },
-        "msgtype": "text"
+        "msgtype": "markdown"
     }
     headers = {'Content-Type': 'application/json'}
     resp = requests.post(url, json=body, headers=headers)
@@ -301,11 +305,27 @@ def send_custom_robot_group_message(access_token, msg, at_user_ids=None, at_mobi
 
 
 def send_to_dingtalk(msg: str):
+    formatted_utc_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
     at_user_ids = []
     at_mobiles = []
     send_custom_robot_group_message(
         'f38e4a0b83763311cff9aed9bfc1bb789dafa10c51ed8356649dcba8786feea2',
-        "【通知】\n"+msg,
+        formatted_utc_time+"【通知】\n" + msg,
+        at_user_ids=at_user_ids,
+        at_mobiles=at_mobiles,
+        is_at_all=False
+    )
+
+
+def send_qr_to_dingtalk(qr_base64: str):
+    formatted_utc_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    at_user_ids = []
+    at_mobiles = []
+    qs_content = "![二维码](data:image/png;base64,%s)"
+    send_custom_robot_group_message(
+        'f38e4a0b83763311cff9aed9bfc1bb789dafa10c51ed8356649dcba8786feea2',
+        formatted_utc_time+"【通知】\n" + qs_content % qr_base64,
         at_user_ids=at_user_ids,
         at_mobiles=at_mobiles,
         is_at_all=False
@@ -327,8 +347,3 @@ def print_dir_tree(start_path: str, prefix: str = ""):
         if os.path.isdir(path):
             extension = "    " if is_last else "│   "
             print_dir_tree(path, prefix + extension)
-# 示例用法
-if __name__ == "__main__":
-    root_directory = "./news"  # 👈 替换成你的目录路径
-    print(os.path.basename(root_directory) + "/")
-    print_dir_tree(root_directory)

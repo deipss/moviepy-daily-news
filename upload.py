@@ -5,7 +5,7 @@ from logging_config import logger
 import os
 import time
 import argparse
-from utils import send_to_dingtalk, build_daily_json_path, get_yesterday_str
+from utils import send_to_dingtalk, build_daily_json_path, get_yesterday_str,send_qr_to_dingtalk
 from typing import Dict
 import json
 from datetime import datetime, timedelta
@@ -103,7 +103,7 @@ if __name__ == '__main__':
             f.write(image_bytes)
         os.system(f"open {image_path}")
         logger.info(f"qrcode saved in {image_path}")
-        send_to_dingtalk(f"qrcode saved in {image_path}")
+        send_qr_to_dingtalk(base64_data)
         max_wait_time = 60  # 最多等待 60 秒
         interval = 0.5  # 每次检查间隔 0.5 秒
         start_time = time.time()
