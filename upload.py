@@ -4,10 +4,11 @@ import requests
 from logging_config import logger
 import os
 import time
-
+import argparse
 from utils import send_to_dingtalk, build_daily_json_path, get_yesterday_str
 from typing import Dict
 import json
+from datetime import datetime, timedelta
 
 
 def upload_one(page, news_dict):
@@ -63,7 +64,9 @@ def upload_one(page, news_dict):
 
 
 if __name__ == '__main__':
-    #
+    parser = argparse.ArgumentParser(description="新闻爬取和处理工具")
+    parser.add_argument("--today", type=str, default=get_yesterday_str(), help="指定日期")
+    args = parser.parse_args()
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -123,7 +126,7 @@ if __name__ == '__main__':
             exit(1)
 
         upload_file_json: Dict[str, Dict[str, object]] = {}
-        daily_text_path = build_daily_json_path(get_yesterday_str())
+        daily_text_path = build_daily_json_path(args.today)
         if os.path.exists(daily_text_path):
             with open(daily_text_path, 'r', encoding='utf-8') as json_file:
                 upload_file_json = json.load(json_file)
