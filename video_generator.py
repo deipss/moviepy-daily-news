@@ -11,6 +11,7 @@ from logging_config import logger
 import sys
 from utils import *
 import time
+from typing import Dict
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -188,23 +189,22 @@ def build_introduction_txt(today=datetime.now(), time_tag=0):
     return "今天是{},{},\n欢迎收看[今日快电]{}".format(solar_date, weekday, time_tag)
 
 
-def get_weekday_color():
+def get_weekday_color(date_str):
     # 星期与颜色的映射关系 (0 = Monday, 6 = Sunday)
     weekday_color_map = {
-        0: 'Red',  # 周一 - 红色
-        1: 'Orange',  # 周二 - 橙色
-        2: 'Black',  # 周三 - 黑色
-        3: 'Green',  # 周四 - 绿色
-        4: 'Blue',  # 周五 - 蓝色
-        5: 'Purple',  # 周六 - 紫色
-        6: 'Pink'  # 周日 - 粉色
+        0: '#F70968',  # 周一 - 红色
+        1: '#3352CC',  # 周二 - 橙色
+        2: '#336600',  # 周三 - 黑色
+        3: '#6666CC',  # 周四 - 绿色
+        4: '#003333',  # 周五 - 蓝色
+        5: '#666666',  # 周六 - 紫色
+        6: '#CCCCFF'  # 周日 - 粉色
     }
 
     # 获取当前星期几 (0=Monday, 6=Sunday)
-    weekday = datetime.today().weekday()
-
+    date_obj = datetime.strptime(date_str, "%Y%m%d")
     # 返回对应颜色
-    return weekday_color_map[weekday]
+    return weekday_color_map[date_obj.weekday()]
 
 
 def generate_video_introduction(output_path='temp/introduction.mp4', today=datetime.now().strftime("%Y%m%d"),
@@ -244,16 +244,17 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
 
     topics = generate_top_topic_by_ollama(today, time_tag)
     logger.info(f"generate introduction topics=\n{topics}")
+    topic_font_size = int(GLOBAL_HEIGHT * 0.75 / 5 * 0.59)
     topic_txt_clip = TextClip(
         text=topics,
-        font_size=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.6),
-        color=get_weekday_color(),
-        interline=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.6) // 4,
+        font_size=topic_font_size,
+        color=get_weekday_color(today),
+        interline=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.59) // 4,
         font='./font/simhei.ttf',
         stroke_color=MAIN_BG_COLOR,
-        stroke_width=2
+        stroke_width=1
 
-    ).with_duration(duration).with_position((GAP * 1.85, GLOBAL_HEIGHT * 0.1))
+    ).with_duration(duration).with_position((GAP * 1.85 + topic_font_size * 2, GLOBAL_HEIGHT * 0.1))
 
     lady = (VideoFileClip(build_announcer_path(time_tag)).with_effects([Loop(duration=duration)])
             .with_position((GLOBAL_WIDTH * 0.68, GLOBAL_HEIGHT * 0.47)).resized(0.7))
@@ -386,14 +387,15 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), time_tag: int
     logger.info(f"生成主视频并整合...")
     final_path = build_final_video_path(today, time_tag)
     final_path_walk = build_final_video_walk_path(today, time_tag)
-    logger.info(f"主视频保存在:{final_path} and {final_path_walk}")
+    logger.info(f"主视频生成，保存在:{final_path} and {final_path_walk}，")
     duration_list = combine_videos_with_transitions(video_paths, final_path)
     logger.info('开始添加进度条')
     start_time = time.time()
     add_walking_man(final_path, final_path_walk, duration_list)
-    logger.info(f'添加进度条结束，耗时: {time.time() - start_time:.2f} 秒')
-    logger.info(f"生成新闻JSON文件...")
-    save_today_news_json(topics=topics, time_tag=time_tag, today=today)
+    info = f'{today},{time_tag},添加进度条结束，耗时: {time.time() - start_time:.2f} 秒'
+    logger.info(info)
+    send_to_dingtalk(info)
+    save_today_news_json(topics=topics, time_tag=time_tag, today=today, final_path_walk=final_path_walk)
 
 
 def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"), time_tag=0) -> list[str]:
@@ -456,15 +458,15 @@ def load_json_by_source(source, today):
     return json_file_path, news_data
 
 
-def save_today_news_json(topics, time_tag, today: str = datetime.now().strftime("%Y%m%d")):
+def save_today_news_json(topics, time_tag, final_path_walk, today: str = datetime.now().strftime("%Y%m%d")):
     today_formatted = datetime.strptime(today, "%Y%m%d").strftime("%Y年%m月%d日")
-    text_path = build_articles_json_path(today=today, time_tag=time_tag)
+    articles_path = build_articles_json_path(today=today, time_tag=time_tag)
 
-    if not os.path.exists(text_path):
-        logger.warning(f"新闻json文件不存在,path={text_path}")
+    if not os.path.exists(articles_path):
+        logger.warning(f"新闻json文件不存在,path={articles_path}")
         return []
 
-    with open(text_path, 'r', encoding='utf-8') as json_file:
+    with open(articles_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
     urls = []
     titles = []
@@ -480,26 +482,39 @@ def save_today_news_json(topics, time_tag, today: str = datetime.now().strftime(
                     break
                 titles.append(words)
                 show_idx += 1
-    append_and_save_month_urls(today[:6], set(urls))
-    text_path = build_daily_text_path(today)
-    rows = ['\n', today_formatted + TIMES_TYPE[time_tag], TAGS, topics.replace("\n", " ")]
+    rows = [topics.replace("\n", " ")]
     rows.extend(titles)
     rows.append(HINT_INFORMATION)
     txt = "\n".join(rows)
-    with open(text_path, "a", encoding="utf-8") as file:
-        file.write(txt)
+
+    upload_file_json: Dict[str, Dict[str, object]] = {}
+    daily_text_path = build_daily_json_path(today)
+    if os.path.exists(daily_text_path):
+        with open(daily_text_path, 'r', encoding='utf-8') as json_file:
+            upload_file_json = json.load(json_file)
+    upload_json = {'title': today_formatted + TIMES_TYPE[time_tag], 'tags': TAGS, 'introduction': txt,
+                   'final_path_walk': final_path_walk}
+    upload_file_json[time_tag] = upload_json
+    with open(daily_text_path, "w", encoding="utf-8") as file:
+        json.dump(upload_file_json, file, ensure_ascii=False, indent=4)
     logger.info(f'今日新闻简介信息 {txt}')
-    logger.info(f"今日新闻text文件 {text_path}")
+    logger.info(f"今日新闻text文件 {daily_text_path}")
 
 
 def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"), time_tag=0) -> str:
-    client = OllamaClient()
     json_file_path = build_articles_json_path(today, time_tag)
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
         news_data = json.load(json_file)
-    txt = ";".join([news_item['title'] if news_item['show'] else '' for news_item in news_data])
-    data = client.generate_top_topic(txt)
-    data = data.replace(' ', '')
+    show_titles = []
+    cnt = 0
+    for news_item in news_data:
+        if news_item['show']:
+            show_titles.append(news_item['title'][:17])
+            cnt += 1
+        if cnt > 4:
+            break
+    txt = "\n".join([f'{idx}.{i}' for idx, i in enumerate(show_titles, start=1)])
+    data = txt.replace(' ', '')
     logger.info(f'topic is \n{data}')
     return data
 

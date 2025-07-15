@@ -1,4 +1,5 @@
 import json
+import threading
 from ollama_client import OllamaClient
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
@@ -26,10 +27,10 @@ class NewsScraper:
     def do_crawl_news(self, today: datetime.now().strftime("%Y%m%d")):
         today_source_path = self.build_today_source_path(today)
         if not os.path.exists(today_source_path):
-            self.crawling_news_article(today)
+            return self.crawling_news_article(today)
         else:
             logger.info(f" {today_source_path} today_source_path had exists. ")
-        logger.info(f"{self.source} 爬取完成。")
+            return []
 
     def build_today_source_path(self, today):
         today_source_path = os.path.join(NEWS_FOLDER_NAME, today, self.source)
@@ -95,6 +96,7 @@ class NewsScraper:
         json_results = [i.to_dict() for i in results[:SUB_LIST_LENGTH]]
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(json_results, json_file, ensure_ascii=False, indent=4)
+        logger.info(f"{self.source} 爬取完成")
         return results
 
     @abstractmethod
@@ -659,7 +661,7 @@ def load_and_summarize_news(json_file_path: str) -> List[NewsArticle]:
             article.summary = ollama_client.generate_summary(article.content_cn, max_tokens=120)
         if article.content_en:
             article.summary = ollama_client.generate_summary_cn(article.content_en, max_tokens=120)
-        article.summary = ollama_client.optimize_summary_cn(article.summary, max_tokens=120)
+        # article.summary = ollama_client.optimize_summary_cn(article.summary, max_tokens=120)
         logger.info(f'summary is {article.summary} ,len = {len(article.summary)}')
         if check_english_percentage(article.summary):
             article.show = False
@@ -708,7 +710,7 @@ def process_news_results(source: str, today: str = datetime.now().strftime("%Y%m
         return processed_news
     else:
         logger.info(f"未找到新闻结果文件: {json_file_path}")
-    logger.info(f"处理 {source} 的新闻结果文件完成")
+    logger.info(f"处理 {today} {source} 的新闻结果文件完成")
 
 
 def generate_all_news_audio(source: str, today: str = datetime.now().strftime("%Y%m%d")) -> None:
@@ -742,19 +744,33 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), time_tag: int =
     al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='中东半岛新闻', sleep_time=20,
                     times=time_tag)
     bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='BBC', sleep_time=20, times=time_tag)
-    en = CNDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='中国日报',
+    cn = CNDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='中国日报',
                           sleep_time=4, times=time_tag)
 
     threads = []
-    for scraper in [rt, al, bbc, en]:
-        thread = Thread(target=scraper.do_crawl_news, args=(today,))
+    results = []
+    for scraper in [rt, al, bbc, cn]:
+        thread = Thread(target=lambda q, arg1, s=scraper: q.extend(s.do_crawl_news(arg1)), args=(results, today))
         threads.append(thread)
         thread.start()
     for thread in threads:
         thread.join()
     _end = time.time()
-    logger.info(f"并发爬取新闻耗时: {_end - _start:.2f} 秒")
+    info = f"{today},{time_tag},并发爬取新闻耗时: {_end - _start:.2f} 秒,获取到 {len(results)} 个新闻"
+    logger.info(info)
+    send_to_dingtalk(info)
+    urls = []
+    [urls.append(i.url) for i in results]
+    append_and_save_month_urls(today[:6], set(urls))
 
+
+def add_summary_audio(time_tag, today):
+    rt = RTScraper(source_url='https://www.rt.com/', source=RT, news_type='今日俄罗斯', sleep_time=4, times=time_tag)
+    al = ALJScraper(source_url='https://www.aljazeera.com/', source=ALJ, news_type='中东半岛新闻', sleep_time=20,
+                    times=time_tag)
+    bbc = BbcScraper(source_url='https://www.bbc.com', source=BBC, news_type='BBC', sleep_time=20, times=time_tag)
+    en = CNDailyENScraper(source_url='https://www.chinadaily.com.cn', source=CHINADAILY_EN, news_type='中国日报',
+                          sleep_time=4, times=time_tag)
     logger.info("开始AI生成摘要")
     _start = time.time()
     rt_articles = process_news_results(source=rt.source, today=today)
@@ -764,7 +780,6 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), time_tag: int =
     _end = time.time()
     logger.info(f"AI生成摘要耗时: {_end - _start:.2f} 秒")
     build_new_articles_json(today, rt_articles, al_articles, bbc_articles, en_articles, time_tag)
-
     # 根据现有的资料，暂时不支持微软的edge-tts不支持并发，会有限流
     logger.info("开始生成音频")
     _start = time.time()
@@ -831,28 +846,49 @@ def _test_alj():
 import argparse
 
 if __name__ == "__main__":
-    logger.info('========start crawl==============')
-    _start = time.time()
     parser = argparse.ArgumentParser(description="新闻爬取和处理工具")
     parser.add_argument("--today", type=str, default=datetime.now().strftime("%Y%m%d"), help="指定日期")
     parser.add_argument("--times", type=int, default=0, help="执行次数")
     parser.add_argument("--rewrite", type=bool, default=False, help="是否重写")
+    parser.add_argument("--func", type=str, default='crawl', help="默认爬取")
     args = parser.parse_args()
-    logger.info(f"新闻爬取调用参数 args={args}")
-    try:
-        auto_download_daily(today=args.today, time_tag=args.times)
-    except  Exception as e:
-        logger.error(f"auto_download_daily error:{e}", exc_info=True)
-    logger.info(f"========end crawl==========time spend = {time.time() - _start:.2f} second")
-
-    logger.info('========start combine_videos===========')
     _start = time.time()
-    if args.rewrite:
-        REWRITE = True
-        logger.info("指定强制重写")
-    try:
-        combine_videos(today=args.today, time_tag=args.times)
-    except Exception as e:
-        logger.error(f"视频生成主线失败,error={e}", exc_info=True)
-    remove_outdated_documents()
-    logger.info(f"========end combine_videos time spend = {time.time() - _start:.2f} second=========")
+    if args.func == 'crawl':
+        logger.info('========start crawl==============')
+        logger.info(f"新闻爬取调用参数 args={args}")
+        try:
+            auto_download_daily(today=args.today, time_tag=args.times)
+        except  Exception as e:
+            logger.error(f"auto_download_daily error:{e}", exc_info=True)
+            info = f"{args.today},{args.times} 并发爬取新闻异常，Exception type: {type(e)},Exception args: {e.args},Exception message: {str(e)}"
+            send_to_dingtalk(info)
+        logger.info(f"========end crawl==========time spend = {time.time() - _start:.2f} second")
+    else:
+        logger.info('========start combine_videos==========')
+        _start = time.time()
+        if args.rewrite:
+            REWRITE = True
+            logger.info("指定强制重写")
+
+        for idx in range(4):
+            try:
+                logger.info(f'add_summary_audio start today={args.today}, time_tag={idx}')
+                add_summary_audio(time_tag=idx, today=args.today)
+                logger.info(f'add_summary_audio  end today={args.today}, time_tag={idx}')
+            except Exception as e:
+                logger.error(f"添加摘要和声音异常{args.today} {idx},error={e}", exc_info=True)
+                info = f"{args.today},{args.times} 添加摘要和声音异常，Exception type: {type(e)},Exception args: {e.args},Exception message: {str(e)}"
+                send_to_dingtalk(info)
+        for idx in range(4):
+            try:
+                logger.info(f'combine_videos start today={args.today}, time_tag={idx}')
+                combine_videos(time_tag=idx, today=args.today)
+                logger.info(f'combine_videos  end today={args.today}, time_tag={idx}')
+            except Exception as e:
+                logger.error(f"视频生成异常{args.today} {idx},error={e}", exc_info=True)
+                info = f"{args.today},{args.times} 视频生成异常，Exception type: {type(e)},Exception args: {e.args},Exception message: {str(e)}"
+                send_to_dingtalk(info)
+
+
+        remove_outdated_documents()
+        logger.info(f"========end combine_videos time spend = {time.time() - _start:.2f} second=========")

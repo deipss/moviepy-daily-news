@@ -1,10 +1,11 @@
 import os
 import sys
 import json
-from datetime import datetime
 from logging_config import logger
 from dataclasses import dataclass
 from typing import List
+import requests
+from datetime import datetime, timedelta
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -13,7 +14,7 @@ NEWS_JSON_FILE_NAME_PROCESSED = "news_results_processed.json"
 NEWS_FOLDER_NAME = "news"
 FINAL_VIDEOS_FOLDER_NAME = "final_videos"
 AUDIO_FILE_NAME = "summary_audio.mp3"
-SUB_LIST_LENGTH = 15
+SUB_LIST_LENGTH = 7
 
 RT = "rt"
 ALJ = "rlj"
@@ -46,9 +47,11 @@ TIMES_TYPE = {
     2: '晚间全球快讯',
     3: '深夜全球快讯'
 }
+import threading
 
+lock = threading.RLock()
 HINT_INFORMATION = """信息来源:[中国日报国际版] [中东半岛电视台] [英国广播公司] [今日俄罗斯电视台]"""
-TAGS = """#新闻 #每日新闻 #热点新闻 #信息差"""
+TAGS = ['新闻', '每日新闻', '热点新闻', '信息差', '中东', ' BBC', '热点事件', '今日来电']
 
 
 @dataclass
@@ -110,11 +113,16 @@ def build_date_path(today=datetime.now().strftime("%Y%m%d")):
 
 
 def build_end_path(time_tag):
-    return os.path.join(NEWS_FOLDER_NAME, str(time_tag)+"end.mp4")
+    return os.path.join(NEWS_FOLDER_NAME, str(time_tag) + "end.mp4")
 
 
-def build_daily_text_path(today=datetime.now().strftime("%Y%m%d")):
-    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "all.text")
+def build_daily_json_path(today=datetime.now().strftime("%Y%m%d")):
+    return os.path.join(FINAL_VIDEOS_FOLDER_NAME, today + "all.json")
+
+
+def get_yesterday_str() -> str:
+    yesterday = datetime.now() - timedelta(days=1)
+    return yesterday.strftime("%Y%m%d")
 
 
 def build_introduction_audio_path(today=datetime.now().strftime("%Y%m%d"), time_tag: int = 0):
@@ -199,17 +207,18 @@ def generate_audio(text: str, output_file: str = "audio.wav", rewrite=False, tim
     if os.path.exists(output_file) and not rewrite:
         logger.info(f"{output_file}已存在，跳过生成音频。")
         return
-    logger.info(f"time_tag={time_tag} output_file={output_file} 开始生成音频: {text}")
-    rate = 75
-    announcer_map = {
-        0: 'zh-CN-XiaoxiaoNeural',
-        1: 'zh-CN-XiaoxiaoNeural',
-        2: 'zh-CN-XiaoxiaoNeural',
-        3: 'zh-CN-XiaoxiaoNeural'
-    }
-    sh = f'edge-tts --voice {announcer_map[time_tag]} --text "{text}" --write-media {output_file} --rate="+{rate}%"'
-    logger.info(f"sh={sh}")
-    os.system(sh)
+    with lock:
+        logger.info(f"time_tag={time_tag} output_file={output_file} 开始生成音频: {text}")
+        rate = 75
+        announcer_map = {
+            0: 'zh-CN-XiaoxiaoNeural',
+            1: 'zh-CN-XiaoxiaoNeural',
+            2: 'zh-CN-XiaoxiaoNeural',
+            3: 'zh-CN-XiaoxiaoNeural'
+        }
+        sh = f'edge-tts --voice {announcer_map[time_tag]} --text "{text}" --write-media {output_file} --rate="+{rate}%"'
+        logger.info(f"sh={sh}")
+        os.system(sh)
 
 
 def append_and_save_month_urls(year_month: str, new_urls: set) -> None:
@@ -235,7 +244,7 @@ def remove_outdated_documents():
     # 获取当前日期和时间
     current_date = datetime.now()
     # 计算10天前的日期
-    days_ago = current_date - timedelta(days=2)
+    days_ago = current_date - timedelta(days=10)
     strftime = days_ago.strftime("%Y%m%d")
     logger.info(f'start to remove outdated documents:  {strftime} ')
     folder_path = build_date_path(strftime)
@@ -260,3 +269,81 @@ def remove_outdated_documents():
                 print(f"已删除文件: {file_path}")
             except Exception as e:
                 print(f"删除文件 {file_path} 失败: {e}")
+
+
+def send_custom_robot_group_message(access_token, msg, at_user_ids=None, at_mobiles=None, is_at_all=False):
+    """
+    发送钉钉自定义机器人群消息
+    :param access_token: 机器人webhook的access_token
+    :param secret: 机器人安全设置的加签secret
+    :param msg: 消息内容
+    :param at_user_ids: @的用户ID列表
+    :param at_mobiles: @的手机号列表
+    :param is_at_all: 是否@所有人
+    :return: 钉钉API响应
+    """
+
+    url = f'https://oapi.dingtalk.com/robot/send?access_token={access_token}'
+    formatted_utc_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+    body = {
+        "at": {
+            "isAtAll": str(is_at_all).lower(),
+            "atUserIds": at_user_ids or [],
+            "atMobiles": at_mobiles or []
+        },
+        "markdown": {
+            "title": formatted_utc_time,
+            "text": msg
+        },
+        "msgtype": "markdown"
+    }
+    headers = {'Content-Type': 'application/json'}
+    resp = requests.post(url, json=body, headers=headers)
+    logger.info("钉钉自定义机器人群消息响应：%s", resp.text)
+    return resp.json()
+
+
+def send_to_dingtalk(msg: str):
+    formatted_utc_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+    at_user_ids = []
+    at_mobiles = []
+    send_custom_robot_group_message(
+        'f38e4a0b83763311cff9aed9bfc1bb789dafa10c51ed8356649dcba8786feea2',
+        formatted_utc_time+"【通知】\n" + msg,
+        at_user_ids=at_user_ids,
+        at_mobiles=at_mobiles,
+        is_at_all=False
+    )
+
+
+def send_qr_to_dingtalk(qr_base64: str):
+    formatted_utc_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    at_user_ids = []
+    at_mobiles = []
+    qs_content = "![二维码](data:image/png;base64,%s)"
+    send_custom_robot_group_message(
+        'f38e4a0b83763311cff9aed9bfc1bb789dafa10c51ed8356649dcba8786feea2',
+        formatted_utc_time+"【通知】\n" + qs_content % qr_base64,
+        at_user_ids=at_user_ids,
+        at_mobiles=at_mobiles,
+        is_at_all=False
+    )
+
+
+def print_dir_tree(start_path: str, prefix: str = ""):
+    """递归打印目录结构为文本树图"""
+    items = sorted(os.listdir(start_path))
+    entries = [item for item in items if not item.startswith('.')]  # 忽略隐藏文件
+
+    for index, name in enumerate(entries):
+        path = os.path.join(start_path, name)
+        is_last = index == len(entries) - 1
+
+        connector = "└── " if is_last else "├── "
+        print(prefix + connector + name)
+
+        if os.path.isdir(path):
+            extension = "    " if is_last else "│   "
+            print_dir_tree(path, prefix + extension)
