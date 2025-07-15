@@ -482,15 +482,16 @@ def save_today_news_json(topics, time_tag, final_path_walk, today: str = datetim
                     break
                 titles.append(words)
                 show_idx += 1
-    daily_text_path = build_daily_json_path(today)
-    upload_file_json: Dict[str, Dict[str, object]] = {}
-    if os.path.exists(daily_text_path):
-        with open(daily_text_path, 'r', encoding='utf-8') as json_file:
-            upload_file_json = json.load(json_file)
     rows = [topics.replace("\n", " ")]
     rows.extend(titles)
     rows.append(HINT_INFORMATION)
     txt = "\n".join(rows)
+
+    upload_file_json: Dict[str, Dict[str, object]] = {}
+    daily_text_path = build_daily_json_path(today)
+    if os.path.exists(daily_text_path):
+        with open(daily_text_path, 'r', encoding='utf-8') as json_file:
+            upload_file_json = json.load(json_file)
     upload_json = {'title': today_formatted + TIMES_TYPE[time_tag], 'tags': TAGS, 'introduction': txt,
                    'final_path_walk': final_path_walk}
     upload_file_json[time_tag] = upload_json
