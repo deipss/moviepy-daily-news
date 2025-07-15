@@ -284,7 +284,7 @@ def send_custom_robot_group_message(access_token, msg, at_user_ids=None, at_mobi
     """
 
     url = f'https://oapi.dingtalk.com/robot/send?access_token={access_token}'
-    formatted_utc_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    formatted_utc_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     body = {
         "at": {
@@ -305,7 +305,7 @@ def send_custom_robot_group_message(access_token, msg, at_user_ids=None, at_mobi
 
 
 def send_to_dingtalk(msg: str):
-    formatted_utc_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    formatted_utc_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     at_user_ids = []
     at_mobiles = []
@@ -319,7 +319,7 @@ def send_to_dingtalk(msg: str):
 
 
 def send_qr_to_dingtalk(qr_base64: str):
-    formatted_utc_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    formatted_utc_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     at_user_ids = []
     at_mobiles = []
     qs_content = "![二维码](data:image/png;base64,%s)"
