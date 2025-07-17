@@ -254,7 +254,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
         stroke_color=MAIN_BG_COLOR,
         stroke_width=1
 
-    ).with_duration(duration).with_position((GAP * 1.85 + topic_font_size * 2, GLOBAL_HEIGHT * 0.1))
+    ).with_duration(duration).with_position((GAP * 1.85, GLOBAL_HEIGHT * 0.1))
 
     lady = (VideoFileClip(build_announcer_path(time_tag)).with_effects([Loop(duration=duration)])
             .with_position((GLOBAL_WIDTH * 0.68, GLOBAL_HEIGHT * 0.47)).resized(0.7))
@@ -384,7 +384,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), time_tag: int
     for i in range(len(all_paths)):
         video_paths.append(all_paths[i])
     video_paths.append(generate_video_end(time_tag=time_tag))
-    logger.info(f"生成主视频并整合...")
+    logger.info(f"生成主视频并整合")
     final_path = build_final_video_path(today, time_tag)
     final_path_walk = build_final_video_walk_path(today, time_tag)
     logger.info(f"主视频生成，保存在:{final_path} and {final_path_walk}，")
@@ -508,10 +508,9 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"),
     show_titles = []
     cnt = 0
     for news_item in news_data:
-        if news_item['show']:
-
-            show_titles.append(news_item['title'][:14]+'...')
-            cnt += 1
+        if news_item['show'] and news_item['title'] < 18:
+            show_titles.append(news_item['title'])
+        cnt += 1
         if cnt > 4:
             break
     txt = "\n".join([f'{idx}.{i}' for idx, i in enumerate(show_titles, start=1)])
