@@ -104,7 +104,7 @@ if __name__ == '__main__':
         os.system(f"open {image_path}")
         logger.info(f"qrcode saved in {image_path}")
         send_qr_to_dingtalk(base64_data)
-        max_wait_time = 60  # 最多等待 60 秒
+        max_wait_time = 300  # 最多等待 60 秒
         interval = 0.5  # 每次检查间隔 0.5 秒
         start_time = time.time()
 
