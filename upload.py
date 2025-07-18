@@ -1,3 +1,6 @@
+from csv import excel
+
+from holoviews.plotting.mpl import fire_cmap
 from playwright.sync_api import sync_playwright
 import base64
 import requests
@@ -5,7 +8,7 @@ from logging_config import logger
 import os
 import time
 import argparse
-from utils import send_to_dingtalk, build_daily_json_path, get_yesterday_str,send_qr_to_dingtalk
+from utils import send_to_dingtalk, build_daily_json_path, get_yesterday_str, send_qr_to_dingtalk
 from typing import Dict
 import json
 from datetime import datetime, timedelta
@@ -124,20 +127,23 @@ if __name__ == '__main__':
             browser.close()
             send_to_dingtalk("logging in bilibili failed")
             exit(1)
-
-        upload_file_json: Dict[str, Dict[str, object]] = {}
-        daily_text_path = build_daily_json_path(args.today)
-        if os.path.exists(daily_text_path):
-            with open(daily_text_path, 'r', encoding='utf-8') as json_file:
-                upload_file_json = json.load(json_file)
-        for k, news_dict in upload_file_json.items():
-            try:
-                logger.info(f"start to upload {k}")
-                upload_one(page, news_dict)
-            except Exception as e:
-                logger.error(f'upload_one {k} error {e}', exc_info=True)
-                send_to_dingtalk(f'upload_one {k} error ')
-            finally:
-                page.wait_for_timeout(1000)
-
-        browser.close()
+        try:
+            upload_file_json: Dict[str, Dict[str, object]] = {}
+            daily_text_path = build_daily_json_path(args.today)
+            if os.path.exists(daily_text_path):
+                with open(daily_text_path, 'r', encoding='utf-8') as json_file:
+                    upload_file_json = json.load(json_file)
+            for k, news_dict in upload_file_json.items():
+                try:
+                    logger.info(f"start to upload {k}")
+                    upload_one(page, news_dict)
+                except Exception as e:
+                    logger.error(f'upload_one {k} error {e}', exc_info=True)
+                    send_to_dingtalk(f'upload_one {k} error ')
+                finally:
+                    page.wait_for_timeout(1000)
+        except Exception as e:
+            logger.error(f'upload  error {e}', exc_info=True)
+            send_to_dingtalk(f'upload error {k} error ')
+        finally:
+            browser.close()
