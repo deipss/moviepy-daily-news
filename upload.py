@@ -1,6 +1,4 @@
-from csv import excel
 
-from holoviews.plotting.mpl import fire_cmap
 from playwright.sync_api import sync_playwright
 import base64
 import requests
