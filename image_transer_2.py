@@ -8,6 +8,7 @@ from torchvision.utils import save_image
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import PIL
 
 
 # 定义网络模型
