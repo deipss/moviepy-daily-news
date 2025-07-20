@@ -6,12 +6,15 @@ import os
 import math
 from PIL import Image
 from moviepy.video.fx import Loop
+from tornado.util import exec_in
+
 from ollama_client import OllamaClient
 from logging_config import logger
 import sys
 from utils import *
 import time
 from typing import Dict
+from convert import convert
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -429,7 +432,19 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"), time
         audio_output_path = os.path.join(dir_path, AUDIO_FILE_NAME)
         img_list = []
         for image in article.images:
-            img_list.append(os.path.join(dir_path, image))
+            origin_img = os.path.join(dir_path, image)
+            pixelated_img = os.path.join(dir_path, 'P_' + image)
+            pixelated = True
+            try:
+                convert(origin_img, pixelated_img)
+            except Exception as e:
+                pixelated = False
+                logger.error(f'pixelate error {e}', exec_info=True)
+            logger.info(f'pixelate {origin_img} to {pixelated_img}')
+            if pixelated:
+                img_list.append(pixelated_img)
+            else:
+                img_list.append(origin_img)
         generated_result = generate_single_video(
             output_path=video_output_path,
             audio_path=audio_output_path,
@@ -508,7 +523,7 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"),
     show_titles = []
     cnt = 0
     for news_item in news_data:
-        if news_item['show'] :
+        if news_item['show']:
             show_titles.append(news_item['title'][:18])
         cnt += 1
         if cnt > 4:
