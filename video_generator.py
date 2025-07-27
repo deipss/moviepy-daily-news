@@ -143,7 +143,7 @@ def generate_single_video(audio_path, image_list, title, summary, output_path, i
         interline=font_size // 2,
         font_size=font_size,
         color='black',
-        font='./font/simhei.ttf',
+        font='./font/fusion-pixel-10px-monospaced-zh_hans.ttf',
         text_align='left',
         size=(bottom_left_width, bottom_height),
         method='caption'
@@ -156,7 +156,7 @@ def generate_single_video(audio_path, image_list, title, summary, output_path, i
         text=title,
         font_size=title_font_size,
         color='black',
-        font='./font/simhei.ttf',
+        font='./font/fusion-pixel-10px-monospaced-zh_hans.ttf',
         method='label'
     ).with_duration(duration).with_position(('left', 'top'))
 
@@ -237,7 +237,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
         font_size=int(GLOBAL_WIDTH / max_length * 0.805),
         interline=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.6) // 4,
         color=MAIN_BG_COLOR,
-        font='./font/simhei.ttf',
+        font='./font/fusion-pixel-10px-monospaced-zh_hans.ttf',
         stroke_color='black',
         stroke_width=2
     ).with_duration(duration).with_position((GAP * 1.75, GLOBAL_HEIGHT * 0.7))
@@ -250,7 +250,7 @@ def generate_video_introduction(output_path='temp/introduction.mp4', today=datet
         font_size=topic_font_size,
         color=get_weekday_color(today),
         interline=int(GLOBAL_HEIGHT * 0.75 / 5 * 0.59) // 4,
-        font='./font/simhei.ttf',
+        font='./font/fusion-pixel-10px-monospaced-zh_hans.ttf',
         stroke_color=MAIN_BG_COLOR,
         stroke_width=1
 
@@ -288,7 +288,7 @@ def generate_video_end(is_preview=False, time_tag=0):
         text="谢谢收看",
         font_size=int(GLOBAL_HEIGHT * 0.15),
         color=MAIN_BG_COLOR,
-        font='./font/simhei.ttf',
+        font='./font/fusion-pixel-10px-monospaced-zh_hans.ttf',
         stroke_color='black',
         stroke_width=2
     ).with_duration(duration).with_position(('center', GLOBAL_HEIGHT * 0.7))
@@ -355,7 +355,7 @@ def add_walking_man(path, walk_video_path, duration_list):
             font_size=int(tag.h * 0.83),
             color='white',
             stroke_width=1,
-            font='./font/simhei.ttf'
+            font='./font/fusion-pixel-10px-monospaced-zh_hans.ttf'
         ).with_duration(origin_v.duration).with_position((num, 'bottom')).with_start(0)
         seg_clips.append(txt_clip)
     width = origin_v.w
@@ -509,9 +509,9 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"),
     cnt = 0
     for news_item in news_data:
         if news_item['show'] :
-            show_titles.append(news_item['title'][:18])
+            show_titles.append(news_item['title'][:16])
         cnt += 1
-        if cnt > 4:
+        if cnt > 3:
             break
     txt = "\n".join([f'{idx}.{i}' for idx, i in enumerate(show_titles, start=1)])
     data = txt.replace(' ', '')

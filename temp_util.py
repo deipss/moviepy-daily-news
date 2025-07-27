@@ -1,8 +1,9 @@
 import json
 
-from moviepy import VideoFileClip
+from fake_useragent import UserAgent
+from moviepy import VideoFileClip, CompositeVideoClip
 from moviepy.video.fx import Loop
-from utils import  *
+from utils import *
 from ollama_client import OllamaClient
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
@@ -52,8 +53,8 @@ def generate_audio(text: str, output_file: str = "audio.wav", name='zh-CN-Xiaoxi
 
 def voice_verify():
     for i in ['zh-CN-XiaoxiaoNeural', 'zh-CN-XiaoyiNeural', 'zh-TW-HsiaoChenNeural', 'zh-TW-HsiaoYuNeural',
-              'zh-CN-liaoning-XiaobeiNeural', 'zh-CN-shaanxi-XiaoniNeural']:
-        generate_audio("你好，这一个清澈见底工的测试", output_file=f"temp/{i}audio.wav", name=i)
+              'zh-CN-liaoning-XiaobeiNeural', 'zh-CN-shaanxi-XiaoniNeural','zh-CN-YunjianNeural','zh-CN-YunxiNeural','zh-CN-YunxiaNeural','zh-CN-YunyangNeural']:
+        generate_audio("你好，这一个声音朗诵的测试", output_file=f"temp/{i}audio.wav", name=i)
 
 
 def proxy_verify():
@@ -116,7 +117,17 @@ def _silicon_t():
     print(a)
 
 
-if __name__ == '__main__':
-    v = VideoFileClip('videos/lady_announcer.mp4')
+def reshape_video():
+    v = VideoFileClip('videos/panda_final.mp4')
     a = v.duration
-    v1 = v.subclipped(start_time=a*0.53, end_time=a*0.75).with_effects([Loop(n=2)])
+    v1 = v.subclipped(start_time=a * 0, end_time=a * 1).with_effects([Loop(n=1)])
+    v1 = v1.resized(0.75)
+    bottom_right_img = VideoFileClip('/Users/deipss/Downloads/3d/111.jpg')
+    bottom_right_img = bottom_right_img.resized(0.6)
+    bottom_right_img = bottom_right_img.with_effects([Loop(duration=v1.duration)]).with_position(('right', 'bottom'))
+    final_video = CompositeVideoClip([v1, bottom_right_img], size=v1.size)
+    final_video.write_videofile('videos/panda_final.mp4', codec="libx264", audio_codec="aac", fps=FPS)
+
+
+if __name__ == '__main__':
+    voice_verify()
