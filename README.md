@@ -69,28 +69,16 @@
 │   ├── bbc0
 │   │   ├── 05
 │   │   │   ├── 0a6d77f0-5664-11f0-960d-e9f1088a89fe.png
-│   │   │   ├── 2a31d540-5be6-11f0-a40e-a1af2950b220.png
-│   │   │   ├── 3cbc1490-5665-11f0-960d-e9f1088a89fe.png
-│   │   │   ├── 44c481e0-5665-11f0-960d-e9f1088a89fe.png
-│   │   │   ├── 57920b80-5665-11f0-9074-8989d8c97d87.png
-│   │   │   ├── 5e81dce0-5665-11f0-960d-e9f1088a89fe.png
-│   │   │   ├── 81079dc0-5bdf-11f0-960d-e9f1088a89fe.png
-│   │   │   ├── 84b897d0-5bdf-11f0-960d-e9f1088a89fe.png
 │   │   │   └── b08afdb0-5be6-11f0-a40e-a1af2950b220.png
 │   │   ├── 06
 │   │   │   └── 84339410-5c05-11f0-9d64-1b7197dd7c07.jpg
 │   │   ├── 08
 │   │   │   ├── 0b5f2290-58e3-11f0-b5c5-012c5796682d.jpg
-│   │   │   ├── 300dcf70-58e2-11f0-960d-e9f1088a89fe.jpg
-│   │   │   ├── 3885a070-581e-11f0-960d-e9f1088a89fe.jpg
-│   │   │   ├── 5b49e5a0-5821-11f0-b5c5-012c5796682d.jpg
-│   │   │   ├── 62c8cd00-58e4-11f0-b5c5-012c5796682d.jpg
 │   │   │   └── eae1ea60-58e3-11f0-b5c5-012c5796682d.jpg
 │   │   └── news_results.json
 │   ├── c_en0
 │   │   ├── 10
 │   │   │   ├── 686e2ce9a31000e98c7d7c1b.jpeg
-│   │   │   ├── 686e2ce9a31000e98c7d7c1d.jpeg
 │   │   │   └── 686e2ce9a31000e98c7d7c1f.jpeg
 │   │   ├── 11
 │   │   │   └── 686d9aa9a31000e98c7d68df.jpeg
@@ -106,14 +94,6 @@
 │   │   │   └── AP25190083362645-1752031483.jpg
 │   │   ├── 08
 │   │   │   ├── AFP__20250707__662999A__v6__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752044877.jpg
-│   │   │   ├── AFP__20250707__662B6JY__v1__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752044813.jpg
-│   │   │   ├── AFP__20250708__2223487921__v3__HighRes__DeathTollRisesAfterFlashFloodsInTexasHillCou-1752045110.jpg
-│   │   │   ├── AFP__20250708__668C9XV__v1__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752044908.jpg
-│   │   │   ├── AFP__20250708__668C9XZ__v1__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752044936.jpg
-│   │   │   ├── AFP__20250708__668C9Y7__v2__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752044979.jpg
-│   │   │   ├── AFP__20250708__668C9YC__v1__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752045013.jpg
-│   │   │   ├── AFP__20250708__668C9YM__v1__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752045056.jpg
-│   │   │   ├── AFP__20250708__668C9YN__v1__HighRes__MultipleDeathsFromCatastrophicFloodingInCentral-1752045088.jpg
 │   │   │   └── AP25190135889726-1752045130.jpg
 │   │   └── news_results.json
 │   └── rt0
@@ -133,7 +113,7 @@
 
 ## [ollama_client.py](ollama_client.py)
 
-使用··生成新闻的摘要
+使用LLM生成新闻的摘要
 
 ## [logging_config.py](logging_config.py)
 
@@ -141,7 +121,15 @@
 
 ## [utils.py](utils.py)
 
-日期、文件路径、音频、钉钉消息推送等工具类
+- 固定素材、着色等常量的统一管理
+- 日期、文件路径、音频、钉钉消息推送等工具类
+## [temp_util.py](temp_util.py)
+
+一个临时的测试文件，用以测试，或是素材文件的临时处理
+
+## [image_transfer.py](image_transfer.py)
+
+图片风格像素化
 
 # 🧠 新闻来源
 
@@ -168,7 +156,7 @@ python crawl_news.py
 python vedio_generator.py 
 ```
 
-# 🔮 效果
+# 🔮效果
 
 - https://space.bilibili.com/372736088 每日生成的视频
 
@@ -179,8 +167,8 @@ python vedio_generator.py
 
 # 技术支持
 
-- https://github.com/TakWolf/fusion-pixel-font
-- 
+- https://github.com/TakWolf/fusion-pixel-font 以是像素化的字段
+- https://github.com/Jzou44/photo2pixel 图片像素化
 
 # 🧭测试
 

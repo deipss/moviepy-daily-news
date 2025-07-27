@@ -6,12 +6,14 @@ import os
 import math
 from PIL import Image
 from moviepy.video.fx import Loop
+
 from ollama_client import OllamaClient
 from logging_config import logger
 import sys
 from utils import *
 import time
 from typing import Dict
+from convert import convert
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -94,6 +96,7 @@ def generate_single_video(audio_path, image_list, title, summary, output_path, i
                           time_tag=0):
     title = "" + index + " " + title
     # 加载背景和音频
+
     bg_clip = ImageClip(BACKGROUND_IMAGE_INNER_PATH)  # 白色背景
     try:
         audio_clip = AudioFileClip(audio_path)
@@ -193,12 +196,12 @@ def get_weekday_color(date_str):
     # 星期与颜色的映射关系 (0 = Monday, 6 = Sunday)
     weekday_color_map = {
         0: '#F70968',  # 周一 - 红色
-        1: '#3352CC',  # 周二 - 橙色
+        1: '#0000FF',  # 周二 - 橙色
         2: '#336600',  # 周三 - 黑色
-        3: '#6666CC',  # 周四 - 绿色
-        4: '#003333',  # 周五 - 蓝色
-        5: '#666666',  # 周六 - 紫色
-        6: '#CCCCFF'  # 周日 - 粉色
+        3: '#33FF00',  # 周四 - 绿色
+        4: '#FF0066',  # 周五 - 蓝色
+        5: '#99CC00',  # 周六 - 紫色
+        6: '#3333CC'  # 周日 - 粉色
     }
 
     # 获取当前星期几 (0=Monday, 6=Sunday)
@@ -429,7 +432,19 @@ def generate_all_news_video(today: str = datetime.now().strftime("%Y%m%d"), time
         audio_output_path = os.path.join(dir_path, AUDIO_FILE_NAME)
         img_list = []
         for image in article.images:
-            img_list.append(os.path.join(dir_path, image))
+            origin_img = os.path.join(dir_path, image)
+            pixelated_img = os.path.join(dir_path, 'P_' + image)
+            pixelated = True
+            try:
+                convert(origin_img, pixelated_img)
+            except Exception as e:
+                pixelated = False
+                logger.error(f'pixelate error {e}', exec_info=True)
+            logger.info(f'pixelate {origin_img} to {pixelated_img}')
+            if pixelated:
+                img_list.append(pixelated_img)
+            else:
+                img_list.append(origin_img)
         generated_result = generate_single_video(
             output_path=video_output_path,
             audio_path=audio_output_path,

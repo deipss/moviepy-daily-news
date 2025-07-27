@@ -53,7 +53,8 @@ def generate_audio(text: str, output_file: str = "audio.wav", name='zh-CN-Xiaoxi
 
 def voice_verify():
     for i in ['zh-CN-XiaoxiaoNeural', 'zh-CN-XiaoyiNeural', 'zh-TW-HsiaoChenNeural', 'zh-TW-HsiaoYuNeural',
-              'zh-CN-liaoning-XiaobeiNeural', 'zh-CN-shaanxi-XiaoniNeural','zh-CN-YunjianNeural','zh-CN-YunxiNeural','zh-CN-YunxiaNeural','zh-CN-YunyangNeural']:
+              'zh-CN-liaoning-XiaobeiNeural', 'zh-CN-shaanxi-XiaoniNeural','zh-CN-YunjianNeural','zh-CN-YunxiNeural',''
+                                                                                                                     '','zh-CN-YunyangNeural']:
         generate_audio("你好，这一个声音朗诵的测试", output_file=f"temp/{i}audio.wav", name=i)
 
 
@@ -128,6 +129,46 @@ def reshape_video():
     final_video = CompositeVideoClip([v1, bottom_right_img], size=v1.size)
     final_video.write_videofile('videos/panda_final.mp4', codec="libx264", audio_codec="aac", fps=FPS)
 
+from PIL import Image, ImageDraw
+
+def create_rounded_rectangle(width=300, height=200, radius=30, color=(240, 230, 210), bg_color=(255, 255, 255, 0)):
+        # 创建透明背景图片
+        img = Image.new("RGBA", (width, height), bg_color)
+        draw = ImageDraw.Draw(img)
+
+        # 画圆角矩形
+        draw.rounded_rectangle((0, 0, width, height), radius=radius, fill=color)
+
+        png = "rounded_rectangle.png"
+        img.save("%s" % png)
+        print("✅ 图片已生成：%s" % png)
+        return png
+
+from PIL import Image
+import random
+
+def erode_image_edges(image_path, erosion_strength=500, pixel_size=8):
+    img = Image.open(image_path).convert("RGBA")
+    width, height = img.size
+    pixels = img.load()
+
+    # 随机腐蚀边缘
+    for _ in range(erosion_strength):
+        x = random.randint(0, width-1)
+        y = random.randint(0, height-1)
+        # 只腐蚀边缘区域
+        if x < 20 or x > width-20 or y < 20 or y > height-20:
+            pixels[x, y] = (0, 0, 0, 0)  # 设置透明
+
+    # 像素化处理
+    img = img.resize((width // pixel_size, height // pixel_size), Image.NEAREST)
+    img = img.resize((width, height), Image.NEAREST)
+
+    img.save("eroded_pixel_image.png")
+    print("✅ 图片已保存：eroded_pixel_image.png")
+
+
 
 if __name__ == '__main__':
-    voice_verify()
+    png = create_rounded_rectangle()
+    erode_image_edges(png)
