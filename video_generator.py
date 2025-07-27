@@ -29,7 +29,7 @@ def generate_background_image(width=GLOBAL_WIDTH, height=GLOBAL_HEIGHT, color=MA
     rgb = build_bg_color_rgb(time_tag)
     draw.rounded_rectangle(
         [(border_width, border_width), (width - border_width, height - border_width)],
-        radius=40,  # 圆角半径
+        radius=50,  # 圆角半径
         fill=rgb
     )
     image.save(BACKGROUND_IMAGE_PATH)
