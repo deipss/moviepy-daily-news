@@ -524,7 +524,7 @@ def generate_top_topic_by_ollama(today: str = datetime.now().strftime("%Y%m%d"),
     cnt = 0
     for news_item in news_data:
         if news_item['show'] :
-            show_titles.append(news_item['title'][:16])
+            show_titles.append(news_item['title'][:15]+'...')
         cnt += 1
         if cnt > 3:
             break
