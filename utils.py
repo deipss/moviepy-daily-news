@@ -271,9 +271,10 @@ def remove_outdated_documents():
                 print(f"删除文件 {file_path} 失败: {e}")
 
 
-def send_custom_robot_group_message(access_token, msg, at_user_ids=None, at_mobiles=None, is_at_all=False):
+def send_custom_robot_group_message(access_token, msg, at_user_ids=None, at_mobiles=None, is_at_all=False,title="【通知】"):
     """
     发送钉钉自定义机器人群消息
+    :param title:
     :param access_token: 机器人webhook的access_token
     :param secret: 机器人安全设置的加签secret
     :param msg: 消息内容
@@ -293,7 +294,7 @@ def send_custom_robot_group_message(access_token, msg, at_user_ids=None, at_mobi
             "atMobiles": at_mobiles or []
         },
         "markdown": {
-            "title": formatted_utc_time,
+            "title": formatted_utc_time + title,
             "text": msg
         },
         "msgtype": "markdown"
@@ -304,17 +305,18 @@ def send_custom_robot_group_message(access_token, msg, at_user_ids=None, at_mobi
     return resp.json()
 
 
-def send_to_dingtalk(msg: str):
+def send_to_dingtalk(msg: str,err:False):
     formatted_utc_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     at_user_ids = []
     at_mobiles = []
     send_custom_robot_group_message(
         'f38e4a0b83763311cff9aed9bfc1bb789dafa10c51ed8356649dcba8786feea2',
-        formatted_utc_time+"【通知】\n" + msg,
+        formatted_utc_time+"通知\n" + msg,
         at_user_ids=at_user_ids,
         at_mobiles=at_mobiles,
-        is_at_all=False
+        is_at_all=False,
+        title="【错误】" if err else '【通知】'
     )
 
 
@@ -325,10 +327,11 @@ def send_qr_to_dingtalk(qr_base64: str):
     qs_content = "![二维码](data:image/png;base64,%s)"
     send_custom_robot_group_message(
         'f38e4a0b83763311cff9aed9bfc1bb789dafa10c51ed8356649dcba8786feea2',
-        formatted_utc_time+"【通知】\n" + qs_content % qr_base64,
+        formatted_utc_time+"通知\n" + qs_content % qr_base64,
         at_user_ids=at_user_ids,
         at_mobiles=at_mobiles,
-        is_at_all=False
+        is_at_all=False,
+        title="【二维码】"
     )
 
 
