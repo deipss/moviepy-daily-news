@@ -189,7 +189,7 @@ def build_introduction_txt(today=datetime.now(), time_tag=0):
     weekday = f"星期{weekday_map[today.weekday()]}"
     time_tag = TIMES_TYPE[time_tag]
     # return "今天是{}, \n农历{}, \n{},欢迎收看[今日快电]{}".format(solar_date, lunar_date, weekday, time_tag)
-    return "今天是{},{},\n欢迎收看[今日快电]{}".format(solar_date, weekday, time_tag)
+    return "现在是{},{},\n欢迎收看本次信息{}".format(solar_date, weekday, time_tag)
 
 
 def get_weekday_color(date_str):
