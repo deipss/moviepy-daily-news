@@ -69,19 +69,19 @@ class NewsScraper:
                 logger.warning(f"{article.source} 未找到图片: {url}")
                 continue
             if article.title and self.is_sensitive_word_cn(article.title):
-                logger.warning(f"{article.source} 标题包含敏感词: {url}")
+                logger.warning(f"{article.source} 标题包含敏感词: {url}，{article.title}")
                 continue
             if article.title and len(article.title) < 5:
                 logger.warning(f"{article.source} 标题过短: {url}")
                 continue
             if article.content_cn and self.is_sensitive_word_cn(article.content_cn):
-                logger.warning(f"{article.source} 中文内容包含敏感词: {url}")
+                logger.warning(f"{article.source} 中文内容包含敏感词: {url},{article.content_cn}")
                 continue
             if article.title_en and self.is_sensitive_word_en(article.title_en):
-                logger.warning(f"{article.title_en} 英文标题包含敏感词: {url}")
+                logger.warning(f"{article.source} 英文标题包含敏感词: {url},{article.title_en}")
                 continue
             if article.content_en and self.is_sensitive_word_en(article.content_en):
-                logger.warning(f"{article.source} 英文内容包含敏感词: {url}")
+                logger.warning(f"{article.source} 英文内容包含敏感词: {url},{article.content_en}")
                 continue
             if article.content_cn and len(article.content_cn) < 8:
                 logger.warning(f"{article.source} 内容过短: {url}")
@@ -105,13 +105,26 @@ class NewsScraper:
 
     def is_sensitive_word_cn(self, word) -> bool:
         cnt = 0
-        sensitive_words = ["平", "%%%", "习", "县", "杀", "总书记", "近"]  # 去除了重复项
+        sensitive_words = ["平", "%%%", "习", "县", "杀", "总书记", "近","中国","香港","澳门","南京","新疆","西藏","宁夏"]  # 去除了重复项
         for sensitive_word in sensitive_words:
             if sensitive_word in word:
                 cnt += 1
         return cnt > 1
 
-    def is_sensitive_word_en(self, word) -> bool:
+    def is_sensitive_word_en(self, word:str) -> bool:
+
+        chinese_regions = [
+            "China",  # 中国
+            "Hong Kong",  # 香港（中国特别行政区）
+            "Macao",  # 澳门（中国特别行政区）
+            "Nanjing",  # 南京（中国江苏省省会）
+            "Xinjiang",  # 新疆（中国新疆维吾尔自治区）
+            "Xizang",  # 西藏（中国西藏自治区）
+            "Ningxia"  # 宁夏（中国宁夏回族自治区）
+        ]
+        for sensitive_word in chinese_regions:
+            if sensitive_word.lower() in word.lower():
+                return True
         return "Jinping" in word
 
     def create_folder(self, today=datetime.now().strftime("%Y%m%d")):
