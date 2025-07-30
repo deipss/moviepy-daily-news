@@ -758,7 +758,7 @@ def auto_download_daily(today=datetime.now().strftime("%Y%m%d"), time_tag: int =
     _end = time.time()
     info = f"{today},{time_tag},并发爬取新闻耗时: {_end - _start:.2f} 秒,获取到 {len(results)} 个新闻"
     logger.info(info)
-    send_to_dingtalk(info)
+    send_to_dingtalk(info,False)
     urls = []
     [urls.append(i.url) for i in results]
     append_and_save_month_urls(today[:6], set(urls))
@@ -861,7 +861,7 @@ if __name__ == "__main__":
         except  Exception as e:
             logger.error(f"auto_download_daily error:{e}", exc_info=True)
             info = f"{args.today},{args.times} 并发爬取新闻异常，Exception type: {type(e)},Exception args: {e.args},Exception message: {str(e)}"
-            send_to_dingtalk(info)
+            send_to_dingtalk(info,False)
         logger.info(f"========end crawl==========time spend = {time.time() - _start:.2f} second")
     else:
         logger.info('========start combine_videos==========')
@@ -878,7 +878,7 @@ if __name__ == "__main__":
             except Exception as e:
                 logger.error(f"添加摘要和声音异常{args.today} {idx},error={e}", exc_info=True)
                 info = f"{args.today},{args.times} 添加摘要和声音异常，Exception type: {type(e)},Exception args: {e.args},Exception message: {str(e)}"
-                send_to_dingtalk(info)
+                send_to_dingtalk(info,False)
         for idx in range(4):
             try:
                 logger.info(f'combine_videos start today={args.today}, time_tag={idx}')
@@ -887,7 +887,7 @@ if __name__ == "__main__":
             except Exception as e:
                 logger.error(f"视频生成异常{args.today} {idx},error={e}", exc_info=True)
                 info = f"{args.today},{args.times} 视频生成异常，Exception type: {type(e)},Exception args: {e.args},Exception message: {str(e)}"
-                send_to_dingtalk(info)
+                send_to_dingtalk(info,False)
 
 
         remove_outdated_documents()

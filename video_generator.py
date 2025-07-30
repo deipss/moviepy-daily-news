@@ -397,7 +397,7 @@ def combine_videos(today: str = datetime.now().strftime("%Y%m%d"), time_tag: int
     add_walking_man(final_path, final_path_walk, duration_list)
     info = f'{today},{time_tag},添加进度条结束，耗时: {time.time() - start_time:.2f} 秒'
     logger.info(info)
-    send_to_dingtalk(info)
+    send_to_dingtalk(info,False)
     save_today_news_json(topics=topics, time_tag=time_tag, today=today, final_path_walk=final_path_walk)
 
 
