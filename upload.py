@@ -161,7 +161,7 @@ def upload_one(page, news_dict):
     # 提交
     page.get_by_text("立即投稿", exact=True).click()
     page.wait_for_timeout(5000)
-    send_to_dingtalk(f"{news_dict['final_path_walk']} 上传成功", True)
+    send_to_dingtalk(f"{news_dict['final_path_walk']} 上传成功", False)
 
 
 if __name__ == "__main__":
