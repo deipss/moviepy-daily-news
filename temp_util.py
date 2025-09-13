@@ -120,11 +120,12 @@ def _silicon_t():
 
 
 def reshape_video():
-    v = VideoFileClip('videos/panda_final_v2.mp4')
+    v = VideoFileClip('videos/panda_final_v3.mp4')
     a = v.duration
-    v1 = v.subclipped(start_time=a * 0.10, end_time=a * 0.73)
+    v1 = v.subclipped(start_time=a * 0.2, end_time=a * 0.96)
+    # v1 = v1.with_effects([Loop(duration=a*3)])
     # v1.preview()
-    v1.write_videofile('videos/panda_final_v2_v2.mp4', codec="libx264", audio_codec="aac", fps=FPS)
+    v1.write_videofile('videos/panda_final_v3.mp4', codec="libx264", audio_codec="aac", fps=FPS)
 
 
 from PIL import Image, ImageDraw

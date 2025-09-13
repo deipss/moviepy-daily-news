@@ -135,10 +135,10 @@ def build_end_audio_path():
 
 def build_announcer_path(time_tag: int = 0):
     announcer_map = {
-        0: 'panda_final_v2.mp4',
-        1: 'panda_final_v2.mp4',
-        2: 'panda_final_v2.mp4',
-        3: 'panda_final_v2.mp4'
+        0: 'panda_final_v3.mp4',
+        1: 'panda_final_v3.mp4',
+        2: 'panda_final_v3.mp4',
+        3: 'panda_final_v3.mp4'
     }
     return os.path.join('videos', announcer_map[time_tag])
 
